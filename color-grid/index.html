@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Grid</title>
+  <style>
+    * { margin: 0; }
+    body { min-height: 100vh; display: grid; grid-template-columns: repeat(16, 1fr); }
+    div { aspect-ratio: 1; transition: background 0.3s; }
+  </style>
+</head>
+<body>
+  <script>
+    const body = document.body;
+    for (let i = 0; i < 256; i++) {
+      const d = document.createElement('div');
+      const hue = (i / 256) * 360;
+      d.style.background = `hsl(${hue}, 70%, 50%)`;
+      d.addEventListener('mouseenter', () => d.style.background = `hsl(${(hue + 180) % 360}, 90%, 60%)`);
+      body.appendChild(d);
+    }
+  </script>
+</body>
+</html>
