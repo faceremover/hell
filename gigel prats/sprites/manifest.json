@@ -1,0 +1,72 @@
+{
+  "ores": {
+    "copper": [
+      "copper1",
+      "copper2",
+      "copper3"
+    ],
+    "lead": [
+      "lead1",
+      "lead2",
+      "lead3"
+    ],
+    "coal": [
+      "coal1",
+      "coal2",
+      "coal3"
+    ],
+    "graphite": [
+      "graphite1",
+      "graphite2",
+      "graphite3"
+    ],
+    "silicon": [
+      "silicon1",
+      "silicon2",
+      "silicon3"
+    ]
+  },
+  "blocks": {
+    "conveyor": [
+      "conveyor"
+    ],
+    "router": [
+      "router"
+    ],
+    "drill": [
+      "drill"
+    ],
+    "wall": [
+      "wall"
+    ],
+    "duo": [
+      "duo"
+    ],
+    "hail": [
+      "hail"
+    ],
+    "scatter": [
+      "scatter"
+    ],
+    "graphitePress": [
+      "graphitePress"
+    ],
+    "siliconSmelter": [
+      "siliconSmelter"
+    ],
+    "core": [
+      "core"
+    ]
+  },
+  "enemies": {
+    "crawler": [
+      "crawler"
+    ],
+    "runner": [
+      "runner"
+    ],
+    "tank": [
+      "tank"
+    ]
+  }
+}
