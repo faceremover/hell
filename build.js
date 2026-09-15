@@ -39,25 +39,103 @@ function buildIndex() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>hell</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      background: #050000;
+      color: #e0d0c0;
       min-height: 100vh;
-      padding: 3rem 1.5rem;
+      padding: 3rem 1.5rem 16rem;
+      overflow-x: hidden;
+      position: relative;
     }
+    /* smoky background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(255,60,0,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 90%, rgba(200,20,0,0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 100%, rgba(255,100,0,0.2) 0%, transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    /* ── flames ── */
+    .flames {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 200px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .flame {
+      position: absolute;
+      bottom: 0;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      filter: blur(3px);
+      mix-blend-mode: screen;
+      animation: flicker ease-in-out infinite alternate;
+    }
+    @keyframes flicker {
+      0%   { transform: scaleX(1)   scaleY(1)   translateY(0); opacity: 1; }
+      25%  { transform: scaleX(1.1) scaleY(0.9) translateY(-8px); opacity: 0.9; }
+      50%  { transform: scaleX(0.9) scaleY(1.1) translateY(-4px); opacity: 1; }
+      75%  { transform: scaleX(1.05) scaleY(0.95) translateY(-10px); opacity: 0.85; }
+      100% { transform: scaleX(1)   scaleY(1.05) translateY(-2px); opacity: 0.95; }
+    }
+    @keyframes sway {
+      0%, 100% { margin-left: 0; }
+      50%      { margin-left: 12px; }
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) scaleY(1); opacity: 0.9; }
+      100% { transform: translateY(-60px) scaleY(1.4); opacity: 0; }
+    }
+    .ember {
+      position: absolute;
+      bottom: 0;
+      width: 4px; height: 4px;
+      background: #ff6600;
+      border-radius: 50%;
+      animation: rise 2s ease-out infinite;
+      filter: blur(1px);
+    }
+
+    .content { position: relative; z-index: 2; }
     h1 {
       text-align: center;
-      font-size: 2.5rem;
+      font-family: 'Creepster', cursive;
+      font-size: 5rem;
+      color: #ff2200;
+      text-shadow:
+        0 0 20px rgba(255,30,0,0.8),
+        0 0 60px rgba(255,60,0,0.4),
+        0 0 100px rgba(255,0,0,0.2),
+        0 4px 0 #8b0000;
+      letter-spacing: 0.1em;
       margin-bottom: 0.25rem;
-      color: #ff4444;
+      animation: titlePulse 3s ease-in-out infinite;
+    }
+    @keyframes titlePulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,30,0,0.8), 0 0 60px rgba(255,60,0,0.4), 0 0 100px rgba(255,0,0,0.2), 0 4px 0 #8b0000; }
+      50%      { text-shadow: 0 0 30px rgba(255,30,0,1), 0 0 80px rgba(255,60,0,0.6), 0 0 120px rgba(255,0,0,0.3), 0 4px 0 #8b0000; }
     }
     .subtitle {
       text-align: center;
-      color: #666;
+      color: #aa4433;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      font-style: italic;
+    }
+    .disclaimer {
+      text-align: center;
+      color: #663333;
       margin-bottom: 3rem;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
     }
     .grid {
       max-width: 800px;
@@ -67,51 +145,88 @@ function buildIndex() {
       gap: 1rem;
     }
     .card {
-      background: #161616;
-      border: 1px solid #222;
+      background: rgba(20,5,0,0.85);
+      border: 1px solid #3a1500;
       border-radius: 8px;
       padding: 1.25rem;
       text-decoration: none;
       color: inherit;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: all 0.3s;
+      backdrop-filter: blur(4px);
     }
     .card:hover {
-      border-color: #ff4444;
+      border-color: #ff4400;
       transform: translateY(-2px);
+      box-shadow: 0 0 20px rgba(255,60,0,0.3), inset 0 0 30px rgba(255,40,0,0.05);
     }
     .card h2 {
       font-size: 1.1rem;
       margin-bottom: 0.35rem;
-      color: #fff;
+      color: #ffccaa;
     }
     .card p {
       font-size: 0.85rem;
-      color: #888;
+      color: #996655;
       line-height: 1.4;
     }
     .empty {
       text-align: center;
-      color: #555;
+      color: #553322;
       margin-top: 4rem;
       font-size: 1rem;
     }
   </style>
 </head>
 <body>
-  <h1>hell</h1>
-  <p class="subtitle">${entries.length} project${entries.length !== 1 ? "s" : ""}</p>
-  ${
-    entries.length
-      ? `<div class="grid">${entries
-          .map(
-            (e) =>
-              `<a class="card" href="/${e.slug}/">
-        <h2>${e.title}</h2>${e.description ? `<p>${e.description}</p>` : ""}
-      </a>`
-          )
-          .join("\n    ")}</div>`
-      : `<p class="empty">No projects yet.</p>`
-  }
+  <!-- flames -->
+  <div class="flames">
+    <div class="flame" style="left:5%;width:80px;height:140px;background:radial-gradient(ellipse at bottom,#ff3300,#ff8800 40%,#ffcc00 70%,transparent);animation:fllicker 1.2s infinite alternate,sway 3s ease-in-out infinite;"></div>
+    <div class="flame" style="left:12%;width:60px;height:110px;background:radial-gradient(ellipse at bottom,#ff4400,#ff9900 50%,#ffdd22 80%,transparent);animation:fllicker 0.9s 0.2s infinite alternate,sway 2.5s 0.3s infinite;"></div>
+    <div class="flame" style="left:20%;width:90px;height:160px;background:radial-gradient(ellipse at bottom,#ee2200,#ff7700 35%,#ffbb00 65%,transparent);animation:fllicker 1.4s 0.5s infinite alternate,sway 4s 0.7s infinite;"></div>
+    <div class="flame" style="left:30%;width:70px;height:120px;background:radial-gradient(ellipse at bottom,#ff5500,#ffaa00 45%,#ffcc33 75%,transparent);animation:fllicker 1.1s 0.8s infinite alternate,sway 3.5s 1s infinite;"></div>
+    <div class="flame" style="left:40%;width:85px;height:150px;background:radial-gradient(ellipse at bottom,#ff2200,#ff8800 40%,#ffcc00 70%,transparent);animation:fllicker 1.3s 0.3s infinite alternate,sway 2.8s 0.5s infinite;"></div>
+    <div class="flame" style="left:50%;width:75px;height:130px;background:radial-gradient(ellipse at bottom,#ff4400,#ff9900 42%,#ffbb22 72%,transparent);animation:fllicker 1s 0.6s infinite alternate,sway 3.2s 0.8s infinite;"></div>
+    <div class="flame" style="left:60%;width:95px;height:170px;background:radial-gradient(ellipse at bottom,#ee1100,#ff7700 38%,#ffaa00 68%,transparent);animation:fllicker 1.5s 0.1s infinite alternate,sway 3.8s 0.4s infinite;"></div>
+    <div class="flame" style="left:70%;width:65px;height:105px;background:radial-gradient(ellipse at bottom,#ff5500,#ffbb00 48%,#ffdd44 78%,transparent);animation:fllicker 0.85s 0.7s infinite alternate,sway 2.6s 0.9s infinite;"></div>
+    <div class="flame" style="left:80%;width:80px;height:140px;background:radial-gradient(ellipse at bottom,#ff3300,#ff8800 40%,#ffcc00 70%,transparent);animation:fllicker 1.15s 0.4s infinite alternate,sway 3.4s 0.6s infinite;"></div>
+    <div class="flame" style="left:90%;width:70px;height:115px;background:radial-gradient(ellipse at bottom,#ff4400,#ff9900 44%,#ffcc22 74%,transparent);animation:fllicker 1.05s 0.9s infinite alternate,sway 2.9s 1.1s infinite;"></div>
+    <div class="flame" style="left:15%;width:50px;height:90px;background:radial-gradient(ellipse at bottom,#ff6600,#ffcc00 50%,#ffee66 80%,transparent);animation:fllicker 0.8s 1s infinite alternate,sway 2.2s 1.3s infinite;"></div>
+    <div class="flame" style="left:45%;width:55px;height:95px;background:radial-gradient(ellipse at bottom,#ff5500,#ffbb00 48%,#ffdd44 78%,transparent);animation:fllicker 0.95s 0.15s infinite alternate,sway 3.1s 0.2s infinite;"></div>
+    <div class="flame" style="left:75%;width:60px;height:100px;background:radial-gradient(ellipse at bottom,#ee3300,#ff8800 42%,#ffbb22 72%,transparent);animation:fllicker 1.08s 0.65s infinite alternate,sway 2.7s 0.85s infinite;"></div>
+    <div class="flame" style="left:35%;width:45px;height:80px;background:radial-gradient(ellipse at bottom,#ff7700,#ffcc22 52%,#ffee66 82%,transparent);animation:fllicker 0.75s 1.2s infinite alternate,sway 2.3s 1.5s infinite;"></div>
+    <div class="flame" style="left:55%;width:50px;height:85px;background:radial-gradient(ellipse at bottom,#ff6600,#ffbb11 50%,#ffdd33 80%,transparent);animation:fllicker 0.88s 0.35s infinite alternate,sway 2.4s 0.45s infinite;"></div>
+    <div class="flame" style="left:85%;width:55px;height:95px;background:radial-gradient(ellipse at bottom,#ff5500,#ffaa00 46%,#ffcc33 76%,transparent);animation:fllicker 1.02s 0.75s infinite alternate,sway 3.3s 1.2s infinite;"></div>
+    <div class="flame" style="left:8%;width:40px;height:70px;background:radial-gradient(ellipse at bottom,#ff8800,#ffdd33 55%,#ffee88 85%,transparent);animation:fllicker 0.7s 1.4s infinite alternate,sway 2.1s 1.6s infinite;"></div>
+    <div class="flame" style="left:65%;width:42px;height:75px;background:radial-gradient(ellipse at bottom,#ff7700,#ffcc22 53%,#ffee66 83%,transparent);animation:fllicker 0.78s 1.1s infinite alternate,sway 2.5s 1.4s infinite;"></div>
+    <div class="ember" style="left:18%;animation-delay:0s;"></div>
+    <div class="ember" style="left:32%;animation-delay:0.4s;"></div>
+    <div class="ember" style="left:48%;animation-delay:0.8s;"></div>
+    <div class="ember" style="left:62%;animation-delay:1.2s;"></div>
+    <div class="ember" style="left:78%;animation-delay:1.6s;"></div>
+    <div class="ember" style="left:25%;animation-delay:0.2s;background:#ff4400;"></div>
+    <div class="ember" style="left:55%;animation-delay:0.6s;background:#ff4400;"></div>
+    <div class="ember" style="left:88%;animation-delay:1.0s;background:#ff4400;"></div>
+    <div class="ember" style="left:40%;animation-delay:1.4s;background:#ff5500;"></div>
+    <div class="ember" style="left:72%;animation-delay:1.8s;background:#ff5500;"></div>
+  </div>
+
+  <div class="content">
+    <h1>HELL</h1>
+    <p class="subtitle">now this is the</p>
+    <p class="disclaimer">⚠ ${entries.length} project${entries.length !== 1 ? "s" : ""} of pure AI slop ⚠</p>
+    ${
+      entries.length
+        ? `<div class="grid">${entries
+            .map(
+              (e) =>
+                `<a class="card" href="/${e.slug}/">
+          <h2>🔥 ${e.title}</h2>${e.description ? `<p>${e.description}</p>` : ""}
+        </a>`
+            )
+            .join("\n      ")}</div>`
+        : `<p class="empty">your mother is taking a shit</p>`
+    }
+  </div>
 </body>
 </html>
 `;
