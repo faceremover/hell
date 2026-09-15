@@ -280,6 +280,7 @@ function buildIndex() {
       *, *::before, *::after { animation: none !important; }
       #fire, #ash { display: none; }
     }
+  </style>
 </head>
 <body>
   <div class="abyss"></div>
