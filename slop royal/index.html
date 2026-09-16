@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="icon" href="data:,">
+<title>Slop Royale</title>
+<link rel="stylesheet" href="css/style.css?v=20260824c">
+</head>
+<body>
+<div id="app">
+
+  <!-- Top bar: enemy info + timer -->
+  <div id="topbar">
+    <div class="side-info red">
+      <span class="pname">Red King</span>
+      <span class="crowns"><span id="crowns-red">0</span> 👑</span>
+    </div>
+    <div id="timer-box">
+      <span id="phase-label"></span>
+      <span id="timer">3:00</span>
+    </div>
+    <div class="side-info blue">
+      <span class="crowns"><span id="crowns-blue">0</span> 👑</span>
+      <span class="pname">You</span>
+    </div>
+  </div>
+
+  <!-- Arena -->
+  <div id="arena-wrap">
+    <canvas id="game" width="468" height="832"></canvas>
+
+    <div id="overlay">
+      <h1 id="ov-title">SLOP ROYALE</h1>
+      <div id="ov-body">
+        <p>A tiny Clash Royale clone.</p>
+        <ul>
+          <li>🖱️ Tap a card (or press <b>1–4</b>), then tap <b>your half</b> to deploy.</li>
+          <li>🔮 Spells can be cast anywhere.</li>
+          <li>🏰 Destroy towers to earn crowns. Taking the King Tower wins instantly.</li>
+          <li>⏱️ Most crowns after 3:00 wins — otherwise sudden death, then an HP-drain tiebreaker!</li>
+          <li>💧 Elixir refills over time. Double Elixir in the last minute.</li>
+          <li>😇 The Saint Goblinator's splash hits convert enemy goblins (never harms them); his blessings are permanent and triple a goblin's HP.</li>
+          <li>🥣 The Slop Master grabs enemies and dumps them in the river.</li>
+          <li>🧪 Try <b>SANDBOX</b>: pause time and spawn anything, anywhere, as any team.</li>
+          <li>⎋ Esc / right-click cancels a selected card.</li>
+        </ul>
+      </div>
+      <div id="ov-buttons">
+        <button id="ov-btn">BATTLE!</button>
+        <button id="ov-btn2">SANDBOX</button>
+        <button id="ov-btn3">🃏 DECK</button>
+      </div>
+    </div>
+
+    <!-- Deck builder -->
+    <div id="deck-screen" class="hidden">
+      <h2>BUILD YOUR DECK</h2>
+      <p id="deck-count">0 / 8 CARDS</p>
+      <div id="deck-grid"></div>
+      <div class="deck-actions">
+        <button id="deck-random">🎲 RANDOM</button>
+        <button id="deck-insane">🧪 INSANE</button>
+        <button id="deck-save" disabled>SAVE DECK</button>
+        <button id="deck-back">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar: next card, hand, elixir -->
+  <div id="bottombar">
+    <div id="next-wrap">
+      <span class="label">NEXT</span>
+      <div id="next-card"></div>
+    </div>
+    <div id="hand"></div>
+    <div id="elixir-wrap">
+      <div id="elixir-bar"><div id="elixir-fill"></div><div id="elixir-ticks"></div></div>
+      <div id="elixir-row"><span id="elixir-drop">💧</span><span id="elixir-num">5</span></div>
+    </div>
+    <div id="sandbox-bar" class="hidden">
+      <div id="sb-teams">
+        <button class="sb-team" data-team="blue">BLUE</button>
+        <button class="sb-team" data-team="red">RED</button>
+        <button class="sb-team" data-team="green">GREEN</button>
+      </div>
+      <div id="sb-cards"></div>
+      <button id="sb-pause" title="Pause / resume (P or Space)">⏸</button>
+    </div>
+  </div>
+
+</div>
+<script src="js/constants.js?v=20260824c"></script>
+<script src="js/cards.js?v=20260824c"></script>
+<script src="js/entities.js?v=20260824c"></script>
+<script src="js/ai.js?v=20260824c"></script>
+<script src="js/render.js?v=20260824c"></script>
+<script src="js/main.js?v=20260824c"></script>
+</body>
+</html>
