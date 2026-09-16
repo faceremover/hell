@@ -2,6 +2,8 @@
 
 [hell.faceremover.net](http://hell.faceremover.net)
 
+this is the slopository
+
 ## Mauppi Instructions for Mauppi
 
 Hey Mauppi, welcome to the project! Here's what Mauppi needs to know to contribute:
