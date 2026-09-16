@@ -67,31 +67,49 @@ function buildIndex() {
         radial-gradient(ellipse 30% 25% at 85% 95%, rgba(255,40,0,0.18) 0%, transparent 60%),
         radial-gradient(ellipse 80% 50% at 50% -10%, rgba(120,0,0,0.15) 0%, transparent 60%);
     }
-    /* ── blood moon ── */
+    /* ── blood moon: mottled maria + craters, irregular limb ── */
     .blood-moon {
-      position: fixed; top: 42px; right: 6vw; width: 110px; height: 110px; z-index: 0; pointer-events: none;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #ff8a6a 0%, #e0261a 30%, #7a0a00 62%, #2a0200 100%);
-      box-shadow: 0 0 40px rgba(255,30,0,0.45), 0 0 110px rgba(255,30,0,0.2);
+      position: fixed; top: 42px; right: 6vw; width: 112px; height: 108px; z-index: 0; pointer-events: none;
+      border-radius: 48% 52% 51% 49% / 52% 48% 52% 48%;
+      background:
+        radial-gradient(circle at 66% 60%, rgba(70,4,0,0.6) 0 9%, transparent 10%),
+        radial-gradient(circle at 40% 56%, rgba(110,8,0,0.55) 0 12%, transparent 13%),
+        radial-gradient(circle at 56% 32%, rgba(130,12,0,0.5) 0 8%, transparent 9%),
+        radial-gradient(circle at 30% 36%, rgba(255,150,110,0.3) 0 8%, transparent 9%),
+        radial-gradient(circle at 58% 72%, rgba(50,2,0,0.55) 0 15%, transparent 16%),
+        radial-gradient(circle at 76% 44%, rgba(80,5,0,0.5) 0 6%, transparent 7%),
+        radial-gradient(circle at 24% 58%, rgba(150,20,5,0.4) 0 7%, transparent 8%),
+        radial-gradient(circle at 35% 35%, #ff9a7a 0%, #e0261a 24%, #8a0d00 56%, #2e0300 80%, #100000 100%);
+      box-shadow: 0 0 30px rgba(255,30,0,0.35), 0 0 100px rgba(255,30,0,0.16), -6px 4px 22px rgba(0,0,0,0.5) inset;
+    }
+    .blood-moon::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background:
+        radial-gradient(circle at 22% 28%, rgba(255,205,175,0.55) 0 3.5%, rgba(120,10,0,0.4) 4%, transparent 5%),
+        radial-gradient(circle at 50% 42%, rgba(255,180,150,0.3) 0 2.5%, rgba(90,5,0,0.35) 3%, transparent 4%),
+        radial-gradient(circle at 72% 28%, rgba(0,0,0,0.4) 0 5%, transparent 6%),
+        radial-gradient(circle at 34% 66%, rgba(0,0,0,0.45) 0 7%, transparent 8%),
+        radial-gradient(circle at 60% 54%, rgba(0,0,0,0.35) 0 4%, transparent 5%),
+        radial-gradient(circle at 46% 76%, rgba(0,0,0,0.3) 0 5%, transparent 6%),
+        radial-gradient(circle at 80% 62%, rgba(255,120,80,0.2) 0 3%, transparent 4%);
     }
     .blood-moon::after {
-      content: ''; position: absolute; inset: -30px; border-radius: 50%;
-      background: radial-gradient(circle, transparent 55%, rgba(0,0,0,0.35) 58%, transparent 62%);
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: radial-gradient(circle at 74% 70%, transparent 48%, rgba(10,0,0,0.6) 76%, rgba(0,0,0,0.85) 100%);
     }
-    /* ── volcano range ── */
+    /* ── volcano range (behind everything) ── */
     .mountains {
-      position: fixed; left: 0; right: 0; bottom: 96px; height: 380px; z-index: 1; pointer-events: none; opacity: 1;
+      position: fixed; left: 0; right: 0; bottom: 105px; height: 460px; z-index: 1; pointer-events: none; opacity: 1;
     }
     .mountains svg { width: 100%; height: 100%; display: block; }
-    /* ── canvases ── */
-    #ash {
-      position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0.9;
-    }
+    /* ── stacking: volcanoes < lava lake < fire tongues < ash/embers ── */
+    .lava-floor { position: fixed; left: 0; right: 0; bottom: 0; height: 150px; z-index: 2; pointer-events: none; background: #1a0300; }
     #fire {
-      position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 300px; z-index: 3; pointer-events: none;
+      position: fixed; left: 0; right: 0; bottom: 95px; width: 100%; height: 360px; z-index: 3; pointer-events: none;
     }
-    /* ── LAVA LAKE ── */
-    .lava-floor { position: fixed; left: 0; right: 0; bottom: 0; height: 150px; z-index: 4; pointer-events: none; background: #1a0300; }
+    #ash {
+      position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0.9;
+    }
     #lava { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .lava-rim {
       position: absolute; top: -2px; left: 0; right: 0; height: 5px;
@@ -118,9 +136,15 @@ function buildIndex() {
 
     .content { position: relative; z-index: 10; }
     .gate { position: relative; text-align: center; margin-bottom: 2.5rem; }
+    @keyframes pentSpin { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
     .pentagram {
       position: absolute; left: 50%; top: 46%; transform: translate(-50%,-50%);
       width: min(460px, 88vw); height: min(460px, 88vw); opacity: 0.13; pointer-events: none;
+      animation: pentSpin 120s linear infinite;
+    }
+    @keyframes hellGlow {
+      0%, 100% { filter: drop-shadow(0 2px 0 #1a0000) drop-shadow(0 0 22px rgba(255,60,0,0.55)) drop-shadow(0 0 50px rgba(255,30,0,0.3)); }
+      50%      { filter: drop-shadow(0 2px 0 #1a0000) drop-shadow(0 0 38px rgba(255,80,0,0.8)) drop-shadow(0 0 80px rgba(255,20,0,0.5)) drop-shadow(0 0 120px rgba(200,0,0,0.25)); }
     }
     h1 {
       position: relative;
@@ -131,7 +155,7 @@ function buildIndex() {
       letter-spacing: 0.04em;
       background: linear-gradient(180deg, #fff8d0 0%, #ffdd44 18%, #ff8800 42%, #ff2a00 65%, #8b0000 85%, #3d0000 100%);
       -webkit-background-clip: text; background-clip: text; color: transparent;
-      filter: drop-shadow(0 2px 0 #1a0000) drop-shadow(0 0 22px rgba(255,60,0,0.55));
+      animation: hellGlow 3s ease-in-out infinite;
       margin-bottom: 0.6rem;
     }
     .subtitle {
@@ -306,68 +330,67 @@ function buildIndex() {
       <!-- far silhouettes: two depth layers -->
       <path d="M0 380 L0 305 L60 275 L120 300 L190 255 L250 295 L320 260 L390 300 L460 270 L530 305 L600 265 L680 305 L750 275 L830 310 L900 270 L980 308 L1050 272 L1130 308 L1200 278 L1280 310 L1360 285 L1440 305 L1440 380 Z" fill="#0a0200" opacity="0.85"/>
       <path d="M0 380 L0 335 L110 310 L220 340 L330 312 L440 345 L560 318 L680 348 L800 320 L920 348 L1040 322 L1160 348 L1280 324 L1440 345 L1440 380 Z" fill="#120402" opacity="0.9"/>
-      <!-- LEFT VOLCANO -->
+      <!-- LEFT VOLCANO — tallest of the range -->
       <g>
-        <ellipse cx="300" cy="148" rx="92" ry="34" fill="url(#craterGlow)" opacity="0.5" filter="url(#soft8)"/>
-        <!-- main cone with notched summit -->
-        <path d="M40 380 L150 285 L185 250 L210 210 L242 148 L270 156 L300 160 L330 156 L358 146 L395 205 L430 250 L470 295 L560 380 Z" fill="url(#rockL)" stroke="rgba(0,0,0,0.6)" stroke-width="1.5"/>
-        <!-- right-flank shadow for volume -->
-        <path d="M300 160 L330 156 L358 146 L395 205 L430 250 L470 295 L560 380 L300 380 Z" fill="#000" opacity="0.32"/>
-        <!-- rocky ridges -->
-        <path d="M242 148 L200 220 L160 290" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2"/>
-        <path d="M358 146 L410 225 L470 300" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="2"/>
-        <path d="M242 148 L200 220 L160 290" fill="none" stroke="rgba(255,120,20,0.22)" stroke-width="1" transform="translate(6,0)"/>
-        <path d="M270 200 L250 260 L230 320" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
-        <path d="M335 200 L355 260 L375 325" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
-        <!-- crater interior: dark bowl sunk between rims -->
-        <path d="M242 148 L270 156 L300 160 L330 156 L358 146 L345 168 L300 176 L255 168 Z" fill="#050000"/>
-        <ellipse cx="300" cy="160" rx="42" ry="8.5" fill="url(#lavaChan)"/>
-        <ellipse cx="300" cy="159" rx="22" ry="4.5" fill="#ffe9a0"/>
-        <!-- lava flows: tapered filled ribbons, not uniform strokes -->
-        <g filter="url(#soft4)">
-          <path d="M282 168 C278 210 286 255 276 300 L270 342 L284 342 C292 295 290 220 292 168 Z" fill="#ff8a00" opacity="0.45"/>
-          <path d="M318 168 C322 215 315 270 323 332 L331 332 C329 270 333 215 328 168 Z" fill="#ff8a00" opacity="0.4"/>
-        </g>
-        <path d="M282 168 C278 210 286 255 276 300 L271 338 L279 338 C287 292 285 220 290 168 Z" fill="url(#lavaChan)" opacity="0.95"/>
-        <path d="M318 168 C322 215 316 268 322 328 L327 328 C326 268 330 215 326 168 Z" fill="url(#lavaChan)" opacity="0.9"/>
-        <path d="M300 170 C300 220 302 280 298 350 L302 350 C306 280 304 220 304 170 Z" fill="#ff7a00" opacity="0.55"/>
-        <!-- static smoke puffs -->
-        <ellipse cx="296" cy="105" rx="42" ry="17" fill="#160a06" opacity="0.5" filter="url(#soft8)"/>
-        <ellipse cx="308" cy="72" rx="55" ry="20" fill="#160a06" opacity="0.32" filter="url(#soft8)"/>
+        <path d="M50 380 L170 275 L220 220 L260 165 L290 118 L315 126 L345 128 L370 124 L395 116 L430 170 L470 225 L520 285 L610 380 Z" fill="url(#rockL)" stroke="rgba(0,0,0,0.6)" stroke-width="1.5"/>
+        <path d="M345 128 L370 124 L395 116 L430 170 L470 225 L520 285 L610 380 L345 380 Z" fill="#000" opacity="0.3"/>
+        <path d="M290 118 L240 200 L190 280" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2"/>
+        <path d="M395 116 L445 200 L500 285" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="2"/>
+        <path d="M290 118 L240 200 L190 280" fill="none" stroke="rgba(255,120,20,0.18)" stroke-width="1" transform="translate(6,0)"/>
+        <path d="M315 175 L295 245 L280 320" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+        <path d="M365 175 L385 245 L400 320" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+        <path d="M290 118 L315 126 L345 128 L370 124 L395 116 L380 138 L340 146 L300 144 L285 132 Z" fill="#050000"/>
+        <ellipse cx="338" cy="138" rx="34" ry="7" fill="url(#lavaChan)"/>
+        <ellipse cx="338" cy="137" rx="17" ry="3.5" fill="#ffe9a0"/>
+        <path d="M318 144 C312 190 320 240 310 290 L304 348 L314 348 C322 295 320 200 326 144 Z" fill="url(#lavaChan)" opacity="0.9"/>
+        <path d="M356 144 C362 195 354 250 362 310 L366 348 L358 348 C352 295 354 200 348 144 Z" fill="url(#lavaChan)" opacity="0.85"/>
+        <ellipse cx="309" cy="350" rx="9" ry="4" fill="#ff6a00" opacity="0.8"/>
+        <ellipse cx="362" cy="350" rx="8" ry="4" fill="#ff6a00" opacity="0.8"/>
+        <!-- glow IN FRONT of the cone so the crater reads as emitting light -->
+        <ellipse cx="338" cy="136" rx="72" ry="24" fill="url(#craterGlow)" opacity="0.55" filter="url(#soft8)"/>
+        <ellipse cx="314" cy="88" rx="40" ry="15" fill="#160a06" opacity="0.5" filter="url(#soft4)"/>
+        <ellipse cx="328" cy="66" rx="52" ry="18" fill="#160a06" opacity="0.3" filter="url(#soft4)"/>
       </g>
-      <!-- RIGHT VOLCANO -->
+      <!-- RIGHT VOLCANO — shorter, broader than the left -->
       <g>
-        <ellipse cx="1120" cy="158" rx="100" ry="36" fill="url(#craterGlow)" opacity="0.5" filter="url(#soft8)"/>
-        <path d="M860 380 L970 285 L1005 250 L1032 208 L1062 150 L1090 158 L1120 162 L1150 158 L1178 148 L1212 205 L1250 252 L1290 297 L1400 380 Z" fill="url(#rockR)" stroke="rgba(0,0,0,0.6)" stroke-width="1.5"/>
-        <path d="M1120 162 L1150 158 L1178 148 L1212 205 L1250 252 L1290 297 L1400 380 L1120 380 Z" fill="#000" opacity="0.32"/>
-        <path d="M1062 150 L1020 222 L980 292" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2"/>
-        <path d="M1178 148 L1230 227 L1290 302" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="2"/>
-        <path d="M1092 202 L1072 262 L1054 322" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
-        <path d="M1152 202 L1172 262 L1190 326" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
-        <path d="M1062 150 L1090 158 L1120 162 L1150 158 L1178 148 L1165 170 L1120 178 L1075 170 Z" fill="#050000"/>
-        <ellipse cx="1120" cy="162" rx="44" ry="9" fill="url(#lavaChan)"/>
-        <ellipse cx="1120" cy="161" rx="23" ry="4.5" fill="#ffe9a0"/>
-        <g filter="url(#soft4)">
-          <path d="M1102 170 C1098 212 1106 257 L1096 302 L1090 344 L1104 344 C1112 297 L1110 222 L1112 170 Z" fill="#ff8a00" opacity="0.45"/>
-          <path d="M1138 170 C1142 217 L1135 272 L1143 334 L1151 334 C1149 272 L1153 217 L1148 170 Z" fill="#ff8a00" opacity="0.4"/>
-        </g>
-        <path d="M1102 170 C1098 212 1106 257 L1096 302 L1091 340 L1099 340 C1107 294 L1105 222 L1110 170 Z" fill="url(#lavaChan)" opacity="0.95"/>
-        <path d="M1138 170 C1142 217 L1136 270 L1142 330 L1147 330 C1146 270 L1150 217 L1146 170 Z" fill="url(#lavaChan)" opacity="0.9"/>
-        <ellipse cx="1116" cy="112" rx="46" ry="18" fill="#160a06" opacity="0.5" filter="url(#soft8)"/>
-        <ellipse cx="1128" cy="78" rx="58" ry="21" fill="#160a06" opacity="0.32" filter="url(#soft8)"/>
+        <path d="M840 380 L950 280 L990 235 L1020 185 L1048 142 L1075 150 L1100 153 L1125 150 L1152 140 L1185 190 L1225 240 L1270 290 L1390 380 Z" fill="url(#rockR)" stroke="rgba(0,0,0,0.6)" stroke-width="1.5"/>
+        <path d="M1100 153 L1125 150 L1152 140 L1185 190 L1225 240 L1270 290 L1390 380 L1100 380 Z" fill="#000" opacity="0.3"/>
+        <path d="M1048 142 L1005 215 L965 290" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="2"/>
+        <path d="M1152 140 L1205 215 L1260 290" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="2"/>
+        <path d="M1078 195 L1060 260 L1048 320" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+        <path d="M1128 195 L1145 260 L1158 322" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1.5"/>
+        <path d="M1048 142 L1075 150 L1100 153 L1125 150 L1152 140 L1140 162 L1100 169 L1060 162 Z" fill="#050000"/>
+        <ellipse cx="1100" cy="160" rx="36" ry="7.5" fill="url(#lavaChan)"/>
+        <ellipse cx="1100" cy="159" rx="18" ry="3.5" fill="#ffe9a0"/>
+        <path d="M1080 166 C1074 210 1082 260 1074 305 L1070 345 L1078 345 C1086 298 1084 210 1088 166 Z" fill="url(#lavaChan)" opacity="0.9"/>
+        <path d="M1118 166 C1124 212 1116 265 1124 312 L1128 345 L1120 345 C1114 296 1116 210 1110 166 Z" fill="url(#lavaChan)" opacity="0.85"/>
+        <ellipse cx="1074" cy="347" rx="8" ry="4" fill="#ff6a00" opacity="0.8"/>
+        <ellipse cx="1124" cy="347" rx="8" ry="4" fill="#ff6a00" opacity="0.8"/>
+        <!-- glow IN FRONT of the cone so the crater reads as emitting light -->
+        <ellipse cx="1100" cy="158" rx="74" ry="25" fill="url(#craterGlow)" opacity="0.55" filter="url(#soft8)"/>
+        <ellipse cx="1094" cy="112" rx="42" ry="16" fill="#160a06" opacity="0.5" filter="url(#soft4)"/>
+        <ellipse cx="1108" cy="86" rx="54" ry="19" fill="#160a06" opacity="0.3" filter="url(#soft4)"/>
       </g>
-      <!-- small middle cone -->
-      <g opacity="0.95">
-        <path d="M620 380 L672 300 L692 268 L706 248 L716 252 L726 254 L736 252 L746 248 L762 266 L782 300 L824 380 Z" fill="url(#rockM)" stroke="rgba(0,0,0,0.6)" stroke-width="1"/>
-        <path d="M706 248 L716 252 L726 254 L736 252 L746 248 L740 258 L726 261 L712 258 Z" fill="#050000"/>
-        <ellipse cx="726" cy="256" rx="12" ry="3" fill="url(#lavaChan)"/>
-        <path d="M722 260 C721 290 722 330 L720 368 L724 368 C726 330 725 290 726 260 Z" fill="#ff7a00" opacity="0.7"/>
+      <!-- distant middle cone (depth filler, pushed right off-center) -->
+      <g opacity="0.9" transform="translate(60,18)">
+        <path d="M560 380 L700 240 L740 195 L760 202 L780 205 L800 202 L820 195 L860 240 L1000 380 Z" fill="#0d0301" stroke="rgba(0,0,0,0.6)" stroke-width="1"/>
+        <path d="M740 195 L760 202 L780 205 L800 202 L820 195 L812 208 L780 212 L748 208 Z" fill="#050000"/>
+        <ellipse cx="780" cy="206" rx="18" ry="4" fill="url(#lavaChan)" opacity="0.9"/>
+        <ellipse cx="780" cy="206" rx="30" ry="8" fill="url(#craterGlow)" opacity="0.35"/>
+      </g>
+      <!-- small front cone, pushed left to break the symmetry -->
+      <g opacity="0.95" transform="translate(-110,8)">
+        <path d="M540 380 L585 310 L600 275 L610 245 L620 249 L630 250 L640 249 L650 245 L662 272 L678 310 L710 380 Z" fill="url(#rockM)" stroke="rgba(0,0,0,0.6)" stroke-width="1"/>
+        <path d="M610 245 L620 249 L630 250 L640 249 L650 245 L644 255 L630 257 L616 255 Z" fill="#050000"/>
+        <ellipse cx="630" cy="253" rx="10" ry="2.5" fill="url(#lavaChan)"/>
+        <path d="M626 256 C625 290 626 330 L624 366 L628 366 C630 330 629 290 630 256 Z" fill="#ff7a00" opacity="0.7"/>
+        <ellipse cx="630" cy="253" rx="16" ry="5" fill="url(#craterGlow)" opacity="0.35"/>
       </g>
     </svg>
   </div>
-  <canvas id="ash"></canvas>
-  <canvas id="fire"></canvas>
   <div class="lava-floor" aria-hidden="true"><canvas id="lava"></canvas><div class="lava-rim"></div></div>
+  <canvas id="fire"></canvas>
+  <canvas id="ash"></canvas>
   <div class="fire-light"></div>
   <div class="vignette"></div>
   <div class="grain"></div>
@@ -381,7 +404,7 @@ function buildIndex() {
         <circle cx="100" cy="100" r="6" fill="none" stroke="#ff6600" stroke-width="1.5"/>
       </svg>
       <h1>HELL</h1>
-      <p class="subtitle">Abandon all code, ye who enter here</p>
+      <p class="subtitle" id="sub"></p>
       <p class="disclaimer"><span>⚠ ${entries.length} project${entries.length !== 1 ? "s" : ""} of pure AI slop ⚠</span></p>
     </div>
     ${
@@ -393,7 +416,7 @@ function buildIndex() {
           <div class="card-inner">
             <div class="card-top"><span class="soul-no">${String(i + 1).padStart(2, "0")}</span><span class="soul-runes">᛭ ᚺ ᛖ ᛚ ᛚ</span></div>
             <h2>${e.title}</h2>${e.description ? `<p>${e.description}</p>` : ""}
-            <span class="go"><span class="seal">▼</span> Descend into torment</span>
+        
           </div>
           <div class="ember-glow"></div>
         </a>`
@@ -405,6 +428,20 @@ function buildIndex() {
   </div>
 <script>
 (function () {
+  // Random subtitle on load
+  var subs = [
+    'today is slop day. prepare','who wants slop juice','is this hell (yes)','this is lit','ts pmo',
+    'the stuff on the floor is actually not lava. its slop','slop','sloppy slophole','a vault site of faulty shite',
+    'look at those bouncy flames','it is 3 am','who polished the moon','is that like a malformed bowling ball on the right',
+    'oh no the lava is on fire','actually, gigel prats works flawlessly','now with chicken','illegal in finland!',
+    'what do we have here...','did you get hit by another meteor','adedo','haaki','adedo haaki',
+    'sun mutsisi on kakalla (täällä)','i feel green','do you feel green','soulless slop','slopless soul',
+    'poopy','do NOT visit the restaurant','the restaurant is actually fine','this is fine','welcome home',
+    'or heaven depending on what you like','hell','rated 1 star (the one behind this text)'
+  ];
+  var el = document.getElementById('sub');
+  if (el) el.textContent = subs[Math.floor(Math.random() * subs.length)];
+
   var lavaC0 = document.getElementById('lava');
   function paintStaticLava() {
     if (!lavaC0) return;
@@ -499,10 +536,10 @@ function buildIndex() {
     }
   });
   var sparks = [];
-  for (var s = 0; s < 42; s++) sparks.push({ x: Math.random(), y: Math.random(), v: 0.0008 + Math.random() * 0.0028, sz: 0.6 + Math.random() * 2.2, sw: Math.random() * 6.28, ember: Math.random() < 0.55, tw: 1 + Math.random() * 3 });
+  for (var s = 0; s < 42; s++) sparks.push({ x: Math.random(), y: Math.random(), v: 0.0008 + Math.random() * 0.0018, sz: 0.6 + Math.random() * 2.2, sw: Math.random() * 6.28, ember: Math.random() < 0.55, tw: 1 + Math.random() * 3 });
   var cinders = [];
-  for (var c = 0; c < 14; c++) cinders.push({ x: Math.random(), y: 0.6 + Math.random() * 0.4, v: 0.002 + Math.random() * 0.005, sz: 1 + Math.random() * 2.5, life: Math.random() });
-  function drawFire() {
+  for (var c = 0; c < 14; c++) cinders.push({ x: Math.random(), y: 0.6 + Math.random() * 0.4, v: 0.002 + Math.random() * 0.004, sz: 1 + Math.random() * 2.5, life: Math.random() });
+  function drawFire(dt) {
     var W = fire.width, H = fire.height;
     fx.globalCompositeOperation = 'source-over';
     fx.clearRect(0, 0, W, H);
@@ -513,8 +550,8 @@ function buildIndex() {
     fx.globalCompositeOperation = 'lighter';
     for (var i = 0; i < tongues.length; i++) {
       var t = tongues[i], L = layers[t.li];
-      var sway = Math.sin(T * t.sp + t.ph) * (10 + t.li * 6);
-      var flick = 0.82 + 0.18 * Math.sin(T * (2 + t.sp) + t.ph * 2);
+      var sway = Math.sin(T * t.sp + t.ph) * (4 + t.li * 2);
+      var flick = 0.9 + 0.1 * Math.sin(T * (2 + t.sp) + t.ph * 2);
       var bx = t.x * W + sway;
       var bh = H + 10;
       var th = t.h * flick;
@@ -529,7 +566,7 @@ function buildIndex() {
     }
     fx.globalCompositeOperation = 'source-over';
   }
-  function drawAsh() {
+  function drawAsh(dt) {
     var W = ashC.width, H = ashC.height;
     ax.globalCompositeOperation = 'source-over';
     ax.clearRect(0, 0, W, H);
@@ -538,9 +575,9 @@ function buildIndex() {
     var i, p, px, py;
     for (i = 0; i < sparks.length; i++) {
       p = sparks[i];
-      p.y -= p.v; p.sw += 0.01;
+      p.y -= p.v * dt; p.sw += 0.01 * dt;
       if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); }
-      px = p.x * W + Math.sin(p.sw * 3 + T) * 22;
+      px = p.x * W + Math.sin(p.sw * 3 + T) * 6;
       py = p.y * H;
       if (p.ember) {
         var gs = p.sz * 7;
@@ -556,8 +593,8 @@ function buildIndex() {
     ax.globalCompositeOperation = 'lighter';
     for (i = 0; i < cinders.length; i++) {
       p = cinders[i];
-      p.life += 0.008;
-      p.y -= p.v * 0.6;
+      p.life += 0.008 * dt;
+      p.y -= p.v * 0.6 * dt;
       if (p.y < 0.35 || p.life > 1) { p.y = 0.95 + Math.random() * 0.05; p.x = Math.random(); p.life = 0; }
       var fade = 1 - p.life;
       var cs = (p.sz * fade + 0.4) * 6;
@@ -579,19 +616,12 @@ function buildIndex() {
       amp: 4 + Math.random() * 6
     });
   }
-  var cracksV = [];
-  for (var cvi = 0; cvi < 8; cvi++) {
-    cracksV.push({
-      bx: Math.random(), yBase: Math.random() * 0.8,
-      len: 12 + Math.random() * 24, tilt: (Math.random() - 0.5) * 20,
-      sp: 3 + Math.random() * 7, ph: Math.random() * 6.28
-    });
-  }
   var hotspots = [];
   for (var hi = 0; hi < 8; hi++) hotspots.push({ x: Math.random(), y: 0.15 + Math.random() * 0.7, r: 60 + Math.random() * 110, ph: Math.random() * 6.28, sp: 0.8 + Math.random() * 1.6 });
   var bubbles = [];
   for (var bi = 0; bi < 8; bi++) bubbles.push({ x: Math.random(), y: Math.random(), r: 2 + Math.random() * 5, life: Math.random(), sp: 0.008 + Math.random() * 0.02 });
-  function drawLava() {
+  function drawLava(dt) {
+    if (!dt) dt = 1;
     var W = lavaC.width, H = lavaC.height;
     if (!W || !H) return;
     // PERF: base + shade gradients cached on resize; hotspots are sprite blits
@@ -607,30 +637,30 @@ function buildIndex() {
       lx.globalAlpha = 0.5 * pulse;
       lx.drawImage(glowSprite, hx - hs.r, hy - hs.r, hs.r * 2, hs.r * 2);
       if (hx < hs.r) lx.drawImage(glowSprite, hx + W - hs.r, hy - hs.r, hs.r * 2, hs.r * 2);
+      if (hx > W - hs.r) lx.drawImage(glowSprite, hx - W - hs.r, hy - hs.r, hs.r * 2, hs.r * 2);
     }
     lx.globalAlpha = 1;
     // PERF: 2 streaks, no shadowBlur, plain strokes
     lx.globalCompositeOperation = 'source-over';
     lx.lineWidth = 2;
     for (var st = 0; st < 2; st++) {
-      var sy = H * (0.3 + st * 0.3) + Math.sin(T * 0.9 + st * 2) * 4;
-      var off = (T * (18 + st * 12)) % (W * 0.5);
+      var sy = H * (0.3 + st * 0.3) + Math.sin(T * 0.7 + st * 2) * 2;
       lx.strokeStyle = st ? 'rgba(255,240,180,0.16)' : 'rgba(255,240,180,0.22)';
       lx.beginPath();
       for (var x = -40; x <= W + 40; x += 60) {
-        var xx = x - off;
-        var yy = sy + Math.sin((x + T * 40) * 0.02 + st) * 5;
-        if (x === -40) lx.moveTo(xx, yy); else lx.lineTo(xx, yy);
+        var yy = sy + Math.sin((x + T * 30) * 0.013 + st * 3) * 3 + Math.sin((x + T * 18) * 0.031 + st * 7) * 2;
+        if (x === -40) lx.moveTo(x, yy); else lx.lineTo(x, yy);
       }
       lx.stroke();
     }
     // PERF: crust haze via sprite blits, not per-frame radial gradients
     for (var mi = 0; mi < 4; mi++) {
-      var mx = ((mi * 0.27 + 0.05 + T * 0.002 * (mi % 2 ? 1 : -1)) % 1 + 1) % 1 * W;
+      var mx = ((mi * 0.27 + 0.05 + T * 0.002) % 1 + 1) % 1 * W;
       var my = H * (0.2 + (mi % 3) * 0.25);
       var mr = 320 + (mi % 3) * 140;
       lx.drawImage(darkBlob, mx - mr / 2, my - mr / 2, mr, mr);
       if (mx < mr / 2) lx.drawImage(darkBlob, mx + W - mr / 2, my - mr / 2, mr, mr);
+      if (mx > W - mr / 2) lx.drawImage(darkBlob, mx - W - mr / 2, my - mr / 2, mr, mr);
     }
     // PERF: single-pass cracks, no shadowBlur, coarser polyline
     for (var k = 0; k < cracksH.length; k++) {
@@ -639,32 +669,19 @@ function buildIndex() {
       lx.strokeStyle = flick > 0.62 ? 'rgba(255,196,90,0.85)' : 'rgba(255,170,60,0.6)';
       lx.lineWidth = cr.w;
       lx.beginPath();
-      var coff = (T * cr.drift) % 200;
       var started = false;
       for (var gx = -40; gx <= W + 40; gx += 44) {
-        var gy = cr.yBase * H + Math.sin((gx + coff * 2 + cr.seed * 40) * 0.018 + cr.ph) * cr.amp;
+        var gy = cr.yBase * H + Math.sin((gx + T * cr.drift * 2 + cr.seed * 40) * 0.018 + cr.ph) * cr.amp;
         if (!started) { lx.moveTo(gx, gy); started = true; }
         else lx.lineTo(gx, gy);
       }
-      lx.stroke();
-    }
-    for (var vc = 0; vc < cracksV.length; vc++) {
-      var vk = cracksV[vc];
-      var vspan = W + 120;
-      var vx = (((vk.bx * vspan + T * vk.sp) % vspan) + vspan) % vspan - 60;
-      var vy = vk.yBase * H;
-      lx.strokeStyle = 'rgba(255,170,60,0.55)';
-      lx.lineWidth = 1.1;
-      lx.beginPath();
-      lx.moveTo(vx, vy);
-      lx.quadraticCurveTo(vx + vk.tilt * 0.4, vy + vk.len * 0.5, vx + vk.tilt, vy + vk.len);
       lx.stroke();
     }
     // PERF: bubbles via glow sprite
     lx.globalCompositeOperation = 'lighter';
     for (var b = 0; b < bubbles.length; b++) {
       var bb = bubbles[b];
-      bb.life += bb.sp;
+      bb.life += bb.sp * dt;
       if (bb.life > 1) { bb.life = 0; bb.x = Math.random(); bb.y = 0.2 + Math.random() * 0.7; }
       var br = bb.r * (0.5 + bb.life * 1.6) * 2.4;
       var ba = bb.life < 0.7 ? 0.7 : 0.7 * (1 - (bb.life - 0.7) / 0.3);
@@ -677,22 +694,29 @@ function buildIndex() {
     lx.fillRect(0, 0, W, H);
   }
   // PERF: pause offscreen + lava at half rate (every 2nd frame)
-  var frame = 0, running = true;
+  var frame = 0, running = true, lastT = 0;
   document.addEventListener('visibilitychange', function () {
     running = !document.hidden;
-    if (running) requestAnimationFrame(loop);
+    if (running) { lastT = 0; requestAnimationFrame(loop); }
   });
-  function loop() {
+  function loop(ts) {
     if (!running) return;
-    T += 0.03;
+    // PERF: frame-rate-independent dt. Target = 60 fps baseline.
+    // On 240 Hz monitors rAF fires 4× more often; dt scales T down
+    // so every animation speed stays identical to a 60 Hz display.
+    if (!lastT) lastT = ts;
+    var dt = (ts - lastT) / 16.667;
+    lastT = ts;
+    if (dt > 3) dt = 3; // cap large jumps (tab was backgrounded)
+    T += 0.03 * dt;
     frame++;
-    drawFire();
-    if (frame % 2 === 0) drawLava();
-    drawAsh();
+    drawFire(dt);
+    if (frame % 2 === 0) drawLava(dt);
+    drawAsh(dt);
     requestAnimationFrame(loop);
   }
   drawLava();
-  loop();
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
