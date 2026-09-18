@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HIGHWAY TO TS — ascii roguelike</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root { --grn:#33ff66; --dim:#1a8a3c; --amber:#ffcc33; --red:#ff3344; --bg:#030803; }
+  html,body { background:var(--bg); min-height:100vh; }
+  body {
+    font-family:'IBM Plex Mono',monospace; color:var(--grn);
+    display:flex; justify-content:center; padding:18px 10px 60px;
+    background: radial-gradient(ellipse 90% 60% at 50% 0%, #061706 0%, #030803 60%, #000 100%);
+  }
+  body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:50;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+    mix-blend-mode:multiply; }
+  #cab { width:min(1060px,100%); border:2px solid var(--dim); border-radius:10px; overflow:hidden;
+    box-shadow:0 0 40px rgba(51,255,102,0.15), 0 0 120px rgba(51,255,102,0.06), inset 0 0 60px rgba(0,0,0,0.8);
+    background:#020502; }
+  #topbar { display:flex; align-items:center; gap:10px; padding:8px 14px; background:#041004;
+    border-bottom:2px solid var(--dim); font-family:'VT323',monospace; font-size:20px; letter-spacing:1px; }
+  .dots { display:flex; gap:6px; } .dots i { width:11px; height:11px; border-radius:50%; display:block; }
+  #hud { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1px; background:var(--dim);
+    border-bottom:2px solid var(--dim); font-size:12.5px; }
+  #hud div { background:#031303; padding:7px 10px; } #hud b { color:#eaffea; }
+  #hud .low { color:var(--red); animation:blink 0.7s steps(2) infinite; }
+  @keyframes blink { 50% { opacity:0.35; } }
+  #layout { display:grid; grid-template-columns: 1fr 340px; gap:0; }
+  @media (max-width:860px){ #layout{grid-template-columns:1fr;} }
+  #stage { padding:12px; border-right:2px solid var(--dim); }
+  #road { background:#000; border:1px solid var(--dim); border-radius:6px; padding:10px 8px;
+    font-size:13px; line-height:1.28; white-space:pre; overflow-x:auto; min-height:380px;
+    text-shadow:0 0 6px rgba(51,255,102,0.7); user-select:none; }
+  #sub { margin-top:8px; font-size:13px; min-height:54px; color:#c9ffd6; }
+  #sub .who { color:var(--amber); font-weight:700; }
+  #choices { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .choice { text-align:left; font:inherit; font-size:13.5px; background:#041a08; color:var(--grn);
+    border:1px solid var(--dim); border-radius:6px; padding:8px 10px; cursor:pointer; }
+  .choice:hover:not(:disabled){ background:#0a2f10; border-color:var(--grn); }
+  .choice:disabled{ opacity:0.45; cursor:default; }
+  .choice kbd { background:var(--grn); color:#000; border-radius:4px; padding:0 7px; margin-right:8px; font-weight:700; }
+  #btnrow { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .btn { font:inherit; font-size:12.5px; background:#061a0a; color:var(--grn); border:1px solid var(--dim);
+    border-radius:6px; padding:7px 10px; cursor:pointer; }
+  .btn:hover { border-color:var(--grn); background:#0a2a10; }
+  .btn.warn { color:var(--amber); border-color:#7a5c00; } .btn.danger{ color:var(--red); border-color:#7a1020;}
+  #side { display:flex; flex-direction:column; background:#020a03; }
+  #portrait { border-bottom:2px solid var(--dim); padding:10px; font-size:11.5px; line-height:1.25;
+    white-space:pre; overflow-x:auto; min-height:190px; color:var(--amber); text-shadow:0 0 8px rgba(255,204,51,0.4); }
+  #log { flex:1; padding:10px 12px; font-size:12.5px; line-height:1.5; max-height:430px; overflow-y:auto; }
+  #log p { margin-bottom:6px; } #log .sys{color:#7dff9e;} #log .bad{color:var(--red);} #log .good{color:var(--amber);}
+  #log .dim2{color:#4a7a55;} #log hr{border:0;border-top:1px dashed var(--dim); margin:8px 0;}
+  #foot { padding:8px 14px; border-top:2px solid var(--dim); font-size:11.5px; color:#5da86f;
+    display:flex; flex-wrap:wrap; gap:4px 16px; background:#041004; }
+  kbd.k { border:1px solid var(--dim); border-radius:4px; padding:0 5px; color:#eaffea; background:#061606; }
+  /* overlays */
+  .veil { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.85); padding:16px; }
+  .card2 { width:min(680px,100%); max-height:92vh; overflow-y:auto; border:2px solid var(--grn); border-radius:10px;
+    background:#020a03; padding:26px 26px 22px; box-shadow:0 0 60px rgba(51,255,102,0.3); }
+  .card2 h1 { font-family:'VT323',monospace; font-size:52px; line-height:0.95; letter-spacing:2px;
+    color:var(--grn); text-shadow:0 0 18px rgba(51,255,102,0.8); }
+  .card2 h1 .ts { color:var(--amber); text-shadow:0 0 18px rgba(255,204,51,0.8); }
+  .card2 pre.ascii { font-size:11px; line-height:1.2; color:var(--amber); margin:12px 0; white-space:pre-wrap; }
+  .card2 p { font-size:13.5px; line-height:1.6; margin:8px 0; color:#c9ffd6; }
+  .card2 .big { font-size:15px; color:#fff; }
+  .hidden { display:none !important; }
+  /* QTE */
+  #qteArrow { font-family:'VT323',monospace; font-size:110px; line-height:1; text-align:center;
+    color:var(--red); text-shadow:0 0 30px rgba(255,51,68,0.9); animation:qtePanic 0.25s infinite alternate; }
+  @keyframes qtePanic { from{transform:scale(1) rotate(-2deg);} to{transform:scale(1.12) rotate(2deg);} }
+  #qteBarWrap { height:16px; border:1px solid var(--red); border-radius:99px; overflow:hidden; margin-top:10px; background:#1a0205; }
+  #qteBar { height:100%; width:100%; background:linear-gradient(90deg,#ff3344,#ffcc33); }
+  #qteCar { font-size:13px; white-space:pre; text-align:center; color:#ff8899; line-height:1.2; }
+  .shake { animation:shake 0.4s; } @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 50%{transform:translateX(8px);} 75%{transform:translateX(-5px);} }
+  .splat { color:var(--red) !important; }
+  #coach { margin-top:8px; font-size:13px; background:#071a0c; border:1px solid var(--dim);
+    border-left:4px solid var(--amber); border-radius:6px; padding:8px 10px; color:#ffe9a8; min-height:20px; }
+  #coach.done { border-left-color:var(--dim); color:#5da86f; }
+  .pulse { animation:pulse 1.1s ease-in-out infinite; border-color:var(--amber) !important; color:var(--amber) !important; }
+  @keyframes pulse { 50% { box-shadow:0 0 16px rgba(255,204,51,0.7); transform:scale(1.04); } }
+  .adv { display:none; } .unlocked .adv { display:block; }
+  #btnrow .advbtn { display:none; } #btnrow.showAll .advbtn { display:inline-block; }
+  #qteKey { font-size:20px; letter-spacing:4px; color:#fff; margin-top:4px; }
+  #qteCount { font-family:'VT323',monospace; font-size:30px; color:var(--amber); }
+  ::-webkit-scrollbar{width:10px;height:10px;} ::-webkit-scrollbar-thumb{background:var(--dim);border-radius:99px;} ::-webkit-scrollbar-track{background:#020a03;}
+</style>
+</head>
+<body>
+<div id="cab">
+  <div id="topbar"><span class="dots"><i style="background:#ff5f56"></i><i style="background:#ffbd2e"></i><i style="background:#27c93f"></i></span>
+    <span>TS-DOS v6.66 — highway_to_ts.exe</span><span style="margin-left:auto;color:#5da86f" id="clock">☾ NIGHT 0</span></div>
+  <div id="hud">
+    <div>HP <b id="hHp">10/10</b></div>
+    <div class="hd hdFood">FOOD <b id="hFood">8</b></div>
+    <div class="hd hdMile">MILE <b id="hMile">0</b>/100</div>
+    <div class="hd hdLane">LANE <b id="hLane">═╬═</b></div>
+    <div class="hd hdEn">ENERGY <b id="hEn">10/10</b></div>
+    <div class="hd hdScrap">SCRAP <b id="hScrap">0</b></div>
+    <div class="hd hdLv">LV <b id="hLv">1</b> <span id="hXp" style="color:#5da86f"></span></div>
+    <div class="hd hdInv">INV <b id="hInv">—</b></div>
+  </div>
+  <div id="layout">
+    <div id="stage">
+      <div id="road">loading…</div>
+      <div id="coach">…</div>
+      <div id="sub">press WALK.</div>
+      <div id="choices"></div>
+      <div id="btnrow">
+        <button class="btn" id="bWalk">▲ WALK [W/↑]</button>
+        <button class="btn advbtn" id="bLeft">◀ [A/←]</button>
+        <button class="btn advbtn" id="bRight">[D/→] ▶</button>
+        <button class="btn advbtn" id="bTalk">✎ TALK [E]</button>
+        <button class="btn warn advbtn" id="bEat">🍖 EAT [F]</button>
+        <button class="btn warn advbtn" id="bHeal">💊 FIX [C]</button>
+        <button class="btn advbtn" id="bHelp">? HELP [H]</button>
+        <button class="btn danger advbtn" id="bDie">☠ ABANDON [Q]</button>
+      </div>
+    </div>
+    <div id="side">
+      <div id="portrait">…</div>
+      <div id="log"></div>
+    </div>
+  </div>
+  <div id="foot">
+    <span>follow the <b style="color:var(--amber)">yellow hint box</b> — it teaches one key at a time</span>
+    <span style="margin-left:auto">goal: reach mile 100 — the town of <b style="color:var(--amber)">TS</b></span>
+  </div>
+</div>
+
+<!-- TITLE -->
+<div class="veil" id="vTitle">
+  <div class="card2">
+    <h1>HIGHWAY<br>TO <span class="ts">TS</span></h1>
+<pre class="ascii">      ____________________________________________________
+     /                                                    \
+    |  ROUTE 66⁶⁶  ──►  NOWHERE ──► SOMEWHERE ──► TS 100mi |
+     \____________________________________________________/
+
+              ||           ||           ||
+              ||   AMBER   ||   GHOST   ||
+           ___||___     ___||___     ___||___
+          |__o___o__|   |__o___o__|   |__o___o__|
+              YOU ARE ALREADY ON THE ROAD. THE ROAD IS ALL THERE IS.
+</pre>
+    <p class="big">A slow-burn ASCII roguelike. You walk a highway in the middle of nowhere toward the town of TS.</p>
+    <p>The first 10 miles are <b>guided</b>: one new thing at a time, no surprises. Your first incoming car is <b>practice — it can't kill you</b>. After that, the highway gets meaner: strangers, hunger, and real traffic.</p>
+    <p>🚗 When a car screams in, a <b>QUICK-TIME arrow</b> flashes — press that <b>arrow key</b> in time or get <b style="color:#ff3344">SPLATTERED</b> (30% mercy: crawl away at 1 HP).</p>
+    <p class="dim2" style="color:#5da86f">to start you only need one key: <b>W</b> (walk). the rest unlocks as you go.</p>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn" id="bStart" style="font-size:17px;padding:10px 22px">▶ START WALKING</button>
+      <button class="btn" id="bHow">HOW TO PLAY</button>
+    </div>
+    <p id="hiLine" style="color:#5da86f"></p>
+  </div>
+</div>
+
+<!-- HELP -->
+<div class="veil hidden" id="vHelp">
+  <div class="card2"><h1 style="font-size:36px">HOW TO WALK</h1>
+    <p>▲ <b>W / ↑</b> — step forward 1 mile. This is 90% of the game. Everything else can wait.</p>
+    <p>◀ ▶ <b>A / D or ← / →</b> — sidestep lanes (unlocks at mile 1).</p>
+    <p>✎ <b>E</b> — talk to whoever is roadside (unlocks at mile 2). Then <b>1–4</b> to pick dialogue.</p>
+    <p>🍖 <b>F</b> — eat a snack. Food drops 1 every 2 miles; starving hurts.</p>
+    <p>💊 <b>C</b> — use a fix-kit (+4 HP).</p>
+    <p>🚗 <b>QTE:</b> an arrow (◀ ▲ ▼ ▶) appears + alarm. Press THAT arrow key. Real cars splat — except a 30% miracle leaves you at 1 HP. Cars are rare and slow early, faster later.</p>
+    <p>🏁 Reach <b>mile 100</b> to enter TS. Death is permanent; hi-score is saved.</p>
+    <div><button class="btn" id="bCloseHelp">CLOSE</button></div>
+  </div>
+</div>
+
+<!-- QTE -->
+<div class="veil hidden" id="vQte">
+  <div class="card2" style="border-color:var(--red);text-align:center" id="qteCard">
+    <p style="color:#ff3344;font-weight:700;letter-spacing:3px">⚠ INCOMING ⚠ <span id="qteName">PICKUP TRUCK</span></p>
+    <p id="qtePractice" style="color:#ffcc33;display:none">PRACTICE — this one can't kill you. Breathe.</p>
+    <div id="qteCar"></div>
+    <div id="qteArrow">▲</div>
+    <div id="qteKey">UP ARROW</div>
+    <div id="qteCount">3…</div>
+    <p style="color:#ffcc33">PRESS THE ARROW KEY! DODGE!</p>
+    <div id="qteBarWrap"><div id="qteBar"></div></div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="veil hidden" id="vEnd">
+  <div class="card2" id="endCard"><h1 id="endTitle">SPLATTERED</h1><pre class="ascii" id="endArt"></pre><p id="endText"></p>
+    <p id="endStats" style="color:#5da86f"></p>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="bAgain" style="font-size:16px">↻ WALK AGAIN [R]</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= HIGHWAY TO TS ================= */
+const $ = id => document.getElementById(id);
+const R = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+let S = null;           // game state
+let curNPC = null;      // roadside entity awaiting talk
+let busy = false;       // modal/qte/choice lock
+let qte = null;         // active qte
+let scroll = 0;         // road animation offset
+let muted = false;
+let AC = null;
+function beep(f,d,type,g){ if(muted) return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),v=AC.createGain(); o.type=type||'square'; o.frequency.value=f;
+  v.gain.value=g||0.06; o.connect(v); v.connect(AC.destination); o.start();
+  v.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+(d||0.08)); o.stop(AC.currentTime+(d||0.08)); }catch(e){} }
+const sStep=()=>beep(180+R(0,60),0.05,'square',0.04);
+const sGood=()=>{beep(523,0.09);setTimeout(()=>beep(784,0.12),90);};
+const sBad=()=>{beep(110,0.25,'sawtooth',0.09);setTimeout(()=>beep(70,0.3,'sawtooth',0.09),120);};
+const sAlarm=()=>{for(let i=0;i<4;i++)setTimeout(()=>beep(880,0.07,'square',0.08),i*110);};
+const sSplat=()=>{beep(90,0.4,'sawtooth',0.12);setTimeout(()=>beep(45,0.5,'sawtooth',0.12),80);};
+
+function newGame(){
+  S = { hp:12, maxhp:12, en:10, maxen:10, food:8, scrap:0, kits:1, snacks:3,
+        xp:0, lv:1, mile:0, lane:1, dodges:0, kills:0, talked:0, splats:0,
+        foodTick:0, practiced:false, tutDone:false,
+        un:{lane:false,talk:false,eat:false,heal:false,scrap:false,full:false},
+        weapon:{n:'sharp rock',b:1}, armor:{n:'windbreaker',b:0},
+        alive:true, won:false, startT:Date.now() };
+  curNPC=null; busy=false; qte=null;
+  $('log').innerHTML='';
+  log('You step onto the asphalt. The sky is huge and empty.','sys');
+  say('The highway hums. Heat shimmers. Nothing behind you but dust.','THE ROAD');
+  renderAll(); hideAll(); refreshUnlocks();
+  coach('👣 Press <b>W</b> (or tap WALK) to take your first step. That\'s the whole game for now.');
+  $('bWalk').classList.add('pulse');
+}
+/* ---------- COACH + PROGRESSIVE UNLOCKS ---------- */
+function coach(msg,done){ const c=$('coach'); c.innerHTML=msg; c.classList.toggle('done',!!done); }
+function unlock(name){ if(S.un[name]) return false; S.un[name]=true; refreshUnlocks(); return true; }
+function refreshUnlocks(){
+  if(!S) return;
+  // HUD: start HP/FOOD/MILE only; lanes+energy at mile 1; scrap+level when talking; inv at first loot/heal
+  show('.hdLane',S.un.lane); show('.hdEn',S.un.lane);
+  show('.hdScrap',S.un.scrap); show('.hdLv',S.un.scrap);
+  show('.hdInv',S.un.full||S.un.heal);
+  // buttons: walk always; lanes → mile 1; talk → mile 2; eat → mile 3; heal → first hurt; rest → mile 10
+  $('bLeft').style.display=S.un.lane?'':'none';
+  $('bRight').style.display=S.un.lane?'':'none';
+  $('bTalk').style.display=S.un.talk?'':'none';
+  $('bEat').style.display=S.un.eat?'':'none';
+  $('bHeal').style.display=S.un.heal?'':'none';
+  $('bHelp').style.display=S.un.full?'':'none';
+  $('bDie').style.display=S.un.full?'':'none';
+  if(S.mile>=1) $('bWalk').classList.remove('pulse');
+}
+function show(sel,on){ const els=document.querySelectorAll(sel); els.forEach(e=>{e.style.display=on?'':'none';}); }
+/* Scripted first-10-miles: one new thing at a time, nothing lethal. */
+function tutorialBeat(){
+  const m=S.mile;
+  if(m===1 && unlock('lane')){ coach('◀ ▶ Nice. <b>A / D</b> sidesteps lanes. Nothing to dodge yet — just feel it. Keep walking.'); sGood(); }
+  else if(m===2 && !curNPC){ unlock('talk'); unlock('scrap');
+    const dave={name:'SUN-BLEACHED SKELETON (still walking)',lane:1,
+      art:`   __\n  (o o)  just vibes\n   \\_/   "no thoughts. only mileage."\n  _|_|_`,
+      line:'"sup. i\'m dave. died at mile 12. still walking. you get used to it. here — trail mix. press E to talk to folks like me."'};
+    dave.opts=[
+      {t:'"Thanks, Dave." (take 1 snack, +2 xp)',run:()=>{S.snacks++;gainXp(2);say('"no problem. see you out there. probably." dave keeps walking. forever.','DAVE');sGood();}},
+      {t:'Ask how to survive',run:()=>{S.kits++;gainXp(2);say('"rule one: dodge. rule two: eat. here, a kit i found in my ribcage."','DAVE');}}];
+    curNPC=dave;
+    coach('👤 Someone\'s on the shoulder — press <b>E</b> (or TALK) to say hi. Dave is harmless. Mostly.');
+    log('👤 Mile 2: DAVE on the shoulder. [E] to talk.','good'); beep(660,0.08);
+  }
+  else if(m===3 && unlock('eat')){ coach('🍖 Food drops <b>1 every 2 miles</b>. You carry <b>'+S.snacks+' snacks</b> — press <b>F</b> to eat when FOOD gets low.'); }
+  else if(m===4){ coach('🌵 Breathe. The road provides. Two more miles to your first car — and it\'s practice. It <b>can\'t kill you</b>.'); }
+  else if(m===5 && !S.practiced){ startQTE('PRACTICE PICKUP (student driver)',{practice:true,ms:2600}); }
+  else if(m===6){ coach('🎒 Loot! Walking pays. Scrap buys mercy from strangers later.'); }
+  else if(m===8){ coach('✨ Scrap = money. XP = levels (bigger max HP). Both come from talking, looting, dodging.'); }
+  else if(m>=10 && !S.tutDone){ S.tutDone=true; unlock('full'); unlock('heal');
+    coach('🛣️ Training wheels off. Cars are <b>real</b> now — dodge or die (30% mercy). Reach TS at mile 100.',true);
+    log('🛣️ <b>Tutorial complete.</b> Full HUD + buttons unlocked. The highway gets meaner from here.','good'); sGood(); }
+}
+/* Contextual hint after the tutorial. */
+function idleCoach(){
+  if(!S.tutDone) return;
+  if(curNPC) coach('👤 Roadside stranger — press <b>E</b> to talk, or <b>W</b> to walk past.');
+  else if(S.food<=2) coach('🍖 FOOD low — press <b>F</b> to eat a snack ('+S.snacks+' left).');
+  else if(S.hp<=S.maxhp-3 && S.kits>0) coach('💊 You\'re hurt — press <b>C</b> to use a fix-kit ('+S.kits+' left).');
+  else coach('🛣️ Mile '+S.mile+'/100. <b>W</b> to walk. TS is ahead.',true);
+}
+function hi(){ try{return JSON.parse(localStorage.getItem('hwts_hi')||'null');}catch(e){return null;} }
+function saveHi(){ const prev=hi();
+  const score=S.mile*10+S.kills*25+S.dodges*15+S.lv*30+(S.won?1000:0);
+  if(!prev||score>prev.score){ localStorage.setItem('hwts_hi',JSON.stringify({score,mile:S.mile,date:new Date().toLocaleDateString()})); return true; } return false; }
+
+/* ---------- LOG / DIALOG ---------- */
+function log(msg,cls){ const box=$('log'); const d=document.createElement('p'); if(cls)d.className=cls; d.innerHTML=msg;
+  box.appendChild(d); while(box.children.length>60) box.removeChild(box.firstChild);
+  box.scrollTop=box.scrollHeight; }
+function say(msg,who){ $('sub').innerHTML='<span class="who">['+(who||'???')+']</span> '+msg; }
+function setChoices(list){ const c=$('choices'); c.innerHTML='';
+  list.forEach((o,i)=>{ const b=document.createElement('button'); b.className='choice';
+    b.innerHTML='<kbd>'+(i+1)+'</kbd>'+o.label; b.onclick=()=>o.fn&&o.fn(); c.appendChild(b); }); }
+
+/* ---------- RENDER ---------- */
+const LANE_X=[9,19,29];
+function skyName(){ const m=S.mile;
+  if(m>=85) return 'TS GLOWS ON THE HORIZON';
+  const c=Math.floor(m/12)%4; return ['☾ NIGHT','☀ DAWN','☀ NOON HAZE','☾ DUSK'][c]; }
+function renderAll(){ if(!S) return;
+  $('hHp').textContent=S.hp+'/'+S.maxhp; $('hHp').className=S.hp<=3?'low':'';
+  $('hEn').textContent=S.en+'/'+S.maxen;
+  $('hFood').textContent=S.food; $('hFood').className=S.food<=2?'low':'';
+  $('hLv').textContent=S.lv; $('hXp').textContent='('+S.xp+'/'+(S.lv*8)+'xp)';
+  $('hScrap').textContent=S.scrap; $('hMile').textContent=S.mile;
+  $('hLane').textContent=['LEFT','MID','RIGHT'][S.lane];
+  $('hInv').textContent=' snack×'+S.snacks+' kit×'+S.kits+' '+S.weapon.n+'+'+S.weapon.b;
+  $('clock').textContent=skyName()+' · '+S.dodges+' dodges';
+  renderRoad(); renderPortrait();
+}
+function renderPortrait(){
+  if(curNPC){ $('portrait').textContent=curNPC.art+'\n\n>>> '+curNPC.name+' blocks your path. Press E / TALK. (lane '+['L','M','R'][curNPC.lane]+')'; }
+  else $('portrait').textContent='   . . . empty shoulder . . .\n   wind. dust. a crushed cup.\n\n   [walk forward — something will find you]';
+}
+function renderRoad(){
+  const W=42,H=17; let out='';
+  const night=skyName().includes('NIGHT')||skyName().includes('DUSK');
+  const edge=night?'‖':'#';
+  for(let y=0;y<H;y++){
+    let row='';
+    const worldY=S.mile*2+scroll+y;
+    const dash=(worldY%3===0)?'≡':' ';
+    for(let x=0;x<W;x++){
+      let ch=' ';
+      if(x===2||x===3) ch=edge; else if(x===W-3||x===W-4) ch=edge;
+      else if(x===12||x===13||x===22||x===23||x===32||x===33){ ch=(x%2? dash : ' '); if(night&&dash==='≡')ch='·'; }
+      else if(x>3&&x<W-4) ch=' ';
+      else ch = (Math.random()<0.02?'`':'.');
+      row+=ch;
+    }
+    // roadside flavor glyphs
+    if(y%4===1){ const f=roadsideGlyph(worldY); row=setAt(row,0,f); }
+    if(y%5===3){ const f2=roadsideGlyph(worldY+99); row=setAt(row,W-1,f2); }
+    out+=row+'\n';
+  }
+  let lines=out.split('\n');
+  // NPC marker
+  if(curNPC){ const ny=H-6; const nx=curNPC.lane===0?6:(curNPC.lane===2?W-7:36);
+    lines[ny]=setAt(lines[ny],nx,'?'); lines[ny+1]=setAt(lines[ny+1],nx,'♦'); }
+  // player
+  const py=H-3, px=LANE_X[S.lane];
+  lines[py]=setAt(lines[py],px-1,'(o)');
+  lines[py+1]=setAt(lines[py+1],px-1,'/@\\');
+  lines[py+1]=setAt(lines[py+1],px,'@');
+  // traffic shadow if qte looming
+  if(qte){ lines[1]=setAt(lines[1],LANE_X[qte.carLane],'###'); lines[2]=setAt(lines[2],LANE_X[qte.carLane]-1,'[CAR]'); }
+  $('road').textContent=lines.join('\n')+'\n  ── mile '+S.mile+' ── '+skyName()+' ── ['+['LEFT','MID','RIGHT'][S.lane]+' lane] ──';
+}
+function setAt(s,i,v){ return s.substring(0,i)+v+s.substring(i+v.length); }
+function roadsideGlyph(seed){ const g=['.','.',',','`',' ',' ',' ','t','*','~','+','c','_',' ']; return g[Math.abs(seed)%g.length]; }
+
+/* ---------- XP / DAMAGE ---------- */
+function gainXp(n){ S.xp+=n; log('+'+n+' xp','good');
+  while(S.xp>=S.lv*8){ S.xp-=S.lv*8; S.lv++; S.maxhp+=2; S.hp=clamp(S.hp+3,0,S.maxhp); S.maxen+=1; S.en=S.maxen;
+    log('⬆ LEVEL '+S.lv+'! max HP up. You feel road-hardened.','good'); sGood(); } }
+function hurt(n,why){ S.hp-=n; sBad(); if(S.un) unlock('heal');
+  log('−'+n+' HP '+why,'bad'); if(S.hp<=0){ S.hp=0; die(why); } renderAll(); }
+function heal(n){ S.hp=clamp(S.hp+n,0,S.maxhp); log('+'+n+' HP','good'); sGood(); }
+
+/* ================= DATA: NPCs ================= */
+const NPCS=[
+{name:'HITCHHIKER WITH NO THUMBS', lane:0,
+art:`    o/\n   /|\\\n   / \\\n  [nubs wrapped in tape]`,
+line:'"No thumbs. Lost \'em hitchin\'. Irony, huh? Gimme 1 scrap and I\'ll tell you which lane the next truck takes."',
+opts:[
+ {t:'Pay 1 scrap for the tip', can:()=>S.scrap>=1, run:()=>{S.scrap--;gainXp(3);log('He whispers: "trucks love the MIDDLE. stay out of it." Next QTE is 1.5× slower.','good');S._tip=true;say('"Middle. Trust me. I\'m basically radar now."','HITCHHIKER');}},
+ {t:'Give him a snack instead', can:()=>S.snacks>0, run:()=>{S.snacks--;S.food+=1;heal(1);gainXp(4);say('"You… you\'re the first. The TS will remember you." He vanishes into heat shimmer.','HITCHHIKER');}},
+ {t:'Keep walking, weirdo', run:()=>{say('He flips you off with his wrists. Somehow devastating.','HITCHHIKER');log('Your feelings take 1 damage (emotional).','dim2');}}]},
+{name:'ROADKILL PROPHET', lane:2,
+art:`   .-\"\"-.\n  / .--. \\\n  | (o)(o) |\n   \\  M  /   holding a dead armadillo\n    |^^^|`,
+line:'"THE ARMA-DILLO HAS SPOKEN! At mile 40 the road BLEEDS! Give me scrap and I shall bless your shoes!"',
+opts:[
+ {t:'Donate 2 scrap for blessing (+max energy)', can:()=>S.scrap>=2, run:()=>{S.scrap-=2;S.maxen+=2;S.en=S.maxen;gainXp(4);say('"YOUR SHOES ARE HOLY NOW. squeak with purpose."','PROPHET');}},
+ {t:'Ask for prophecy (free, cursed)', run:()=>{const p=pick(['"A RED car. Soon. DODGE LEFT."','"Do NOT eat the gas station sushi."','"The TS is just a water tower that learned to dream."','"Your left shoe will outlive you."']);say(p+' The armadillo stares. It knows.','PROPHET');gainXp(2);}},
+ {t:'Steal the armadillo?!', run:()=>{if(Math.random()<0.5){S.food+=2;log('You yoink the armadillo. Prophet screams. Protein acquired (+2 food).','good');}else{hurt(2,'(prophet-bonk)');say('"DEFILEMENT! THE SHELL REMEMBERS!" *thwack*','PROPHET');}}}]},
+{name:'GAS STATION HERMIT', lane:1,
+art:`   _______\n  | SLURP |\n  |  MART |  smells of old hot dogs\n  |__o____|___\n     ||`,
+line:'"Closed since \'87. Still open. Schrödinger\'s jerky: 2 scrap a pack. Or fix-kit, 4 scrap. Or… a RIDDLE for your soul."',
+opts:[
+ {t:'Buy jerky (+3 food, 2 scrap)', can:()=>S.scrap>=2, run:()=>{S.scrap-=2;S.food+=3;S.snacks++;gainXp(2);say('"Chewy. Eternal. Like regret."','HERMIT');}},
+ {t:'Buy fix-kit (4 scrap)', can:()=>S.scrap>=4, run:()=>{S.scrap-=4;S.kits++;gainXp(2);say('"Side effects include walking. Severe walking."','HERMIT');}},
+ {t:'Take the riddle', run:()=>{startRiddle();}}]},
+{name:'VENDING-MACHINE CULTIST', lane:0,
+art:`  __________\n | [][][][] |\n | EAT   $3 |\n |(kneeling) |\n  ‾‾‾‾‾‾‾‾‾‾`,
+line:'"ALL HAIL VENDRA! She hums in B-flat and provides lukewarm cola! Insert 1 SCRAP as tithe, receive MYSTERY."',
+opts:[
+ {t:'Tithe 1 scrap (mystery can)', can:()=>S.scrap>=1, run:()=>{S.scrap--;const r=Math.random();
+   if(r<0.3){S.kits++;say('*CLUNK* A FIX-KIT falls out. VENDRA PROVIDES.','CULTIST');}
+   else if(r<0.6){S.snacks+=2;S.food+=2;say('*CLUNK CLUNK* Two snacks! The hum rises in approval.','CULTIST');}
+   else if(r<0.8){gainXp(5);say('*CLUNK* A can labeled "XP". You drink it. Tastes like static and growth.','CULTIST');}
+   else{hurt(1,'(mystery can was bees)');say('*BZZZZ* THE CAN WAS BEES. VENDRA TESTS YOU.','CULTIST');} gainXp(1);}},
+ {t:'Kick the machine (risky)', run:()=>{if(Math.random()<0.45){S.scrap+=3;gainXp(2);log('You shake loose 3 scrap! The cultist wails.','good');say('"VENDRA! WHY HAVE YOU SHAKEN?!','CULTIST');}else{hurt(2,'(vending machine fights back)');say('The machine drops on your foot. VENDRA JUDGES.','CULTIST');}}},
+ {t:'Convert (lose 1 energy, gain 3 xp)', can:()=>S.en>1, run:()=>{S.en--;gainXp(3);say('"ONE OF US. ONE OF US. hum in B-flat."','CULTIST');}}]},
+{name:'TRUCKER GHOST', lane:2,
+art:`   .-.\n  (o o)  translucent, smells of diesel\n  /|__|- - - 18 wheels behind him\n   \\_/`,
+line:'"I run this route since the pileup of \'79. Kid… your rig (legs) needs diesel (food). Trade 2 food for GHOST ARMOR?"',
+opts:[
+ {t:'Trade 2 food → ghost mudflaps (armor+1)', can:()=>S.food>=2, run:()=>{S.food-=2;S.armor={n:'ghost mudflaps',b:S.armor.b+1};gainXp(3);say('"Now 18-wheelers fear YOU a little."','GHOST');}},
+ {t:'Ask for a ride (spooky)', run:()=>{if(Math.random()<0.5){const d=R(3,6);S.mile+=d;log('He carries you '+d+' miles through the night. You wake up cold.','good');say('"No charge. Tip is thinkin\' of me at mile markers."','GHOST');afterWalk(true);}else{hurt(1,'(ghost exhaust)');say('"HA. Walkers walk. Rules is rules."','GHOST');}}},
+ {t:'"How did you die?"', run:()=>{say('"Dodge failed. Arrow said LEFT, I went RIGHT. Press the right one, kid. PRESS THE RIGHT ONE." He fades, brake lights weeping.','GHOST');gainXp(3);log('Chilling. Next QTE feels slower (ghost warning).','good');S._tip=true;}}]},
+{name:'CURSED CLOWN CAR-POOLER', lane:1,
+art:`   ,--.\n  (o O)  red nose, too many teeth\n  /|v|\\  honk honk\n   /_\\`,
+line:'"HONK! Need a lift? Just sign the greasepaint waiver! (side effects: honking, shrinking, being a clown)."',
+opts:[
+ {t:'Accept lift (+5 miles, ???)', run:()=>{const r=Math.random();
+   if(r<0.55){S.mile+=5;gainXp(4);say('"WHEEE!" You arrive 5 miles ahead smelling of greasepaint.','CLOWN');afterWalk(true);}
+   else if(r<0.8){hurt(2,'(clown jazz)');say('He plays 40 minutes of clown jazz at full volume. You walk away bleeding from the ears.','CLOWN');}
+   else{S.scrap+=4;gainXp(2);say('You pickpocket the glovebox mid-honk: +4 scrap! He honks approvingly.','CLOWN');}}},
+ {t:'Decline politely', run:()=>{gainXp(1);say('"Honk… suit yourself, walker." A single tear of face paint.','CLOWN');}},
+ {t:'Fight the clown', run:()=>startCombat('CURSED CLOWN',7,2)}]},
+{name:'FERAL SHOPPING CART', lane:0,
+art:`  \\o____\n  |_____|\n  (o)  (o)  it rattles. it hungers.`,
+line:'*SKREEE.* It wants your snacks. It wants your shins. It wants EVERYTHING.',
+opts:[
+ {t:'Fight it', run:()=>startCombat('FERAL CART',5,1)},
+ {t:'Feed it a snack (tame → carries you +2 mi)', can:()=>S.snacks>0, run:()=>{S.snacks--;S.mile+=2;gainXp(4);log('It purrs (rattles) and wheels you 2 miles.','good');say('*skree (happy)*','CART');afterWalk(true);}},
+ {t:'Sprint past (lose 2 energy)', can:()=>S.en>=2, run:()=>{S.en-=2;if(Math.random()<0.4){hurt(2,'(cart ambush)');}else{gainXp(2);log('You outrun it. Its screams fade.','good');}}} ]},
+{name:'TOLL TROLL (accepts cash or riddles)', lane:1,
+art:`   (ô_ô)\n  /|___|\\  under a tiny toll booth\n  d     b`,
+line:'"TOLL. 3 scrap. OR answer me ONE question. None pass without paying the stupid tax."',
+opts:[
+ {t:'Pay 3 scrap', can:()=>S.scrap>=3, run:()=>{S.scrap-=3;gainXp(3);say('"Pass, wallet-warrior. The TS tolls are worse."','TROLL');}},
+ {t:'Answer the riddle', run:()=>startRiddle()},
+ {t:'Fight the troll', run:()=>startCombat('TOLL TROLL',9,2)}]},
+{name:'SUN-BLEACHED SKELETON (still walking)', lane:2,
+art:`   __\n  (o o)  just vibes\n   \\_/   "no thoughts. only mileage."\n  _|_|_`,
+line:'"sup. i\'m dave. died at mile 12. still walking. you get used to it. take this hubcap, i don\'t need it."',
+opts:[
+ {t:'Take the GLINTING HUBCAP (weapon+2)', run:()=>{S.weapon={n:'glinting hubcap',b:2};gainXp(3);say('"it served me well. bonk responsibly." dave keeps walking. forever.','DAVE');sGood();}},
+ {t:'Ask how to survive', run:()=>{S.kits++;gainXp(2);say('"rule one: dodge. rule two: eat. rule three: there is no rule three. here, a kit i found in my ribcage."','DAVE');}},
+ {t:'Walk with Dave a while (+1 xp, −1 food, heals 1)', run:()=>{S.food=Math.max(0,S.food-1);heal(1);gainXp(2);say('You walk in comfortable silence. Best conversation on the whole highway.','DAVE');}}]},
+{name:'ICE-CREAM TRUCK (no music, just idling)', lane:0,
+art:`  ___________\n | ICE SCREAM |  the jingle is stuck at one note\n |__o_____o__|`,
+line:'"Ice cream. Ice. Cream. 2 scrap. Also… I sell SCREAM-flavored. It screams back. Kids love it."',
+opts:[
+ {t:'Buy ice cream (2 scrap → +2 food, +2 HP)', can:()=>S.scrap>=2, run:()=>{S.scrap-=2;S.food+=2;heal(2);gainXp(2);say('"Enjoy. Tip the freezer, it has feelings."','DRIVER');}},
+ {t:'Buy SCREAM (free, ???)', run:()=>{const r=Math.random();if(r<0.5){gainXp(6);S.en=S.maxen;say('You lick the SCREAM. You see THROUGH TIME for a second. (+6 xp, energy restored!)','DRIVER');}else{hurt(2,'(the scream screamed back)');say('IT SCREAMED BACK. It knew your name.','DRIVER');}}},
+ {t:'Rob the truck', run:()=>startCombat('ICE-CREAM DRIVER',8,2)}]},
+{name:'SIGNPOST THAT TALKS', lane:1,
+art:`   ┌─────────┐\n   │ TS 100→ │  (it wasn't pointing that way before)\n   └─────────┘`,
+line:'"TS. TSSSS. The town of TS. Some say it stands for Tender Sustenance. Some say Total Silence. Walk, walker."',
+opts:[
+ {t:'Touch the sign (weird)', run:()=>{const r=Math.random();if(r<0.4){S.en=S.maxen;gainXp(3);say('Warmth floods your legs. Energy restored! The sign winks (it has no eyes).','SIGN');}else if(r<0.7){S.scrap+=2;say('Someone taped 2 scrap under the sign. Finders walkers.','SIGN');}else{startQTE('SIGNPOST LIGHTNING',true);}}},
+ {t:'Ask directions', run:()=>{say('"STRAIGHT. Always straight. The highway only goes one way: FORWARD, toward TS. The rest is shoulder and regret."','SIGN');gainXp(1);}},
+ {t:'Graffiti the sign (+1 xp, −karma?)', run:()=>{gainXp(1);S.scrap+=1;log('You tag "WALKER WUZ HERE". A trucker honks in respect. +1 scrap.','good');}}]},
+{name:'WOUNDED TRAVELER', lane:2,
+art:`    o/\n   /|  (holding side, leaking)\n   / \\  please. help.`,
+line:'"Car clipped me… left me at 1 HP, just like the stories… got any fix? I got scrap. Lots of scrap. Please."',
+opts:[
+ {t:'Spend 1 kit to save them (+5 scrap, +5 xp)', can:()=>S.kits>0, run:()=>{S.kits--;S.scrap+=5;gainXp(5);say('"You… you\'re the highway. I\'ll tell TS about you. GO." They limp on, crying.','TRAVELER');sGood();}},
+ {t:'Rob them instead (evil)', run:()=>{S.scrap+=4;log('You take 4 scrap from a bleeding person. The highway watches. The highway remembers.','bad');say('"…oh. oh okay. it\'s like that." They crawl on without you.','TRAVELER');if(Math.random()<0.4){hurt(1,'(guilt)');}}},
+ {t:'Leave them', run:()=>{say('You walk on. Their breathing fades behind you. The road feels longer.','NARRATOR');}}]},
+{name:'COYOTE IN A HI-VIZ VEST', lane:0,
+art:`   /\\_/\\\n  ( o.o )  OFFICIAL ROAD CREW (self-appointed)\n   > ^ <`,
+line:'"Yip. Road crew. Gotta pay the cone tax. One snack. Or we… redecorate your ankles." (There are six of them.)',
+opts:[
+ {t:'Pay the cone tax (1 snack)', can:()=>S.snacks>0, run:()=>{S.snacks--;gainXp(3);say('"Yip! Pleasure doin\' business." They cone-bless you (+dodge luck next QTE slower).','COYOTE');S._tip=true;}},
+ {t:'Fight the pack', run:()=>startCombat('COYOTE CREW (6)',10,2)},
+ {t:'Howl back (chaos)', run:()=>{if(Math.random()<0.5){gainXp(5);S.scrap+=2;say('"AWOOOO." They accept you as middle management. +2 scrap severance.','COYOTE');}else{hurt(2,'(ankle redecoration)');say('"Wrong howl. WRONG HOWL."','COYOTE');}}}]},
+{name:'MIME STUCK IN TRAFFIC (there is no traffic)', lane:1,
+art:`   o\n  /|\\  (trapped in a box that isn't there)\n  / \\  help. please.`,
+line:'… (He mimes: BIG TRUCK COMING. He mimes: DODGE. He mimes applause for your survival.)',
+opts:[
+ {t:'Applaud (free, kind)', run:()=>{gainXp(3);heal(1);say('You clap. He weeps silently and mimes giving you his invisible lunch (+heal).','MIME');}},
+ {t:'Mime back (energy game)', run:()=>{if(Math.random()<0.55){gainXp(4);S.en=clamp(S.en+2,0,S.maxen);say('You out-mime him (invisible rope pull!). He bows. You feel limber.','MIME');}else{S.en=Math.max(0,S.en-1);say('You pull the wrong invisible rope. He shakes his head, disappointed.','MIME');}}},
+ {t:'Push the invisible box over (mean)', run:()=>{S.scrap+=1;log('He falls over dramatically. Something jingles: +1 scrap. You monster.','bad');}}]},
+{name:'DOOMSDAY RADIO PREACHER (tower on back)', lane:2,
+art:`    /|\\\n   / | \\  antennae crackling\n  | (o) |  "THE AIRWAVES PROVIDE"\n    \\|/`,
+line:'"REPENT! The SEMI-TRUCK GOD comes at mile 100! Only the DODGE-BLESSED enter TS! Tithe 2 scrap for the broadcast blessing!"',
+opts:[
+ {t:'Tithe 2 scrap (+2 max HP blessing)', can:()=>S.scrap>=2, run:()=>{S.scrap-=2;S.maxhp+=2;S.hp+=2;gainXp(3);say('"BLESSED! YOUR BLOOD IS NOW 5W-30, HOLY AND SLICK!"','PREACHER');}},
+ {t:'Debate eschatology', run:()=>{gainXp(4);say('"Is TS heaven? Is TS a truck stop? YES." You feel enlightened and confused.','PREACHER');}},
+ {t:'Steal his batteries', run:()=>{if(Math.random()<0.5){S.scrap+=3;gainXp(2);log('+3 scrap in batteries. He keeps preaching, quieter.','good');}else{hurt(2,'(holy static shock)');}}} ]},
+];
+
+/* riddles for hermit/troll */
+const RIDDLES=[
+ {q:'"I have lanes but no cars, a shoulder but no arm. What am I?"',a:['highway','road','this highway'],hint:'(answer: HIGHWAY / ROAD)'},
+ {q:'"I scream without a mouth and vanish when you dodge. What am I?"',a:['horn','car horn','wind'],hint:'(answer: HORN / WIND)'},
+ {q:'"The more miles you take, the more you leave behind. What am I?"',a:['footsteps','steps','footprints','tracks'],hint:'(answer: FOOTSTEPS)'},
+];
+function startRiddle(){ const r=pick(RIDDLES); busy=true;
+  say(r.q+' Shout your answer, walker.','RIDDLE');
+  setChoices([{label:'"HIGHWAY!" / "ROAD!"',fn:()=>riddleAns(r,'highway')},{label:'"HORN!"',fn:()=>riddleAns(r,'horn')},
+    {label:'"FOOTSTEPS!"',fn:()=>riddleAns(r,'footsteps')},{label:'"TS!" (guess wildly)',fn:()=>riddleAns(r,'ts')}]);
+  log('❓ RIDDLE: '+r.q+' '+r.hint,'good'); }
+function riddleAns(r,g){ const ok=r.a.some(a=>g.includes(a));
+  if(ok){ S.scrap+=3; gainXp(5); say('"CORRECT! The stupid tax is WAIVED. Take 3 scrap, scholar."','TROLL/HERMIT'); sGood(); }
+  else { hurt(1,'(riddle shame)'); say('"WRONG! The stupid tax is PAIN."','TROLL/HERMIT'); }
+  busy=false; dismissNPC(); setChoices([]); idleCoach(); refreshUnlocks(); renderAll(); }
+
+/* ================= COMBAT ================= */
+let foe=null;
+function startCombat(name,hp,atk){ if(busy) return; busy=true; foe={name,hp,maxhp:hp,atk};
+  log('⚔ '+name+' attacks! ('+hp+' HP)','bad'); say('A '+name+' bars the shoulder! FIGHT! [1] bonk [2] throw scrap [3] flee','BATTLE');
+  sAlarm(); renderPortraitCombat();
+  setChoices([
+   {label:'Bonk with '+S.weapon.n+' (1d6+'+S.weapon.b+')',fn:()=>combatRound('bonk')},
+   {label:'Throw scrap ('+S.scrap+' avail, big dmg, costs 1)',fn:()=>combatRound('scrap')},
+   {label:'Use fix-kit, then bonk (uses 1 kit)',fn:()=>combatRound('kit')},
+   {label:'FLEE (50%, else eat a hit)',fn:()=>combatRound('flee')}]);
+}
+function renderPortraitCombat(){ if(foe) $('portrait').textContent=
+`  ┌─ BATTLE ──────────\n  │ ${foe.name}\n  │ HP ${'█'.repeat(Math.max(0,foe.hp))}${'░'.repeat(Math.max(0,foe.maxhp-foe.hp))} (${foe.hp}/${foe.maxhp})\n  │ your HP ${S.hp}/${S.maxhp}\n  └───────────────────\n\n  (\\_/)\n  ( •_•)  >==[${S.weapon.n}]=>\n  / >${'🍖'.repeat(0)}  fight!`; }
+function combatRound(move){
+  if(!foe) return;
+  if(move==='flee'){ if(Math.random()<0.5){ log('You flee screaming. Very athletic.','dim2'); foe=null; busy=false; dismissNPC(); setChoices([]); idleCoach(); renderAll(); return; }
+    log('Failed to flee!','bad'); }
+  else if(move==='scrap'){ if(S.scrap<1){log('No scrap to throw!','bad');return;} S.scrap--; const d=R(4,8)+S.lv; foe.hp-=d; log('You hurl scrap for '+d+' dmg!','good'); beep(600,0.08); }
+  else if(move==='kit'){ if(S.kits>0){S.kits--;heal(3);} else log('No kits! Desperate bonk!','bad'); const d=R(1,6)+S.weapon.b; foe.hp-=d; log('You bonk for '+d+' dmg!','good'); beep(500,0.07); }
+  else { const d=R(1,6)+S.weapon.b; foe.hp-=d; log('You bonk '+foe.name+' for '+d+' dmg!','good'); beep(500,0.07); }
+  if(foe.hp<=0){ const n=foe.name; S.kills++; const loot=R(1,3); S.scrap+=loot; gainXp(5);
+    log('☠ '+n+' defeated! +'+loot+' scrap.','good'); say('The '+n+' lies still. The crows applaud. You loot '+loot+' scrap.','NARRATOR');
+    foe=null; busy=false; dismissNPC(); setChoices([]); idleCoach(); renderAll(); return; }
+  // foe hits back (armor reduces)
+  const raw=R(1,foe.atk+2); const dmg=Math.max(0,raw-S.armor.b);
+  S.hp-=dmg; sBad(); log(foe.name+' hits you for '+dmg+'! ('+S.hp+'/'+S.maxhp+')','bad');
+  $('cab').classList.remove('shake'); void $('cab').offsetWidth; $('cab').classList.add('shake');
+  if(S.hp<=0){ const kn=foe.name; S.hp=0; foe=null; setChoices([]); die('mauled by '+kn); return; }
+  renderAll(); renderPortraitCombat();
+}
+
+/* ================= WALK ================= */
+function dismissNPC(){ curNPC=null; renderPortrait(); }
+function walk(){
+  if(!S||!S.alive||S.won) return;
+  if(busy||qte) return;
+  const tut=!S.tutDone;
+  // energy: no drain during tutorial; gentle after
+  if(!tut){
+    S.en=Math.max(0,S.en-1);
+    if(S.en<=0){ log('Drained legs… you stumble onward (−1 HP), then catch your breath (+2 energy).','bad');
+      hurt(1,'(exhaustion)'); if(!S.alive) return; S.en=2; }
+    else if(Math.random()<0.40) S.en=clamp(S.en+1,0,S.maxen);
+  }
+  scroll+=2; sStep();
+  // hunger: 1 food every 2 miles (was every mile — too punishing while learning)
+  S.foodTick++;
+  if(S.foodTick>=2){ S.foodTick=0; S.food=Math.max(0,S.food-1);
+    if(S.food<=0){ const dmg=tut?1:2;
+      log('⭐ STARVING — your stomach growls (−'+dmg+' HP). Press F to eat!','bad');
+      hurt(dmg,'(starvation)'); if(!S.alive) return; } }
+  S.mile++;
+  if(S.mile>=100){ win(); return; }
+  dismissNPC();
+  if(S.mile<=10) tutorialMile(); else wildMile();
+  idleCoach(); refreshUnlocks(); renderAll();
+}
+/* Calm first 10 miles: scripted beats only. No random cars, fights or hazards. */
+function tutorialMile(){
+  tutorialBeat();
+  if(qte){ renderAll(); return; }              // practice car took over
+  if(curNPC){ renderAll(); talkHint(); return; } // Dave is waiting
+  const m=S.mile;
+  if(m===6) lootEvent();
+  else if(m===8){ S.scrap+=1; unlock('scrap');
+    say('A bottle cap glints… no wait, it\'s 1 SCRAP. Money! Strangers out here love this stuff.','LOOT'); }
+  else say(pick(FLAVOR),'NARRATOR');
+  setChoices([]); renderAll();
+}
+/* The real highway: rarer + slower cars early, ramping up with distance. */
+const CARS=['PICKUP TRUCK','SEMI 18-WHEELER','MINIVAN OF DOOM','LOW RIDER','ICE-CREAM TRUCK (evil)','BUS FULL OF SCREAMING'];
+function wildMile(){
+  const m=S.mile;
+  const q = m<15?0.07 : m<40?0.12 : 0.17;   // was a flat 0.20 from mile 0
+  const roll=Math.random();
+  if(roll<q) startQTE(pick(CARS));
+  else if(roll<q+0.28) spawnNPC();
+  else if(roll<q+0.38) lootEvent();
+  else if(roll<q+0.46) hazardEvent();
+  else if(roll<q+0.53) startCombat(pick(['ROAD COYOTE','FERAL CART','DITCH GOBLIN','TUMBLEWEED (giant)','SUN-MAD BIKER']),R(4,6)+Math.floor(m/25),1+Math.floor(m/35));
+  else flavor();
+  renderAll();
+}
+function spawnNPC(){
+  const n=Object.assign({},pick(NPCS)); n.lane=R(0,2); curNPC=n;
+  log('👤 Mile '+S.mile+': '+n.name+' on the '+['LEFT','MIDDLE','RIGHT'][n.lane]+' shoulder. [E] to talk.','good');
+  say(n.line,n.name); beep(660,0.08); renderAll(); talkHint();
+}
+function talkHint(){ setChoices([{label:'Talk [E]',fn:talk},{label:'Ignore & keep walking [W]',fn:()=>{dismissNPC();say('You walk past. The stranger watches you go.','NARRATOR');setChoices([]);renderAll();}}]); }
+function lootEvent(){ unlock('scrap'); const t=R(0,5);
+  if(t===0){S.snacks++;S.food+=2;log('🎒 Abandoned cooler! +1 snack, +2 food.','good');say('A cooler, humming faintly. The sandwiches inside are… probably fine.','LOOT');}
+  else if(t===1){S.scrap+=R(2,4);log('✨ Hubcap cache! +scrap.','good');say('Hubcaps nailed to a cactus. You pry them off. Finders walkers.','LOOT');}
+  else if(t===2){S.kits++;log('➕ Fix-kit in a ditch! The ditch provides.','good');say('Someone lost a whole fix-kit. Their loss. Your blood.','LOOT');}
+  else if(t===3){S.weapon={n:'rebar of destiny',b:3};log('🗡 You find the REBAR OF DESTINY (weapon +3)!','good');say('It hums with rebar energy. Bonking power DOUBLED-ish.','LOOT');sGood();}
+  else if(t===4){S.en=S.maxen;log('⛽ Tailwind! Energy restored.','good');say('A kind wind pushes you a mile. Trucks honk in harmony.','LOOT');}
+  else{gainXp(2);S.scrap++;log('Lucky penny (it\'s a hubcap penny). +1 scrap +2xp.','good');say('The road provides, in small change.','LOOT');}
+  setChoices([]);
+}
+function hazardEvent(){ const t=R(0,4);
+  if(t===0){say('Glass glitter across the '+['LEFT','MID','RIGHT'][S.lane]+' lane! Sidestep [A/D] or eat it.','HAZARD');
+    if(Math.random()<0.5){hurt(1,'(glass)');} else {log('You hop over the glass like a gazelle.','good');gainXp(1);} }
+  else if(t===1){S.en=Math.max(0,S.en-2);log('Heat shimmer. −2 energy. Drink the air.','bad');say('The sun files a formal complaint against you.','HEAT');}
+  else if(t===2){log('A billboard reads: "TS → (definitely real)". Hope +1.','good');gainXp(2);say('"TS → DEFINITELY REAL (not a mirage) — Dept. of TS"','BILLBOARD');}
+  else if(t===3){S.scrap=Math.max(0,S.scrap-1);log('Pothole tax! −1 scrap falls out of your pockets.','bad');say('*CRACK.* The highway collects its due.','POTHOLE');}
+  else{startQTE('TUMBLEWEED MISSILE (it\'s huge)',{ms:1200});}
+  setChoices([]);
+}
+const FLAVOR=['Wind. A plastic bag crosses like a ghost.','A mile marker: "TS ???mi (someone scratched out the number)".','Crows discuss you. You pretend not to hear.','Heat lightning. No rain. The road wants rain.','An empty shoe. You do not ask.','A distant horn. Not yours. Not yet.','You count lane dashes. You lose count at 400. You feel peace.','Smell of diesel and sage. The official perfume of nowhere.','Your shadow walks beside you. Good company.','A lizard does push-ups. You do two, out of respect. (−0 energy, +honor)'];
+function flavor(){ const f=pick(FLAVOR); say(f,'NARRATOR'); log('… '+f,'dim2'); if(Math.random()<0.3)gainXp(1); setChoices([]); }
+function afterWalk(silent){ renderAll(); if(S.mile>=100){win();} }
+function talk(){ if(busy||qte||!S.alive) return; if(!curNPC){ say('No one here. Just wind and lane paint.','NARRATOR'); return; }
+  busy=true; S.talked++; const n=curNPC; beep(440,0.07);
+  $('portrait').textContent=n.art+'\n\n— '+n.name+' —';
+  say(n.line,n.name); log('You talk to '+n.name+'.','sys');
+  setChoices(n.opts.map((o,i)=>({label:o.t+(o.can&&!o.can()?' (can\'t)':''),fn:()=>{
+    if(o.can&&!o.can()){log('Can\'t do that.','bad');beep(200,0.1);return;}
+    busy=false; o.run();
+    if(busy){ renderAll(); return; } // sub-dialog (riddle/combat) took over — leave its buttons alone
+    if(S.alive&&!S.won){dismissNPC();setChoices([]);} renderAll();
+  }})));
+}
+
+/* ================= QTE ================= */
+const ARROWS={'left':'◀','up':'▲','right':'▶','down':'▼'};
+const KEYNAMES={'left':'LEFT ARROW ◀','up':'UP ARROW ▲','right':'RIGHT ARROW ▶','down':'DOWN ARROW ▼'};
+const KEYS={ArrowLeft:'left',ArrowUp:'up',ArrowRight:'right',ArrowDown:'down'};
+function startQTE(carName,opts){
+  if(qte||!S.alive) return;
+  opts=opts||{};
+  const need=pick(['left','up','right','down']);
+  // generous early, faster later: 2100ms → 950ms floor (was 1350 → 550 from mile 0)
+  let ms=opts.ms||Math.max(950,2100-S.mile*8-S.dodges*10);
+  if(S._tip){ms*=1.5;S._tip=false;}
+  const carLane=R(0,2);
+  qte={need,carLane,ms,t0:performance.now(),done:false,car:carName,practice:!!opts.practice};
+  $('vQte').classList.remove('hidden');
+  $('qteName').textContent=carName+' — PRESS '+ARROWS[need]+'!';
+  $('qteArrow').textContent=ARROWS[need];
+  $('qteKey').textContent=KEYNAMES[need];
+  $('qtePractice').style.display=qte.practice?'':'none';
+  $('qteCar').textContent=
+`        ____\n   ____/ |__\\____\n  |  ___      ___  |\n  | /   \\____/   \\ |\n   \\o_/        \\o_/   HONK HONK`;
+  sAlarm(); say('⚠️ '+carName+'! Hit the <b>'+ARROWS[need]+'</b> ('+KEYNAMES[need]+')!','QTE'); busy=true;
+  requestAnimationFrame(qteTick); renderRoad();
+}
+function qteTick(t){ if(!qte||qte.done) return;
+  const el=(t-qte.t0)/qte.ms;
+  $('qteBar').style.width=Math.max(0,100-el*100)+'%';
+  $('qteCount').textContent=Math.max(0,qte.ms-(t-qte.t0))/1000>=1?(Math.max(0,qte.ms-(t-qte.t0))/1000).toFixed(1)+'s':'NOW!';
+  renderRoadQTEFrame(el);
+  if(el>=1){ resolveQTE(null); return; }
+  requestAnimationFrame(qteTick);
+}
+function renderRoadQTEFrame(el){ /* car approaches player lane visually */ }
+function resolveQTE(pressed){
+  if(!qte||qte.done) return; qte.done=true;
+  const need=qte.need; const ok=pressed===need;
+  $('vQte').classList.add('hidden'); busy=false;
+  if(ok){ S.dodges++; const bonus=qte.practice?3:R(2,4);
+    if(qte.practice) S.practiced=true;
+    gainXp(bonus);
+    log('💨 DODGED the '+qte.car+' with '+ARROWS[need]+'! (+'+bonus+' xp)','good');
+    say(qte.practice?'See? You\'re a natural. Real ones are faster — and they can kill.':'Wind slaps you. Horn fades. You are ALIVE and smug. Dodges: '+S.dodges+'.','NARRATOR'); sGood();
+    if(S.dodges%5===0){S.maxhp++;S.hp++;log('Road-reflexes! +1 max HP every 5 dodges.','good');}
+  } else if(qte.practice){
+    // practice fender-bender: hurts a little, NEVER kills
+    S.practiced=true; S.hp=Math.max(1,S.hp-2); sBad();
+    log('🚗 Practice bump! ('+(pressed===null?'too slow — wanted '+ARROWS[need]:'wrong key — wanted '+ARROWS[need])+'). −2 HP, ego −everything. Real cars splat.','bad');
+    say('The student driver screeches past, SO sorry. You\'re fine (1+ HP guaranteed in practice). Next time: hit '+ARROWS[need]+'.','NARRATOR');
+  } else {
+    splatter(pressed===null?'too slow (wanted '+ARROWS[need]+')':'pressed '+ARROWS[pressed||'?']+' instead of '+ARROWS[need]);
+  }
+  qte=null; renderAll();
+  if(!S.tutDone && S.practiced) coach('🎒 Phew. Cars get <b>real</b> after mile 10. Keep walking — loot ahead.');
+}
+function splatter(how){
+  S.splats++; sSplat();
+  $('cab').classList.remove('shake'); void $('cab').offsetWidth; $('cab').classList.add('shake');
+  log('🩸 SPLAT! '+how+'. The '+ 'car doesn\'t even slow down.','bad');
+  // 30% miracle
+  if(Math.random()<0.30 && S.hp>0){
+    S.hp=1; S.en=0;
+    log('✨ MIRACLE! The highway spits you back out at 1 HP! (30% mercy)','good');
+    say('You wake up roadside, shaped like a pancake but ALIVE. 1 HP. The universe laughs WITH you, this time.','MIRACLE'); sGood();
+    renderAll(); return;
+  }
+  // if already at low? spec: fail = die immediately (30% left with 1hp). our miracle covers 30%.
+  S.hp=0; die('splattered — '+how);
+}
+function die(why){ if(!S.alive) return; S.alive=false; qte=null; busy=true;
+  $('vQte').classList.add('hidden');
+  const isRecord=saveHi(); const h=hi();
+  $('endTitle').textContent='SPLATTERED';
+  $('endTitle').style.color='#ff3344';
+  $('endArt').textContent=
+`     .-\"\"-.\n    / .--. \\\n   | (x)(x) |   flattened. 2-dimensional. at peace? no.\n    \\  ___/\n     '--'     tire tracks across the soul\n\n   R.I.P. WALKER — mile ${S.mile} — ${why}`;
+  $('endArt').style.color='#ff3344';
+  $('endText').innerHTML='The highway keeps humming without you. Cause of death: <b>'+why+'</b>. '+(S.splats>1?'You were splattered '+S.splats+' times total (miracles are finite).':'')+(isRecord?' <b style="color:#ffcc33">★ NEW HI-SCORE! ★</b>':'');
+  $('endStats').textContent='miles '+S.mile+' · lv '+S.lv+' · kills '+S.kills+' · dodges '+S.dodges+' · talked '+S.talked+' · hi '+(h?h.score+' ('+h.mile+'mi)':'—');
+  $('vEnd').classList.remove('hidden'); sBad(); renderAll();
+}
+function win(){ S.won=true; S.alive=true; busy=true; const isRecord=saveHi(); const h=hi(); sGood(); setTimeout(sGood,300);
+  $('endTitle').textContent='YOU REACH TS';
+  $('endTitle').style.color='#ffcc33';
+  $('endArt').textContent=
+`        T  S\n       ____\n      | TS |  water tower gleaming. it dreamed you here.\n      |____|\n       |  |\n      _|  |_   POPULATION: YOU\n     (______)\n\n   the highway ends. the walking doesn't.`;
+  $('endArt').style.color='#ffcc33';
+  $('endText').innerHTML='Mile 100. The air smells like rain and vending-machine cola. A sign reads <b>"WELCOME TO TS (you made it, walker)"</b>.'+(isRecord?' <b style="color:#ffcc33">★ NEW HI-SCORE! ★</b>':'');
+  $('endStats').textContent='miles 100 · lv '+S.lv+' · kills '+S.kills+' · dodges '+S.dodges+' · talked '+S.talked+' · splats survived '+S.splats+' · hi '+(h?h.score:'—');
+  $('vEnd').classList.remove('hidden'); renderAll();
+}
+function hideAll(){ $('vTitle').classList.add('hidden'); $('vEnd').classList.add('hidden'); $('vQte').classList.add('hidden'); $('vHelp').classList.add('hidden'); }
+
+/* ---------- items ---------- */
+function eat(){ if(!S.alive||S.won||busy||qte) return;
+  if(S.snacks>0){S.snacks--;S.food+=3;log('You eat a gas-station snack. +3 food.','good');say('Mystery meat stick. Tastes like survival.','YOU');sGood();}
+  else if(S.food>=0&&S.scrap>=1){S.scrap--;S.food+=2;log('You buy a snack from yourself?? −1 scrap, +2 food. Desperate.','dim2');}
+  else{log('No snacks! Walk into loot or trade.','bad');beep(200,0.1);return;}
+  renderAll(); }
+function fix(){ if(!S.alive||S.won||busy||qte) return;
+  if(S.kits>0){if(S.hp>=S.maxhp){log('Already full HP. Save the kit.','dim2');return;}S.kits--;heal(4);}
+  else{log('No fix-kits!','bad');beep(200,0.1);} renderAll(); }
+
+/* ---------- input ---------- */
+document.addEventListener('keydown',e=>{
+  if(!$('vTitle').classList.contains('hidden')){ if(e.key==='Enter'||e.key===' '){startFromTitle();} return; }
+  if(!$('vEnd').classList.contains('hidden')){ if(e.key==='r'||e.key==='R'||e.key==='Enter'){newGame();} return; }
+  // QTE has absolute priority, arrows only
+  if(qte&&!qte.done){ const k=KEYS[e.key]; if(k){ e.preventDefault(); resolveQTE(k); } return; }
+  if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){ e.preventDefault(); walk(); }
+  else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ e.preventDefault(); moveLane(-1); }
+  else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ e.preventDefault(); moveLane(1); }
+  else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){ e.preventDefault(); log('The ditch is not a lane. Stay on the road.','dim2'); }
+  else if(e.key==='e'||e.key==='E'||e.key==='Enter'){ talk(); }
+  else if(e.key==='f'||e.key==='F'){ eat(); }
+  else if(e.key==='c'||e.key==='C'){ fix(); }
+  else if(e.key==='h'||e.key==='H'){ $('vHelp').classList.remove('hidden'); }
+  else if(e.key==='q'||e.key==='Q'){ if(!busy){ log('You sit down mid-highway and give up. The crows respect it.','bad'); die('abandoned the walk'); } }
+  else if(e.key==='m'||e.key==='M'){ muted=!muted; log(muted?'Muted.':'Sound on.','dim2'); }
+  else if(e.key>='1'&&e.key<='4'){ const b=$('choices').children[Number(e.key)-1]; if(b) b.click(); }
+  else if(e.key==='Escape'){ $('vHelp').classList.add('hidden'); }
+});
+function moveLane(d){ if(!S.alive||S.won||busy||qte) return;
+  const nl=clamp(S.lane+d,0,2); if(nl===S.lane){log('Guardrail. Beyond it: nothing. Stay in.','dim2');return;}
+  S.lane=nl; scroll++; sStep(); log('Sidestep → '+['LEFT','MID','RIGHT'][S.lane]+'.','dim2'); renderAll(); }
+$('bWalk').onclick=walk; $('bLeft').onclick=()=>moveLane(-1); $('bRight').onclick=()=>moveLane(1);
+$('bTalk').onclick=talk; $('bEat').onclick=eat; $('bHeal').onclick=fix;
+$('bHelp').onclick=()=>$('vHelp').classList.remove('hidden');
+$('bCloseHelp').onclick=()=>$('vHelp').classList.add('hidden');
+$('bDie').onclick=()=>{ if(S&&S.alive&&!busy&&!qte){ die('abandoned the walk'); } };
+$('bAgain').onclick=()=>newGame();
+$('bHow').onclick=()=>$('vHelp').classList.remove('hidden');
+function startFromTitle(){ newGame(); }
+$('bStart').onclick=startFromTitle;
+(function(){ const h=hi(); if(h) $('hiLine').textContent='hi-score: '+h.score+' ('+h.mile+' mi, '+h.date+') — beat it.'; })();
+newGame(); $('vTitle').classList.remove('hidden');
+</script>
+</body>
+</html>

@@ -30,6 +30,7 @@ You only see what's in front of you. IT avoids your light — <b style="color:#c
 IT tries to sneak up <b style="color:#c00">BEHIND you</b>. Check around you. Listen.</p>
 <p id="sub">Collect coins to unlock the EXIT. Each level demands more.<br>After being scared off, it roams 3–20s before approaching again.</p>
 <div style="margin-top:14px;color:#999;font-size:13px;letter-spacing:2px">VOLUME <input id="vol" type="range" min="0" max="100" value="75" style="width:180px;vertical-align:middle;accent-color:#c00"> <span id="volv">75%</span></div>
+<div style="margin-top:10px;color:#999;font-size:13px;letter-spacing:2px"><label style="cursor:pointer"><input id="jscare" type="checkbox" checked style="accent-color:#c00;vertical-align:middle"> JUMPSCARE</label></div>
 <button id="btn">ENTER FACILITY</button></div>
 <script>
 "use strict";
@@ -279,7 +280,9 @@ function randNeighborOpen(){const cands=[];for(let y=1;y<GH-1;y++)for(let x=1;x<
 
 // ===== ENTITIES =====
 let player,mang,keys={},mouse={x:0,y:0},running=false,dead=false,cam={x:0,y:0},flick=0,started=false;
-let dying=false,deathT=0,deathShown=false;
+let dying=false,deathT=0,deathShown=false,jumpscareOn=true;
+const jsBox=document.getElementById('jscare');
+if(jsBox)jsBox.addEventListener('change',()=>{jumpscareOn=jsBox.checked;});
 // fullscreen jumpscare face + black void + faded death screen
 function drawScare(t){
   const shx=(Math.random()-.5)*56*(1+t),shy=(Math.random()-.5)*56*(1+t);
@@ -327,8 +330,15 @@ function showDeathScreen(){
   msg.style.opacity='1';
 }
 function updateDeath(){
-  if(deathT<1.3){drawScare(deathT);return true;}
-  if(deathT<3.3){ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);return true;} // 2s void
+  if(jumpscareOn){
+    if(deathT<1.3){drawScare(deathT);return true;}
+    if(deathT<3.3){ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);return true;} // 2s void
+  }else{
+    // gentle death: slow fade to black, no flashing face, no scream
+    const k=Math.min(1,deathT/2.2);
+    ctx.fillStyle=`rgba(0,0,0,${k})`;ctx.fillRect(0,0,W,H);
+    if(deathT<2.4)return true;
+  }
   if(!deathShown){deathShown=true;showDeathScreen();deathMelody();}
   ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
   return false;
@@ -346,7 +356,7 @@ addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
 const volEl=document.getElementById('vol'),volvEl=document.getElementById('volv');
 volEl.addEventListener('input',()=>{volvEl.textContent=volEl.value+'%';setVol(volEl.value/100);});
-btn.onclick=()=>{setVol(volEl.value/100);ac();startDrone();msg.classList.add('hidden');started=true;running=true;level=1;reset(1);last=performance.now();requestAnimationFrame(loop);huntSting();};
+btn.onclick=()=>{setVol(volEl.value/100);if(jsBox)jumpscareOn=jsBox.checked;ac();startDrone();msg.classList.add('hidden');started=true;running=true;level=1;reset(1);last=performance.now();requestAnimationFrame(loop);huntSting();};
 
 let last=performance.now();
 function moveCircle(e,dx,dy){let nx=e.x+dx;if(!solidAt(nx+Math.sign(dx)*e.r,e.y-e.r*.6)&&!solidAt(nx+Math.sign(dx)*e.r,e.y+e.r*.6))e.x=nx;let ny=e.y+dy;if(!solidAt(e.x-e.r*.6,ny+Math.sign(dy)*e.r)&&!solidAt(e.x+e.r*.6,ny+Math.sign(dy)*e.r))e.y=ny;}
@@ -439,10 +449,11 @@ function loop(t){
     tgt={x:m.wx,y:m.wy};
     // direct lunge when very close & LOS
     if(distP<320&&los(m.x,m.y,player.x,player.y)){tgt={x:player.x,y:player.y};speed+=90;}
-    if(distP<52){ // caught — jumpscare -> 2s void -> faded death screen
+    if(distP<52){ // caught — jumpscare (if enabled) -> 2s void -> faded death screen
       dead=true;dying=true;deathT=0;deathShown=false;
       hudL.parentNode.style.display='none';
-      mangleScream();deathSting();droneFadeOut();
+      if(jumpscareOn){mangleScream();deathSting();droneFadeOut();}
+      else{droneFadeOut();beep(110,1.2,'sine',.2);}
     }
   }
   // whisper / proximity cue
