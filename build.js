@@ -334,7 +334,7 @@ function buildIndex() {
     /* ── MOON DOOM: approach + impact + frozen hell ── */
     .blood-moon { transition: box-shadow 0.5s; }
     .blood-moon:hover { box-shadow: 0 0 45px rgba(255,30,0,0.7), 0 0 130px rgba(255,30,0,0.35), -6px 4px 22px rgba(0,0,0,0.5) inset; }
-    /* doom flight: moon drops BEHIND the terrain so volcanoes + lake silhouette black against it */
+    /* doom flight: moon drops BEHIND the terrain so volcanoes + lake stay in front of the disc */
     .blood-moon.doom-flight { pointer-events: none; z-index: 1; }
     .content { transition: opacity 0.9s ease, filter 0.9s ease; }
     body.doom .content { opacity: 0; pointer-events: none; filter: blur(2px) saturate(2); }
@@ -343,7 +343,7 @@ function buildIndex() {
       position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0;
       background:
         radial-gradient(ellipse 90% 70% at 50% 45%, rgba(255,40,0,0.55) 0%, rgba(200,0,0,0.3) 45%, transparent 75%),
-        radial-gradient(ellipse 100% 100% at 50% 50%, rgba(255,0,60,0.25) 0%, transparent 70%);
+        radial-gradient(ellipse 100% 100% at 50% 50%, rgba(255,60,0,0.25) 0%, transparent 70%);
       mix-blend-mode: screen;
     }
     #blackout {
@@ -351,6 +351,14 @@ function buildIndex() {
       background: #000; transition: opacity 0.25s ease;
     }
     #blackout.on { opacity: 1; pointer-events: all; }
+    /* impact slam: pure white flash that hides EVERYTHING, then black.
+       NOTE: deliberately NO transition here — the slam must land on the exact
+       same frame the world filters clear, or a fade leaks normal terrain. */
+    #whiteout {
+      position: fixed; inset: 0; z-index: 101; pointer-events: none; opacity: 0;
+      background: #fff;
+    }
+    #whiteout.on { opacity: 1; pointer-events: all; }
     #thaw-flash {
       position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0;
       background: radial-gradient(ellipse 90% 70% at 50% 45%, rgba(230,244,248,0.95) 0%, rgba(170,205,215,0.55) 45%, transparent 80%);
@@ -433,6 +441,7 @@ function buildIndex() {
   <div class="blood-moon" id="moon" title="do not touch the moon" role="button" tabindex="0" aria-label="mysterious red moon"></div>
   <div id="doom-glow"></div>
   <div id="blackout"></div>
+  <div id="whiteout"></div>
   <div id="thaw-flash"></div>
   <div class="mountains" aria-hidden="true">
     <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMax slice">
@@ -976,12 +985,15 @@ function buildIndex() {
    the harder the screen shakes. At 10s: impact -> pure black,
    then hell wakes up frozen: gray-teal UI, falling ash,
    frozen lake, ground-up ice spikes. The moon burns white-hot on approach
-   while the terrain silhouettes black in front of it (only the UI hides).
+   (hyperbolic size = true looming-then-rushing approach) while everything
+   blackens straight to silhouette in front of it (only the UI hides), and
+   impact is an instant white flash slam straight into black — zero frames.
    Click the pale moon for an animated thaw back. */
 (function () {
   var moon = document.getElementById('moon');
   var glow = document.getElementById('doom-glow');
   var blackout = document.getElementById('blackout');
+  var whiteout = document.getElementById('whiteout');
   var thawFlash = document.getElementById('thaw-flash');
   var sub = document.getElementById('sub');
   if (!moon) return;
@@ -994,30 +1006,28 @@ function buildIndex() {
   try { audio = new Audio('audio/sfx/moonlanding.ogg'); audio.preload = 'auto'; } catch (e) {}
   var shakeTargets = null;
   function collectShakeTargets() {
-    // blacken = 1 → layer silhouettes to pure black as the moon nears
-    // (terrain passing IN FRONT of the moon); 0 → keeps burning bright.
-    // NOTE: the moon itself is deliberately NOT in this list — the intensity
-    // ramp lives on these layers only, so the moon can blow out to white.
-    var specs = [
-      ['.mountains', 1], ['.lava-floor', 1],
-      ['#fire', 0], ['#ash', 0], ['.abyss', 0], ['.fire-light', 0], ['.content', 0]
-    ];
+    // every world layer EXCEPT the moon (terrain: mountains, lava, fire,
+    // embers, glows). It all goes BLACK as the moon nears, passing IN FRONT
+    // of the white-hot disc. Only the UI (.content) fades out instead.
+    // NOTE: the moon itself is deliberately NOT in this list — the blackout
+    // ramp lives on these layers only, so the moon stays lit alone.
+    var sels = ['.content', '.mountains', '.lava-floor', '#fire', '#ash', '.abyss', '.fire-light'];
     shakeTargets = [];
-    specs.forEach(function (sp) {
-      var nodes = document.querySelectorAll(sp[0]);
-      for (var i = 0; i < nodes.length; i++) shakeTargets.push({ el: nodes[i], blacken: sp[1] });
+    sels.forEach(function (sel) {
+      var nodes = document.querySelectorAll(sel);
+      for (var i = 0; i < nodes.length; i++) shakeTargets.push({ el: nodes[i] });
     });
   }
   collectShakeTargets();
   function setIntensity(p) {
+    // terrain → STRAIGHT to black as the moon closes in: brightness dives on
+    // a steep curve, saturation drains with it, and there is NO hue-rotate
+    // anywhere — that detour is what dragged everything through magenta.
+    // Fully black just before impact, when the white flash slam takes over.
     if (!shakeTargets) return;
-    var s = (1 + p * 3.2).toFixed(2), c = (1 + p * 0.9).toFixed(2),
-        h = (-p * 38).toFixed(1), b = 1 + p * 0.5;
-    for (var i = 0; i < shakeTargets.length; i++) {
-      var t = shakeTargets[i];
-      var bb = (b * (1 - p * t.blacken)).toFixed(2); // terrain → 0 = black silhouette
-      t.el.style.filter = 'saturate(' + s + ') contrast(' + c + ') brightness(' + bb + ') hue-rotate(' + h + 'deg)';
-    }
+    var k = Math.min(1, p * 1.15);
+    var f = 'brightness(' + Math.pow(1 - k, 1.4).toFixed(3) + ') saturate(' + (1 - k * 0.85).toFixed(2) + ')';
+    for (var i = 0; i < shakeTargets.length; i++) shakeTargets[i].el.style.filter = f;
   }
   // stash original moon geometry so thaw restores it exactly
   var homeRect = null;
@@ -1052,8 +1062,10 @@ function buildIndex() {
     e = p < 0.7 ? e : e + (p - 0.7) * 1.2; // terminal lunge
     var vw = window.innerWidth, vh = window.innerHeight;
     var startSize = (homeRect ? homeRect.size : 112) || 112;
-    var endSize = Math.max(vw, vh) * 1.6;
-    var size = startSize + (endSize - startSize) * Math.pow(p, 2.2);
+    // true approach physics: apparent size grows hyperbolically (1/distance),
+    // so the sphere looms slowly, then rushes violently in the final seconds
+    // instead of just inflating like a balloon.
+    var size = startSize / Math.max(0.02, 1 - 0.985 * p);
     var sx = homeRect ? homeRect.left + startSize / 2 : vw * 0.9;
     var sy = homeRect ? homeRect.top + startSize / 2 : 90;
     var cx = vw / 2, cy = vh * 0.42;
@@ -1069,7 +1081,9 @@ function buildIndex() {
     if (glow) glow.style.opacity = (0.25 + p * 0.75).toFixed(3);
     // the moon burns out to white-hot as it closes in (no hue shift: white, not pink)
     moon.style.filter = 'saturate(' + Math.max(0, 1 - p * 1.1).toFixed(2) + ') brightness(' + (1 + p * 2.2).toFixed(2) + ') contrast(' + (1 - p * 0.45).toFixed(2) + ')';
-    moon.style.boxShadow = '0 0 ' + Math.round(30 + p * 200) + 'px rgba(255,250,240,' + (0.4 + p * 0.6).toFixed(2) + '), 0 0 ' + Math.round(100 + p * 380) + 'px rgba(255,240,220,' + (0.15 + p * 0.5).toFixed(2) + ')';
+    // halo starts blood-red like the moon itself, then heats to white with it
+    var gg = Math.round(30 + 220 * p), gb = Math.round(240 * p);
+    moon.style.boxShadow = '0 0 ' + Math.round(30 + p * 200) + 'px rgba(255,' + gg + ',' + gb + ',' + (0.35 + p * 0.6).toFixed(2) + '), 0 0 ' + Math.round(100 + p * 380) + 'px rgba(255,' + gg + ',' + gb + ',' + (0.15 + p * 0.45).toFixed(2) + ')';
     setIntensity(p);
     // insane screen shake, scaled by proximity (skip if reduced motion)
     if (!reduceMotion) {
@@ -1097,10 +1111,17 @@ function buildIndex() {
     cancelAnimationFrame(raf);
     clearShake();
     if (glow) glow.style.opacity = '0';
-    // moon fills everything, then everything goes pure black
+    // IMPACT SLAM: pure white flash hides EVERYTHING, holds, then drops
+    // to pure black. Both covers land INSTANTLY (transitions killed) — any
+    // fade would leak a frame of normal-looking terrain underneath.
     moon.style.opacity = '0';
-    blackout.classList.add('on');
-    setTimeout(enterFrozen, 900);
+    blackout.style.transition = 'none';
+    if (whiteout) whiteout.classList.add('on');
+    setTimeout(function () {
+      if (whiteout) whiteout.classList.remove('on');
+      blackout.classList.add('on');
+      setTimeout(enterFrozen, 900);
+    }, 320);
   }
 
   var frozenSubs = ['hell froze over', 'did you get hit by another meteor', 'winter came', 'the floor is now just cold slop', 'who polished the moon (again)', 'i feel blue', 'this is fine (frozen)'];
@@ -1126,6 +1147,8 @@ function buildIndex() {
     var banner = document.querySelector('.disclaimer span');
     if (banner) banner.textContent = '❄ hell froze over — click the pale moon to thaw ❄';
     if (sub) sub.textContent = frozenSubs[Math.floor(Math.random() * frozenSubs.length)];
+    // restore the fade for the frozen reveal only — impact needed it instant.
+    blackout.style.transition = '';
     setTimeout(function () { blackout.classList.remove('on'); }, 250);
   }
 
