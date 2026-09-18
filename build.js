@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = __dirname;
-const IGNORED = new Set(["node_modules", ".git", ".github", "forum", "build.js", "package.json", "package-lock.json"]);
+const IGNORED = new Set(["node_modules", ".git", ".github", "forum", "assets", "build.js", "package.json", "package-lock.json"]);
 
 function slugToTitle(slug) {
   return slug
@@ -69,7 +69,7 @@ function buildIndex() {
     }
     /* ── blood moon: mottled maria + craters, irregular limb ── */
     .blood-moon {
-      position: fixed; top: 42px; right: 6vw; width: 112px; height: 108px; z-index: 0; pointer-events: none;
+      position: fixed; top: 42px; right: 6vw; width: 112px; height: 108px; z-index: 60; pointer-events: auto; cursor: pointer;
       border-radius: 48% 52% 51% 49% / 52% 48% 52% 48%;
       background:
         radial-gradient(circle at 66% 60%, rgba(70,4,0,0.6) 0 9%, transparent 10%),
@@ -331,6 +331,90 @@ function buildIndex() {
       text-align: center; margin-top: 4rem; color: #5a2a1a; font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase;
     }
     footer b { color: #8a3a20; }
+    /* ── MOON DOOM: approach + impact + frozen hell ── */
+    .blood-moon { transition: box-shadow 0.5s; }
+    .blood-moon:hover { box-shadow: 0 0 45px rgba(255,30,0,0.7), 0 0 130px rgba(255,30,0,0.35), -6px 4px 22px rgba(0,0,0,0.5) inset; }
+    /* doom flight: moon drops BEHIND the terrain so volcanoes + lake silhouette black against it */
+    .blood-moon.doom-flight { pointer-events: none; z-index: 1; }
+    .content { transition: opacity 0.9s ease, filter 0.9s ease; }
+    body.doom .content { opacity: 0; pointer-events: none; filter: blur(2px) saturate(2); }
+    body.doom .forum-banner, body.doom .card, body.doom footer { pointer-events: none; }
+    #doom-glow {
+      position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0;
+      background:
+        radial-gradient(ellipse 90% 70% at 50% 45%, rgba(255,40,0,0.55) 0%, rgba(200,0,0,0.3) 45%, transparent 75%),
+        radial-gradient(ellipse 100% 100% at 50% 50%, rgba(255,0,60,0.25) 0%, transparent 70%);
+      mix-blend-mode: screen;
+    }
+    #blackout {
+      position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0;
+      background: #000; transition: opacity 0.25s ease;
+    }
+    #blackout.on { opacity: 1; pointer-events: all; }
+    #thaw-flash {
+      position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: 0;
+      background: radial-gradient(ellipse 90% 70% at 50% 45%, rgba(230,244,248,0.95) 0%, rgba(170,205,215,0.55) 45%, transparent 80%);
+    }
+    /* ── frozen aftermath: dead gray teal blue ── */
+    body.frozen { background: radial-gradient(ellipse 120% 60% at 50% 115%, #1c2a30 0%, #101a1f 35%, #070d10 65%, #04070a 100%), #04070a; color: #a9bdc2; }
+    body.frozen .abyss { background:
+      radial-gradient(ellipse 60% 35% at 50% 108%, rgba(140,180,190,0.22) 0%, rgba(90,130,140,0.1) 40%, transparent 70%),
+      radial-gradient(ellipse 30% 25% at 15% 95%, rgba(120,160,170,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 25% at 85% 95%, rgba(120,160,170,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(60,90,100,0.15) 0%, transparent 60%); }
+    body.frozen .blood-moon {
+      background:
+        radial-gradient(circle at 66% 60%, rgba(60,80,88,0.6) 0 9%, transparent 10%),
+        radial-gradient(circle at 40% 56%, rgba(80,100,108,0.55) 0 12%, transparent 13%),
+        radial-gradient(circle at 56% 32%, rgba(90,110,118,0.5) 0 8%, transparent 9%),
+        radial-gradient(circle at 35% 35%, #e8f1f3 0%, #a9bec4 24%, #5a7078 56%, #22333a 80%, #0a1216 100%);
+      box-shadow: 0 0 30px rgba(150,190,200,0.3), 0 0 100px rgba(150,190,200,0.12), -6px 4px 22px rgba(0,0,0,0.5) inset;
+    }
+    body.frozen .mountains { filter: grayscale(0.85) sepia(0.25) hue-rotate(150deg) brightness(0.65) saturate(0.7); }
+    body.frozen .lava-floor { background: #141e23; }
+    body.frozen .lava-rim { background: linear-gradient(90deg, #7d99a3, #d4e6ea, #7d99a3); box-shadow: 0 0 14px 2px rgba(160,200,210,0.5), 0 0 44px 8px rgba(120,160,170,0.25); }
+    body.frozen .lava-floor::before { background: linear-gradient(180deg, transparent, rgba(140,180,190,0.18) 60%, rgba(160,200,210,0.28)); }
+    body.frozen .fire-light { background: radial-gradient(ellipse 90% 45% at 50% 105%, rgba(140,180,190,0.2) 0%, rgba(100,140,150,0.08) 45%, transparent 70%); opacity: 0.5; }
+    body.frozen h1 {
+      background: linear-gradient(180deg, #f2f7f8 0%, #b9cdd3 18%, #7d99a3 42%, #4a626b 65%, #2a3d44 85%, #121e23 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: none; filter: drop-shadow(0 2px 0 #000) drop-shadow(0 0 22px rgba(150,190,200,0.35));
+    }
+    body.frozen .subtitle { color: #7d99a3; text-shadow: 0 2px 12px rgba(0,0,0,0.9), 0 0 20px rgba(140,180,190,0.2); }
+    body.frozen .disclaimer span { color: #b9cdd3; border-color: rgba(140,180,190,0.4); background: rgba(10,20,24,0.7); box-shadow: 0 0 18px rgba(140,180,190,0.2), inset 0 0 18px rgba(140,180,190,0.1); }
+    body.frozen .pentagram { opacity: 0.08; filter: grayscale(1) sepia(0.3) hue-rotate(150deg); }
+    body.frozen .forum-banner, body.frozen .card {
+      background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(140,180,190,0.12) 0%, transparent 55%), linear-gradient(165deg, #1a252b 0%, #10181c 45%, #070d10 100%);
+      border-color: rgba(140,180,190,0.35); box-shadow: 0 10px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(180,210,220,0.15);
+    }
+    body.frozen .forum-banner h2, body.frozen .card h2 {
+      background: linear-gradient(180deg, #f2f7f8 0%, #b9cdd3 30%, #7d99a3 60%, #4a626b 85%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    body.frozen .forum-flame, body.frozen .forum-cta, body.frozen .card .go .seal { background: radial-gradient(circle at 35% 30%, #6e8b94, #22333a 70%); box-shadow: 0 0 14px rgba(140,180,190,0.4); }
+    body.frozen .forum-banner p, body.frozen .card p { color: #6e8b94; }
+    body.frozen .card .go { color: #7d99a3; border-top-color: rgba(140,180,190,0.15); }
+    body.frozen .soul-no { color: #c8d9de; background: radial-gradient(circle at 35% 30%, #2a3d44 0%, #10181c 65%); border-color: rgba(140,180,190,0.4); box-shadow: 0 0 14px rgba(140,180,190,0.25), inset 0 0 10px rgba(140,180,190,0.2); text-shadow: 0 0 10px rgba(150,190,200,0.6); }
+    body.frozen .soul-runes { color: rgba(140,180,190,0.4); }
+    body.frozen .card::after { color: rgba(140,180,190,0.2); }
+    body.frozen .card:hover { border-color: #7d99a3; box-shadow: 0 18px 60px rgba(140,180,190,0.25), 0 0 40px rgba(140,180,190,0.15); }
+    body.frozen footer { color: #4a626b; }
+    body.frozen footer b { color: #7d99a3; }
+    body.frozen footer a { color: #7d99a3 !important; }
+    /* ── frozen: every leftover orange glow goes ice-blue ── */
+    body.frozen .ember-glow { background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(140,180,190,0.3) 0%, transparent 70%); }
+    body.frozen .forum-banner h2, body.frozen .card h2 {
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 0 14px rgba(140,180,190,0.35));
+    }
+    body.frozen .card:hover h2 { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 0 22px rgba(160,200,210,0.6)); }
+    body.frozen .card:hover::before { border-color: rgba(140,180,190,0.5); }
+    body.frozen .card:hover::after { color: rgba(140,180,190,0.6); text-shadow: 0 0 14px rgba(140,180,190,0.8); }
+    body.frozen .card:hover .go { color: #c8d9de; }
+    body.frozen .card:hover .go .seal { box-shadow: 0 0 20px rgba(140,180,190,0.8); }
+    body.frozen .forum-banner:hover {
+      border-color: #7d99a3;
+      box-shadow: 0 18px 60px rgba(140,180,190,0.3), 0 0 50px rgba(140,180,190,0.2), inset 0 1px 0 rgba(180,210,220,0.35);
+    }
     @media (max-width: 600px) {
       body { padding: 2.5rem 1rem 22rem; }
       .blood-moon { width: 72px; height: 72px; top: 22px; right: 5vw; }
@@ -346,7 +430,10 @@ function buildIndex() {
 </head>
 <body>
   <div class="abyss"></div>
-  <div class="blood-moon"></div>
+  <div class="blood-moon" id="moon" title="do not touch the moon" role="button" tabindex="0" aria-label="mysterious red moon"></div>
+  <div id="doom-glow"></div>
+  <div id="blackout"></div>
+  <div id="thaw-flash"></div>
   <div class="mountains" aria-hidden="true">
     <svg viewBox="0 0 1440 380" preserveAspectRatio="xMidYMax slice">
       <defs>
@@ -567,9 +654,13 @@ function buildIndex() {
   var fitT = null;
   window.addEventListener('resize', function () {
     if (fitT) return;
-    fitT = setTimeout(function () { fitT = null; fit(); }, 150);
+    fitT = setTimeout(function () { fitT = null; fit(); if (hellMode === 'frozen') paintFrozenLava(); }, 150);
   });
   var T = 0;
+  // MOON DOOM state: 'hell' | 'doom' | 'frozen' | 'thawing'. Read by the doom script below.
+  // melt = 1 frozen solid … 0 fully thawed. Drives the animated thaw crossfade.
+  var hellMode = 'hell', doomP = 0, melt = 1;
+  window.__hell = { get mode() { return hellMode; }, set mode(v) { hellMode = v; }, get doomP() { return doomP; }, set doomP(v) { doomP = v; }, get melt() { return melt; }, set melt(v) { melt = v; } };
   // PERF: 35 tongues (was 86). Solid fills, no per-frame gradients.
   var layers = [
     { n: 14, hMin: 90, hMax: 200, wMin: 60, wMax: 130, col: 'rgba(200,30,0,0.55)' },
@@ -591,10 +682,59 @@ function buildIndex() {
   for (var s = 0; s < 42; s++) sparks.push({ x: Math.random(), y: Math.random(), v: 0.0008 + Math.random() * 0.0018, sz: 0.6 + Math.random() * 2.2, sw: Math.random() * 6.28, ember: Math.random() < 0.55, tw: 1 + Math.random() * 3 });
   var cinders = [];
   for (var c = 0; c < 14; c++) cinders.push({ x: Math.random(), y: 0.6 + Math.random() * 0.4, v: 0.002 + Math.random() * 0.004, sz: 1 + Math.random() * 2.5, life: Math.random() });
+  // ── FROZEN: ice spikes rise from the ground (flames frozen mid-lick) ──
+  // NOTE: no full-canvas wash here — that painted a visible seam ("black bar")
+  // against the page behind the canvas. Spikes are rooted at the bottom edge.
+  var icicles = [];
+  for (var ici = 0; ici < 46; ici++) icicles.push({ x: Math.random(), len: 0.25 + Math.random() * 0.7, w: 8 + Math.random() * 22, ph: Math.random() * 6.28, lean: (Math.random() - 0.5) * 12 });
+  function drawIce(m, clear) {
+    var W = fire.width, H = fire.height;
+    if (m === undefined) m = 1;
+    if (clear === undefined) clear = true;
+    fx.globalCompositeOperation = 'source-over';
+    if (clear) fx.clearRect(0, 0, W, H);
+    if (m <= 0) return;
+    fx.globalAlpha = m;
+    var i, ic, bx, bl, bw, shimmer, tipX;
+    for (i = 0; i < icicles.length; i++) {
+      ic = icicles[i];
+      bx = ic.x * W;
+      shimmer = 0.75 + 0.25 * Math.sin(T * 1.5 + ic.ph);
+      bl = ic.len * H * m * (0.9 + 0.1 * Math.sin(T * 0.8 + ic.ph));
+      if (bl < 1) continue;
+      bw = ic.w;
+      tipX = bx + ic.lean * m;
+      fx.fillStyle = 'rgba(170,205,215,' + (0.5 * shimmer).toFixed(3) + ')';
+      fx.beginPath();
+      fx.moveTo(bx - bw / 2, H + 4);
+      fx.lineTo(bx + bw / 2, H + 4);
+      fx.lineTo(tipX, H - bl);
+      fx.closePath(); fx.fill();
+      // bright core
+      fx.fillStyle = 'rgba(225,242,246,' + (0.55 * shimmer).toFixed(3) + ')';
+      fx.beginPath();
+      fx.moveTo(bx - bw / 6, H + 4);
+      fx.lineTo(bx + bw / 6, H + 4);
+      fx.lineTo(tipX, H - bl * 0.92);
+      fx.closePath(); fx.fill();
+    }
+    fx.globalAlpha = 1;
+  }
   function drawFire(dt) {
+    if (hellMode === 'frozen') { drawIce(1); return; }
+    if (hellMode === 'thawing') {
+      drawFireTongues(dt, Math.max(0.001, 1 - melt)); // flames reignite as the ice melts
+      drawIce(melt, false); // shrinking spikes composited on top, no clear
+      fx.globalCompositeOperation = 'source-over';
+      return;
+    }
+    drawFireTongues(dt, hellMode === 'doom' ? (1 + doomP * 1.6) : 1);
+  }
+  function drawFireTongues(dt, boost) {
     var W = fire.width, H = fire.height;
     fx.globalCompositeOperation = 'source-over';
     fx.clearRect(0, 0, W, H);
+    // doom approach: flames grow taller + whiter as the moon nears
     fx.fillStyle = fireBase;
     fx.fillRect(0, 0, W, H);
     // PERF: solid fills only — zero per-frame gradients. 'lighter' blend
@@ -606,7 +746,7 @@ function buildIndex() {
       var flick = 0.9 + 0.1 * Math.sin(T * (2 + t.sp) + t.ph * 2);
       var bx = t.x * W + sway;
       var bh = H + 10;
-      var th = t.h * flick;
+      var th = t.h * flick * boost;
       var tw = t.w * (1.1 - flick * 0.15);
       fx.fillStyle = L.col;
       fx.beginPath();
@@ -618,7 +758,33 @@ function buildIndex() {
     }
     fx.globalCompositeOperation = 'source-over';
   }
+  // ── FROZEN: gray ash falls DOWN like snow ──
+  var snow = [];
+  for (var fli = 0; fli < 140; fli++) snow.push({ x: Math.random(), y: Math.random(), v: 0.0009 + Math.random() * 0.0022, sz: 1 + Math.random() * 3, sw: Math.random() * 6.28, swSp: 0.3 + Math.random() * 1.2, o: 0.25 + Math.random() * 0.5 });
+  function drawSnow(dt, alpha) {
+    if (alpha === undefined) alpha = 1;
+    var W = ashC.width, H = ashC.height;
+    ax.globalCompositeOperation = 'source-over';
+    ax.clearRect(0, 0, W, H);
+    if (alpha <= 0) return;
+    ax.fillStyle = '#9fb0b6';
+    for (var i = 0; i < snow.length; i++) {
+      var p = snow[i];
+      p.y += p.v * dt; p.sw += 0.01 * p.swSp * dt;
+      if (p.y > 1.05) { p.y = -0.05; p.x = Math.random(); }
+      var px = p.x * W + Math.sin(p.sw * 2 + T * 0.5) * 14;
+      var py = p.y * H;
+      ax.globalAlpha = p.o * alpha;
+      var s = p.sz;
+      // tiny cross sparkle on the big flakes
+      if (s > 2.6) { ax.fillRect(px - s, py, s * 2, 1); ax.fillRect(px, py - s, 1, s * 2); }
+      else ax.fillRect(px, py, s, s);
+    }
+    ax.globalAlpha = 1;
+  }
   function drawAsh(dt) {
+    if (hellMode === 'frozen') { drawSnow(dt, 1); return; }
+    if (hellMode === 'thawing') { drawSnow(dt, melt); return; }
     var W = ashC.width, H = ashC.height;
     ax.globalCompositeOperation = 'source-over';
     ax.clearRect(0, 0, W, H);
@@ -672,8 +838,40 @@ function buildIndex() {
   for (var hi = 0; hi < 8; hi++) hotspots.push({ x: Math.random(), y: 0.15 + Math.random() * 0.7, r: 60 + Math.random() * 110, ph: Math.random() * 6.28, sp: 0.8 + Math.random() * 1.6 });
   var bubbles = [];
   for (var bi = 0; bi < 8; bi++) bubbles.push({ x: Math.random(), y: Math.random(), r: 2 + Math.random() * 5, life: Math.random(), sp: 0.008 + Math.random() * 0.02 });
+  function paintFrozenLava(alpha) {
+    if (alpha === undefined) alpha = 1;
+    if (alpha <= 0) return;
+    var W = lavaC.width, H = lavaC.height;
+    if (!W || !H) return;
+    var b = lx.createLinearGradient(0, 0, 0, H);
+    b.addColorStop(0, '#c8d9de');
+    b.addColorStop(0.25, '#8ba2ab');
+    b.addColorStop(0.6, '#4a626b');
+    b.addColorStop(1, '#16242a');
+    lx.globalCompositeOperation = 'source-over';
+    lx.globalAlpha = alpha;
+    lx.fillStyle = b; lx.fillRect(0, 0, W, H);
+    // frozen cracks
+    lx.strokeStyle = 'rgba(220,238,242,0.5)';
+    for (var k = 0; k < 4; k++) {
+      lx.lineWidth = 1 + (k % 2);
+      lx.beginPath();
+      var started = false;
+      for (var gx = -20; gx <= W + 20; gx += 56) {
+        var gy = H * (0.15 + k * 0.22) + Math.sin(gx * 0.02 + k * 9) * 5;
+        if (!started) { lx.moveTo(gx, gy); started = true; } else lx.lineTo(gx, gy);
+      }
+      lx.stroke();
+    }
+    // glossy highlight
+    lx.fillStyle = 'rgba(230,244,248,0.25)';
+    lx.fillRect(0, 0, W, Math.max(2, H * 0.06));
+    lx.globalAlpha = 1;
+  }
+  window.__hellFreezeLava = paintFrozenLava;
   function drawLava(dt) {
     if (!dt) dt = 1;
+    if (hellMode === 'frozen') return; // lake stays frozen solid
     var W = lavaC.width, H = lavaC.height;
     if (!W || !H) return;
     // PERF: base + shade gradients cached on resize; hotspots are sprite blits
@@ -744,6 +942,8 @@ function buildIndex() {
     lx.globalCompositeOperation = 'source-over';
     lx.fillStyle = lavaShade;
     lx.fillRect(0, 0, W, H);
+    // thawing: living lava melts back through the ice sheet
+    if (hellMode === 'thawing') paintFrozenLava(melt);
   }
   // PERF: pause offscreen + lava at half rate (every 2nd frame)
   var frame = 0, running = true, lastT = 0;
@@ -769,6 +969,230 @@ function buildIndex() {
   }
   drawLava();
   requestAnimationFrame(loop);
+})();
+/* ── MOON DOOM: click the red moon ─────────────────────────────
+   0s: moonlanding.ogg plays, UI vanishes, moon approaches.
+   The nearer it gets, the more saturated the world burns and
+   the harder the screen shakes. At 10s: impact -> pure black,
+   then hell wakes up frozen: gray-teal UI, falling ash,
+   frozen lake, ground-up ice spikes. The moon burns white-hot on approach
+   while the terrain silhouettes black in front of it (only the UI hides).
+   Click the pale moon for an animated thaw back. */
+(function () {
+  var moon = document.getElementById('moon');
+  var glow = document.getElementById('doom-glow');
+  var blackout = document.getElementById('blackout');
+  var thawFlash = document.getElementById('thaw-flash');
+  var sub = document.getElementById('sub');
+  if (!moon) return;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var state = 'hell'; // hell | doom | black | frozen | thawing
+  var startT = 0, raf = 0;
+  var DURATION = 10000;
+  var THAW_DURATION = 2800;
+  var audio = null;
+  try { audio = new Audio('audio/sfx/moonlanding.ogg'); audio.preload = 'auto'; } catch (e) {}
+  var shakeTargets = null;
+  function collectShakeTargets() {
+    // blacken = 1 → layer silhouettes to pure black as the moon nears
+    // (terrain passing IN FRONT of the moon); 0 → keeps burning bright.
+    // NOTE: the moon itself is deliberately NOT in this list — the intensity
+    // ramp lives on these layers only, so the moon can blow out to white.
+    var specs = [
+      ['.mountains', 1], ['.lava-floor', 1],
+      ['#fire', 0], ['#ash', 0], ['.abyss', 0], ['.fire-light', 0], ['.content', 0]
+    ];
+    shakeTargets = [];
+    specs.forEach(function (sp) {
+      var nodes = document.querySelectorAll(sp[0]);
+      for (var i = 0; i < nodes.length; i++) shakeTargets.push({ el: nodes[i], blacken: sp[1] });
+    });
+  }
+  collectShakeTargets();
+  function setIntensity(p) {
+    if (!shakeTargets) return;
+    var s = (1 + p * 3.2).toFixed(2), c = (1 + p * 0.9).toFixed(2),
+        h = (-p * 38).toFixed(1), b = 1 + p * 0.5;
+    for (var i = 0; i < shakeTargets.length; i++) {
+      var t = shakeTargets[i];
+      var bb = (b * (1 - p * t.blacken)).toFixed(2); // terrain → 0 = black silhouette
+      t.el.style.filter = 'saturate(' + s + ') contrast(' + c + ') brightness(' + bb + ') hue-rotate(' + h + 'deg)';
+    }
+  }
+  // stash original moon geometry so thaw restores it exactly
+  var homeRect = null;
+  function stashHome() {
+    var r = moon.getBoundingClientRect();
+    homeRect = { top: r.top, left: r.left, size: r.width };
+  }
+  stashHome();
+  window.addEventListener('resize', function () { if (state === 'hell') stashHome(); });
+
+  function setShake(px, rot) {
+    if (!shakeTargets) return;
+    for (var i = 0; i < shakeTargets.length; i++) {
+      shakeTargets[i].el.style.transform = 'translate(' + px.x + 'px,' + px.y + 'px) rotate(' + rot + 'deg)';
+    }
+  }
+  function clearShake() {
+    if (!shakeTargets) return;
+    for (var i = 0; i < shakeTargets.length; i++) {
+      shakeTargets[i].el.style.transform = '';
+      shakeTargets[i].el.style.filter = '';
+    }
+  }
+
+  function doomFrame(now) {
+    if (state !== 'doom') return;
+    var el = now - startT;
+    var p = Math.min(el / DURATION, 1);
+    window.__hell.doomP = p;
+    // moon approach: ease-in, drifts to screen center and grows to swallow the sky
+    var e = p * p * (3 - 2 * p); // smoothstep
+    e = p < 0.7 ? e : e + (p - 0.7) * 1.2; // terminal lunge
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var startSize = (homeRect ? homeRect.size : 112) || 112;
+    var endSize = Math.max(vw, vh) * 1.6;
+    var size = startSize + (endSize - startSize) * Math.pow(p, 2.2);
+    var sx = homeRect ? homeRect.left + startSize / 2 : vw * 0.9;
+    var sy = homeRect ? homeRect.top + startSize / 2 : 90;
+    var cx = vw / 2, cy = vh * 0.42;
+    var mx = sx + (cx - sx) * e;
+    var my = sy + (cy - sy) * e;
+    moon.style.width = size + 'px';
+    moon.style.height = size + 'px';
+    moon.style.left = (mx - size / 2) + 'px';
+    moon.style.top = (my - size / 2) + 'px';
+    moon.style.right = 'auto';
+    // intensity: red glow + saturation ramp on the WORLD layers only.
+    // only the UI (.content) fades out — the terrain stays, blackening below.
+    if (glow) glow.style.opacity = (0.25 + p * 0.75).toFixed(3);
+    // the moon burns out to white-hot as it closes in (no hue shift: white, not pink)
+    moon.style.filter = 'saturate(' + Math.max(0, 1 - p * 1.1).toFixed(2) + ') brightness(' + (1 + p * 2.2).toFixed(2) + ') contrast(' + (1 - p * 0.45).toFixed(2) + ')';
+    moon.style.boxShadow = '0 0 ' + Math.round(30 + p * 200) + 'px rgba(255,250,240,' + (0.4 + p * 0.6).toFixed(2) + '), 0 0 ' + Math.round(100 + p * 380) + 'px rgba(255,240,220,' + (0.15 + p * 0.5).toFixed(2) + ')';
+    setIntensity(p);
+    // insane screen shake, scaled by proximity (skip if reduced motion)
+    if (!reduceMotion) {
+      var mag = p * p * 34;
+      setShake({ x: (Math.random() - 0.5) * 2 * mag, y: (Math.random() - 0.5) * 2 * mag }, (Math.random() - 0.5) * p * 3);
+    }
+    if (p >= 1) { impact(); return; }
+    raf = requestAnimationFrame(doomFrame);
+  }
+
+  function startDoom() {
+    state = 'doom';
+    window.__hell.mode = 'doom';
+    startT = performance.now();
+    document.body.classList.add('doom');
+    moon.classList.add('doom-flight');
+    moon.style.position = 'fixed';
+    if (audio) { try { audio.currentTime = 0; audio.play().catch(function () {}); } catch (e) {} }
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(doomFrame);
+  }
+
+  function impact() {
+    state = 'black';
+    cancelAnimationFrame(raf);
+    clearShake();
+    if (glow) glow.style.opacity = '0';
+    // moon fills everything, then everything goes pure black
+    moon.style.opacity = '0';
+    blackout.classList.add('on');
+    setTimeout(enterFrozen, 900);
+  }
+
+  var frozenSubs = ['hell froze over', 'did you get hit by another meteor', 'winter came', 'the floor is now just cold slop', 'who polished the moon (again)', 'i feel blue', 'this is fine (frozen)'];
+  var hellSub = sub ? sub.textContent : '';
+  var hellBanner = (document.querySelector('.disclaimer span') || {}).textContent || '';
+  function enterFrozen() {
+    state = 'frozen';
+    window.__hell.mode = 'frozen';
+    document.body.classList.remove('doom');
+    document.body.classList.add('frozen');
+    if (window.__hellFreezeLava) window.__hellFreezeLava();
+    // shrink moon to a small pale orb back in the corner, clickable to thaw
+    moon.style.opacity = '1';
+    moon.style.width = '';
+    moon.style.height = '';
+    moon.style.left = '';
+    moon.style.top = '';
+    moon.style.right = '';
+    moon.style.filter = '';
+    moon.style.boxShadow = '';
+    moon.classList.remove('doom-flight');
+    moon.setAttribute('title', 'thaw hell');
+    var banner = document.querySelector('.disclaimer span');
+    if (banner) banner.textContent = '❄ hell froze over — click the pale moon to thaw ❄';
+    if (sub) sub.textContent = frozenSubs[Math.floor(Math.random() * frozenSubs.length)];
+    setTimeout(function () { blackout.classList.remove('on'); }, 250);
+  }
+
+  // ── ANIMATED THAW (over ~2.8s, all driven by melt 1 → 0):
+  // CANVAS: spikes shrink, snow thins, living lava melts through the ice.
+  // UI COLORS: the frozen class drops at thaw START (hell palette snaps back
+  // instantly) but hides under the frost veil — a pale overlay + a grayscale
+  // wash on the world layers — which both fade WITH the melt, so the colors
+  // visibly warm back up instead of popping at the end. ──
+  var thawStart = 0, thawRaf = 0;
+  var thawLen = reduceMotion ? 500 : THAW_DURATION;
+  function thawVeil(m) {
+    // frost veil: pale ice cover lifting off the whole page
+    if (thawFlash) thawFlash.style.opacity = (0.9 * m).toFixed(3);
+    // grayscale wash on the world (not the UI: the veil handles that fade)
+    if (!shakeTargets) return;
+    for (var i = 0; i < shakeTargets.length; i++) {
+      var t = shakeTargets[i];
+      if (t.el.classList && t.el.classList.contains('content')) continue;
+      t.el.style.filter = m <= 0 ? '' : 'grayscale(' + (m * 0.85).toFixed(2) + ') brightness(' + (1 + m * 0.08).toFixed(2) + ')';
+    }
+  }
+  function startThaw() {
+    if (state !== 'frozen') return;
+    state = 'thawing';
+    window.__hell.mode = 'thawing';
+    window.__hell.melt = 1;
+    // hell palette back NOW, under full veil cover — the reveal is the fade
+    document.body.classList.remove('frozen');
+    moon.setAttribute('title', 'thawing…');
+    var banner = document.querySelector('.disclaimer span');
+    if (banner) banner.textContent = '❄ thawing… ❄';
+    if (thawFlash) { thawFlash.style.transition = 'none'; thawFlash.style.opacity = '0.9'; }
+    thawVeil(1);
+    thawStart = performance.now();
+    cancelAnimationFrame(thawRaf);
+    thawRaf = requestAnimationFrame(thawFrame);
+  }
+  function thawFrame(now) {
+    if (state !== 'thawing') return;
+    var p = Math.min((now - thawStart) / thawLen, 1);
+    var m = 1 - p;
+    window.__hell.melt = m;
+    thawVeil(m);
+    if (p >= 1) { finishThaw(); return; }
+    thawRaf = requestAnimationFrame(thawFrame);
+  }
+  function finishThaw() {
+    state = 'hell';
+    window.__hell.mode = 'hell';
+    window.__hell.melt = 1;
+    window.__hell.doomP = 0;
+    thawVeil(0);
+    moon.setAttribute('title', 'do not touch the moon');
+    var banner = document.querySelector('.disclaimer span');
+    if (banner) banner.textContent = hellBanner;
+    if (sub) sub.textContent = hellSub;
+    stashHome();
+  }
+
+  moon.addEventListener('click', function () {
+    if (state === 'hell') startDoom();
+    else if (state === 'frozen') startThaw();
+  });
+  moon.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); moon.click(); }
+  });
 })();
 </script>
 </body>
