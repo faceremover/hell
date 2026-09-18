@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HELLFORUM, screams from the pit</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nosifer&family=Pirata+One&family=Metal+Mania&family=Inter:wght@400;600;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blood:#ff1a00;--lava:#ff6a00;--gold:#ffcc33;--ash:#c9a68a;--panel:#160702;--panel2:#1e0b04;--line:rgba(255,122,26,.22)}
+body{font-family:'Inter',system-ui,sans-serif;background:radial-gradient(ellipse 120% 55% at 50% 112%,#3d0a00 0%,#1a0300 38%,#070000 70%,#030000 100%),#030000;color:#e8c9b0;min-height:100vh;padding-bottom:120px;position:relative;overflow-x:hidden}
+a{color:#ff9a4a}
+.abyss{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 32% at 50% 108%,rgba(255,70,0,.32) 0%,rgba(255,30,0,.1) 45%,transparent 70%)}
+.blood-moon{position:fixed;top:26px;right:4vw;width:74px;height:72px;z-index:0;pointer-events:none;border-radius:48% 52% 51% 49%/52% 48% 52% 48%;background:radial-gradient(circle at 35% 35%,#ff9a7a 0%,#e0261a 24%,#8a0d00 56%,#2e0300 80%,#100000 100%);box-shadow:0 0 30px rgba(255,30,0,.35),0 0 90px rgba(255,30,0,.15)}
+.lava-floor{position:fixed;left:0;right:0;bottom:0;height:74px;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffe27a 0%,#ff6a00 22%,#c41e00 55%,#2a0300 100%)}
+.lava-floor::before{content:'';position:absolute;top:-40px;left:0;right:0;height:42px;background:linear-gradient(180deg,transparent,rgba(255,110,0,.28) 60%,rgba(255,160,30,.4))}
+.vignette{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse 78% 70% at 50% 38%,transparent 55%,rgba(0,0,0,.55) 85%,rgba(0,0,0,.85) 100%)}
+.wrap{position:relative;z-index:10;max-width:1180px;margin:0 auto;padding:22px 16px 0}
+/* header */
+.topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:.72rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#ffb37a;border:1px solid var(--line);background:rgba(30,5,0,.75);padding:.55rem .95rem;border-radius:999px}
+.back:hover{border-color:#ff7a1a;box-shadow:0 0 18px rgba(255,60,0,.4)}
+.logo h1{font-family:'Nosifer',cursive;font-size:clamp(1.9rem,5vw,3rem);line-height:1;background:linear-gradient(180deg,#fff8d0 0%,#ffdd44 18%,#ff8800 42%,#ff2a00 65%,#8b0000 85%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(255,60,0,.5))}
+.logo small{display:block;font-family:Georgia,serif;font-style:italic;color:#d98a6a;font-size:.9rem;margin-top:2px}
+.top-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search{background:#0d0301;border:1px solid var(--line);color:#e8c9b0;border-radius:999px;padding:.55rem 1rem;font-size:.85rem;width:230px;outline:none}
+.search:focus{border-color:#ff7a1a}
+.btn{cursor:pointer;border:1px solid rgba(255,160,60,.5);background:radial-gradient(circle at 35% 30%,#ff5a00,#8b0d00 70%);color:#ffe9c4;font-weight:800;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;padding:.65rem 1.1rem;border-radius:999px;box-shadow:0 0 14px rgba(255,60,0,.5)}
+.btn:hover{filter:brightness(1.15)}
+.btn.ghost{background:rgba(30,5,0,.7);color:#ff9a4a}
+.userpill{display:flex;align-items:center;gap:8px;font-size:.78rem;color:#c9a68a;border:1px dashed rgba(255,140,40,.35);padding:.45rem .8rem;border-radius:999px}
+.av{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;color:#ffe9c4;flex:none}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 16px}
+.stat{background:linear-gradient(165deg,#241009,#0b0301);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem;text-align:center}
+.stat b{display:block;font-size:1.25rem;color:#ffcf7a;font-family:'Pirata One',serif;letter-spacing:.03em}
+.stat span{font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:#8a5a40}
+.pulse{color:#7dff8a!important}
+/* layout */
+.layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.panel{background:linear-gradient(165deg,rgba(36,16,9,.96),rgba(11,3,1,.97));border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.panel-h{padding:.85rem 1.1rem;border-bottom:1px solid rgba(255,120,30,.15);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel-h h2{font-family:'Pirata One',serif;font-size:1.4rem;color:#ffbe4a;letter-spacing:.02em}
+.cats{display:flex;gap:8px;flex-wrap:wrap;padding:.8rem 1.1rem;border-bottom:1px solid rgba(255,120,30,.12)}
+.chip{cursor:pointer;font-size:.68rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);color:#c98a5f;background:rgba(20,5,0,.6);padding:.4rem .75rem;border-radius:999px}
+.chip.on,.chip:hover{background:#ff5a00;color:#ffe9c4;border-color:#ff5a00;box-shadow:0 0 12px rgba(255,90,0,.5)}
+.sortrow{display:flex;align-items:center;gap:10px;padding:.6rem 1.1rem;border-bottom:1px solid rgba(255,120,30,.12);font-size:.75rem;color:#8a5a40}
+.sortrow select{background:#0d0301;color:#ffcf7a;border:1px solid var(--line);border-radius:8px;padding:.35rem .6rem;font-size:.78rem}
+#threadList .row{cursor:pointer;display:grid;grid-template-columns:52px 1fr auto;gap:12px;padding:.9rem 1.1rem;border-bottom:1px solid rgba(255,120,30,.1);align-items:center;transition:background .2s}
+#threadList .row:hover{background:rgba(255,90,0,.06)}
+.votes{display:flex;flex-direction:column;align-items:center;gap:2px;color:#ffcf7a;font-weight:800}
+.votes small{color:#8a5a40;font-size:.62rem}
+.t-title{font-weight:800;color:#ffe3c2;font-size:.95rem;line-height:1.35}
+.t-title .tag{display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:rgba(255,90,0,.16);border:1px solid rgba(255,140,0,.4);color:#ffb37a;border-radius:5px;padding:.1rem .4rem;margin-right:.45rem;vertical-align:middle}
+.t-meta{font-size:.74rem;color:#a06a4a;margin-top:.3rem}
+.t-meta b{color:#ff9a4a}
+.t-ex{font-family:Georgia,serif;font-style:italic;font-size:.82rem;color:#b98a68;margin-top:.25rem;line-height:1.45}
+.t-side{text-align:right;font-size:.72rem;color:#8a5a40;line-height:1.7;min-width:118px}
+.t-side b{color:#ffcf7a}
+/* thread view */
+#threadView{display:none}
+.tv-head{padding:1.1rem 1.2rem;border-bottom:1px solid rgba(255,120,30,.15)}
+.tv-head h2{font-size:1.25rem;color:#ffe3c2;line-height:1.35;margin:.4rem 0}
+.tv-head .t-meta{font-size:.78rem}
+.post{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:1rem 1.2rem;border-bottom:1px solid rgba(255,120,30,.1)}
+.post.op{background:rgba(255,120,0,.05)}
+.p-body{font-size:.88rem;line-height:1.6;color:#e3bda0}
+.p-body p+p{margin-top:.6rem}
+.p-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:.45rem;font-size:.75rem;color:#8a5a40}
+.p-head b{color:#ffcf7a;font-size:.85rem}
+.badge{font-size:.58rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:.12rem .45rem;border-radius:5px}
+.badge.op{background:#ff5a00;color:#fff}
+.badge.mod{background:#2a1503;border:1px solid #ff7a1a;color:#ffb37a}
+.badge.bot{background:#1a2a10;border:1px solid #5aa832;color:#9dff7a}
+.p-foot{display:flex;gap:12px;margin-top:.6rem;font-size:.72rem;color:#8a5a40;align-items:center}
+.uv{cursor:pointer;user-select:none;border:1px solid var(--line);border-radius:999px;padding:.2rem .7rem;font-weight:800;color:#ffcf7a}
+.uv:hover{border-color:#ff7a1a}
+.uv.used{background:#ff5a00;color:#fff;border-color:#ff5a00}
+.sig{margin-top:.6rem;font-family:Georgia,serif;font-style:italic;font-size:.75rem;color:#7a4a32;border-top:1px dashed rgba(255,140,40,.25);padding-top:.4rem}
+.replybox{padding:1rem 1.2rem}
+.replybox textarea{width:100%;min-height:74px;background:#0d0301;border:1px solid var(--line);border-radius:10px;color:#e8c9b0;padding:.7rem;font-size:.85rem;resize:vertical;outline:none}
+.replybox textarea:focus{border-color:#ff7a1a}
+/* sidebar */
+.side{display:flex;flex-direction:column;gap:16px}
+.card{background:linear-gradient(165deg,#241009,#0b0301);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem}
+.card h3{font-family:'Pirata One',serif;color:#ffbe4a;font-size:1.2rem;margin-bottom:.6rem}
+.card ul{list-style:none;font-size:.82rem;line-height:1.5;color:#c98a5f}
+.card li{padding:.35rem 0;border-bottom:1px dashed rgba(255,140,40,.15)}
+.card li:last-child{border:none}
+.card b{color:#ffcf7a}
+.ad{border:1px solid #ffd23e;background:linear-gradient(165deg,#2a1a02,#120702);border-radius:14px;padding:1rem 1.1rem;text-align:center}
+.ad b{font-family:'Pirata One',serif;color:#ffd23e;font-size:1.2rem}
+.ad p{font-size:.78rem;color:#d9a45a;margin:.4rem 0 .7rem}
+.rules{font-size:.8rem;line-height:1.65;color:#c98a5f}
+.online-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7dff8a;box-shadow:0 0 8px #7dff8a;margin-right:6px}
+/* modal */
+#modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);padding:16px}
+#modal.open{display:flex}
+.sheet{width:min(560px,100%);background:#1a0803;border:1px solid rgba(255,140,0,.5);border-radius:16px;padding:1.2rem;box-shadow:0 20px 80px rgba(255,60,0,.35)}
+.sheet h3{font-family:'Pirata One',serif;color:#ffbe4a;font-size:1.4rem;margin-bottom:.6rem}
+.sheet input,.sheet select,.sheet textarea{width:100%;background:#0d0301;border:1px solid var(--line);border-radius:10px;color:#e8c9b0;padding:.6rem;font-size:.85rem;margin-bottom:.6rem;outline:none}
+footer{text-align:center;margin-top:26px;color:#5a2a1a;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase}
+.empty{padding:2rem;text-align:center;font-family:Georgia,serif;font-style:italic;color:#8a5a40}
+.pager{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:.9rem 1.1rem;border-top:1px solid rgba(255,120,30,.12);font-size:.78rem;color:#8a5a40}
+.pgbtn{cursor:pointer;border:1px solid var(--line);background:rgba(20,5,0,.6);color:#ffcf7a;font-weight:800;font-size:.72rem;border-radius:8px;padding:.4rem .75rem;min-width:38px}
+.pgbtn:hover:not(:disabled){border-color:#ff7a1a;box-shadow:0 0 12px rgba(255,90,0,.4)}
+.pgbtn.on{background:#ff5a00;color:#fff;border-color:#ff5a00}
+.pgbtn:disabled{opacity:.35;cursor:default}
+</style>
+</head>
+<body>
+<div class="abyss"></div><div class="blood-moon"></div><div class="lava-floor"></div><div class="vignette"></div>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="/">← back to hell</a>
+    <div class="logo"><h1>HELLFORUM</h1><small id="rotator">screams from the pit · no refunds · souls processed daily</small></div>
+    <div class="top-right">
+      <input id="q" class="search" placeholder="search the damned… (try: dave, slop, mangler)">
+      <div class="userpill"><span class="av" id="meAv">G</span> GuestSoul_666 · <span style="color:#ffcf7a">Tortured Soul</span></div>
+      <button class="btn" id="newBtn">+ new thread</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="online">13,666</b><span><span class="pulse">●</span> souls online</span></div>
+    <div class="stat"><b>8</b><span>circles (games)</span></div>
+    <div class="stat"><b id="tCount"></b><span>threads</span></div>
+    <div class="stat"><b>1.2M</b><span>posts</span></div>
+    <div class="stat"><b>500M+</b><span>dangler downloads*</span></div>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="panel" id="listPanel">
+        <div class="panel-h"><h2>🔥 The Pit, all threads</h2><span style="font-size:.72rem;color:#8a5a40" id="listInfo"></span></div>
+        <div class="cats" id="cats"></div>
+        <div class="sortrow">sort by <select id="sort"><option value="hot">🔥 hot</option><option value="new">✨ newest</option><option value="top">🏆 most upslopped</option><option value="replies">💬 most replies</option></select><span id="count"></span></div>
+        <div id="threadList"></div>
+        <div class="pager" id="pager"></div>
+      </div>
+      <div class="panel" id="threadView">
+        <div class="panel-h"><button class="btn ghost" id="backBtn">← all threads</button><span style="font-size:.72rem;color:#8a5a40">click a post's ▲ to upslop it (saved in this browser)</span></div>
+        <div class="tv-head"><span id="tvCat"></span><h2 id="tvTitle"></h2><div class="t-meta" id="tvMeta"></div></div>
+        <div id="posts"></div>
+        <div class="replybox"><textarea id="replyText" placeholder="add your scream… (it will appear instantly, locally, hell keeps your soul but not your data)"></textarea><div style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="replyBtn">damn this reply</button><span style="font-size:.72rem;color:#8a5a40;align-self:center">be nice. the demons read everything.</span></div></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card"><h3>📜 Rules of Damnation</h3><div class="rules">1. No refunds. Ever.<br>2. Spoiler-tag Mangler jumpscares.<br>3. Dave is always right.<br>4. Do NOT lick the lava. It is slop.<br>5. Mauppi's restaurant reviews must include a photo of the bowl.<br>6. Rating the Dangler anything but 5★ is a bannable offence (only option).</div></div>
+      <div class="card"><h3>🏆 Top Sinners</h3><ul id="tops"></ul></div>
+      <div class="card"><h3><span class="online-dot"></span>Tormented right now</h3><ul id="onlineList"></ul></div>
+      <div class="ad"><b>⛧ SUBWAY DANGLER SURF ⛧</b><p>play the ad instead of the game! 100 free gems if you watch Dave eat a sandwich. BEST VALUE!!</p><button class="btn" onclick="alert('Thank you! The Dangler got you. Skill issue.')">CLAIM 100 GEMS</button><div style="font-size:.62rem;color:#8a6a3a;margin-top:.5rem">*choice made by Dave · made with Unity (not really)</div></div>
+      <div class="card"><h3>🩸 Patch notes v6.66</h3><ul><li><b>Highway to TS:</b> first car still can't kill you. It can still emotionally damage you.</li><li><b>Poopy Butthole:</b> 3 new flavours: Rear Burner, Ring of Fire, Chef's Number Two.</li><li><b>Slop Royal:</b> Slop Master river-dump radius +10%. Goblins furious.</li><li><b>Mangler 3D:</b> IT now 4% faster and 100% more behind you.</li><li><b>Blood moon:</b> still malformed bowling ball. Won't fix.</li></ul></div>
+    </div>
+  </div>
+  <footer>est. MMXXVI · <b style="color:#8a3a20">no refunds</b> · hell.faceremover.net · *downloads counted by Dave</footer>
+</div>
+<div id="modal"><div class="sheet"><h3>Start a new damnation</h3><input id="ntTitle" placeholder="thread title…"><select id="ntCat"></select><textarea id="ntBody" placeholder="your scream…"></textarea><div style="display:flex;gap:8px"><button class="btn" id="ntGo">post to the pit</button><button class="btn ghost" id="ntNo">nevermind</button></div></div></div>
+<script>
+var CATS=["All","Announcements","General","Gigel Prats","Highway to TS","Next Big Thing","Poopy Butthole","Slop Royal","Dangler 4D","Manglerverse","Bug Reports","Lore & Theories"];
+var THREADS=[
+{cat:`Announcements`,title:`Welcome to HELLFORUM, read this before you scream (v6.66)`,by:`Beelzebub`,rank:`DEMON MOD`,time:`pinned · 6mo ago`,views:`666K`,hot:1,pinned:1,ex:`How ranks, flairs, spoiler tags and lava-licking bans work.`,posts:[
+{by:`Beelzebub`,rank:`DEMON MOD`,time:`6mo ago`,up:12400,text:`Welcome, fresh souls. HELL now gets 8 circles of pure AI slop and you all post like it is heaven. Quick rules: flair your Mangler clips NSFW-JUMPSCARE, put Poopy reviews in the restaurant format, and stop reporting the blood moon as a bug. It is a malformed bowling ball. It stays.`},
+{by:`GuestSoul_666`,rank:`Tortured Soul`,time:`6mo ago`,up:3100,text:`honestly first. also is the stuff on the floor actually lava or slop. asking for a friend who licked it.`},
+{by:`Beelzebub`,rank:`DEMON MOD`,time:`6mo ago`,up:5200,text:`It is slop. Your friend is banned.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`6mo ago`,up:4100,text:`Welcome everyone! If your first meal down here is at Poopy Butthole I will personally come to your table. PROUDLY PRESENTED BY MAUPPI1.`} ,
+{by:`rulesLawyer`,rank:`New Soul`,time:`14m ago`,up:210,text:`rule 4 says do NOT lick the lava but the subtitle says the floor is slop. if its slop, licking is tasting. motion to amend`} ,
+{by:`Beelzebub`,rank:`DEMON MOD`,time:`13m ago`,up:890,text:`Denied. The motion, the licking, and you.`} ,
+{by:`secondWaver`,rank:`Fresh Meat`,time:`11m ago`,up:145,text:`just arrived, read all the rules, immediately broke rule 2 by posting my mangler clip untagged. sorry. it got me good and i needed witnesses`} ,
+{by:`flairGoblin`,rank:`Tag Wrangler`,time:`9m ago`,up:178,text:`what flair do i use for a poopy review that is ALSO dave lore. asking for my magnum opus`} ,
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`7m ago`,up:320,text:`Use restaurant format! Photo of the bowl required. Dave lore goes in the dessert section. PROUDLY PRESENTED BY MAUPPI1`} ,
+{by:`pentagramPaul`,rank:`Rotation Watcher`,time:`5m ago`,up:96,text:`sat through a full 120s rotation during the read. nothing summoned. 10/10 onboarding experience tho`} ,
+{by:`GuestSoul_666`,rank:`Tortured Soul`,time:`3m ago`,up:260,text:`update: my friend who licked it has been unbanned and now runs the slop juice petition. character development`}]},
+{cat:`Announcements`,title:`500M+ Dangler downloads celebration + gem code (REAL)`,by:`SUPER MEGA FUN GAMES`,rank:`OFFICIAL`,time:`pinned · 2w ago`,views:`501M`,hot:1,pinned:1,ex:`Dave counted. Editors choice. Claim inside.`,posts:[
+{by:`SUPER MEGA FUN GAMES`,rank:`OFFICIAL`,time:`2w ago`,up:9800,text:`DANGLER 4D hit 500M+ DOWNLOADS with a 4.9 rating (only option). To celebrate: code SKILL-ISSUE gives 100 gems. Daily reward: please come back. TIP: walking is faster than standing.`},
+{by:`Dave`,rank:`EDITOR`,time:`2w ago`,up:6600,text:`I made the choice. It was me. Editors choice award goes to us. Subway Dangler Surf forever.`},
+{by:`xX_sлоп_Xx`,rank:`Dangler Whale`,time:`1w ago`,up:1200,text:`code worked. bought the BEST VALUE pack anyway. my energy is 5/5 which means full which means I should go outside. I will not.`} ,
+{by:`codeRedeemer`,rank:`Gem Saver`,time:`16m ago`,up:190,text:`SKILL-ISSUE worked. 100 gems. bought absolutely nothing, saving for the subway surf collab. discipline`} ,
+{by:`mathMage`,rank:`Numbers Imp`,time:`14m ago`,up:240,text:`500M downloads at 4.9 with one rating option means roughly 500M five-star reviews. dave counted every one. legend`} ,
+{by:`f2pFreddy`,rank:`Free Soul`,time:`12m ago`,up:175,text:`day 60 fully free to play. the game respects my wallet by never letting me keep gems. enlightened design`} ,
+{by:`gemGremlin`,rank:`Impulse Spender`,time:`10m ago`,up:160,text:`spent my 100 celebration gems on energy refills in one sitting. no regrets. okay some regrets`} ,
+{by:`Dave`,rank:`EDITOR`,time:`8m ago`,up:410,text:`Every gem spent is a sandwich earned. Keep spinning.`} ,
+{by:`spinWidow`,rank:`Left Behind`,time:`6m ago`,up:230,text:`my partner left me for the lucky spin. i understand. the spin needed them more`} ,
+{by:`bestValueBeth`,rank:`Value Hunter`,time:`4m ago`,up:150,text:`bought the second-BEST VALUE pack ironically. there is no irony left in me. only value`} ,
+{by:`collectorsCarl`,rank:`Seed Archivist`,time:`2m ago`,up:130,text:`collecting every maze seed screenshot like stamps. seed 666 framed above my desk. my priest has questions`}]},
+{cat:`Gigel Prats`,title:`Gigel Prats is unironically the best Mindustry clone I have played (review)`,by:`copperGremlin`,rank:`Engineer III`,time:`12m ago`,views:`48.2K`,hot:1,ex:`300 hours. My conveyors have conveyors. 9/10, needs more Gigel.`,posts:[
+{by:`copperGremlin`,rank:`Engineer III`,time:`12m ago`,up:2400,text:`REVIEW: Gigel Prats, mindustry if it was playable. Drills feed graphitePresses, siliconSmelters actually make sense, duo/hail/scatter turrets feel great around the core. Wave 40 tanks nearly ended my bloodline. 9/10. Deduct one star because Gigel won't answer my letters.`},
+{by:`routerEnjoyer`,rank:`Conveyor Belter`,time:`10m ago`,up:900,text:`post your router art. mine looks like a pentagram and accidentally summons crawlers. efficient though.`},
+{by:`copperGremlin`,rank:`Engineer III`,time:`8m ago`,up:700,text:`update: wave 61 runners went THROUGH the gap I left for aesthetic reasons. aesthetics are dead. walls everywhere now.`},
+{by:`GigelFan_RO`,rank:`Gigel Disciple`,time:`5m ago`,up:1100,text:`actually gigel prats works flawlessly. the subtitle on the homepage says so. devs would not lie. now with chicken.`} ,
+{by:`beltFed`,rank:`Engineer I`,time:`6m ago`,up:34,text:`wave 40 tanks are a joke if you pre-build scatter on the second ridge. held with 6 duo, 4 hail, zero leaks, graphite never dropped below 200. only thing id add to the review: mention the silicon smell. you know the one.`} ,
+{by:`solderSue`,rank:`Engineer II`,time:`6m ago`,up:41,text:`seconding the scatter-on-ridge call. also pro tip nobody mentions: queue wall blueprints during wave breaks and your builders catch up for free. saved my core twice`} ,
+{by:`gigelAteMyBase`,rank:`Wave 12 Casualty`,time:`2m ago`,up:88,text:`wave 12 crawlers ate my entire copper line because i built my drills in a heart shape. worth it. gigel wouldve wanted it this way`} ,
+{by:`turretTess`,rank:`Corner Holder`,time:`8m ago`,up:90,text:`scatter supremacy is real but hail on the corners does the quiet work. corners win wars`} ,
+{by:`coalBaron`,rank:`Converted`,time:`6m ago`,up:105,text:`switched my whole base to coal-fed presses and my graphite tripled. i take back everything bad i said about coal`} ,
+{by:`waveWatcher`,rank:`Pop Quiz Victim`,time:`4m ago`,up:85,text:`wave 40 tanks are the exam. wave 61 runners are the pop quiz you forgot about. study both`} ,
+{by:`copperGremlin`,rank:`Engineer III`,time:`2m ago`,up:220,text:`EDIT 2: 400 hours now. the review stands. gigel answered one letter. it just said keep building. crying`}]},
+{cat:`Gigel Prats`,title:`PSA: stop putting silicon in your copper line you animals`,by:`leadPoisoned`,rank:`Engineer II`,time:`3h ago`,views:`12.1K`,hot:1,ex:`My entire base jammed because someone on stream told me to mix lines.`,posts:[
+{by:`leadPoisoned`,rank:`Engineer II`,time:`3h ago`,up:1500,text:`If your conveyor has copper AND lead AND coal in it, you don't have a conveyor, you've modern art. Separate your lines. Graphite deserves respect. idk, man`},
+{by:`routerEnjoyer`,rank:`Conveyor Belter`,time:`2h ago`,up:640,text:`counterpoint: chaos lines build character. and crawler food. mostly crawler food.`},
+{by:`coreGuardian`,rank:`Wave 88 Survivor`,time:`1h ago`,up:830,text:`wall off your core BEFORE wave 10. tanks do not care about your five-year plan.`} ,
+{by:`chaosQueen`,rank:`Conveyor Anarchist`,time:`11m ago`,up:88,text:`my lines are ALL mixed and i hit wave 50 last night. the secret is just building more. more drills. more belts. more everything. seperation is for people with planning skills`} ,
+{by:`beltSkeptic`,rank:`Line Doubter`,time:`9m ago`,up:52,text:`counterpoint: one mixed line feeding the CORE directly is fine actually. everything else, yeah, seperate or die`} ,
+{by:`overflowOwen`,rank:`Jammed Again`,time:`4m ago`,up:37,text:`my graphite press has 9 drills on it and it still starves. starting to think the press is just depressed`}]},
+{cat:`Highway to TS`,title:`Mile 47 broke me, the cars QTE is TERRIFYING (Highway to TS discussion)`,by:`crtGhost`,rank:`Mile 60 Walker`,time:`26m ago`,views:`31.7K`,hot:1,ex:`I have 1 HP, no trail mix, and Dave is judging me.`,posts:[
+{by:`crtGhost`,rank:`Mile 60 Walker`,time:`26m ago`,up:1900,text:`The arrow-key dodge came out of nowhere, I got SPLATTERED, and the game gave me the 30% mercy crawl at 1 HP. I've never been so grateful and so insulted at once. TS-DOS v6.66 is cinema.`},
+{by:`daveSkeletonFan`,rank:`Dave Believer`,time:`20m ago`,up:1400,text:`ngl, dave the SUN-BLEACHED SKELETON (still walking) carried my run. Died at mile 12 but keeps walking and GAVE ME TRAIL MIX. Best NPC in any roguelike, argue with the skeleton.`},
+{by:`hungerBarHater`,rank:`Starved at Mile 30`,time:`15m ago`,up:620,text:`managing hp/food/energy/scrap while sidestepping lanes is brutal. eat with f, heal with c, talk with e. i talked to a traffic cone. it helped more than my build.`},
+{by:`crtGhost`,rank:`Mile 60 Walker`,time:`9m ago`,up:410,text:`UPDATE: made mile 52. First 10 miles tutorial lied to me, nothing prepared me for the double-lorry. Dave says keep walking. I keep walking.`} ,
+{by:`busRider`,rank:`Mile 48 Walker`,time:`4m ago`,up:156,text:`played this on my phone on the bus and MISSED my stop becuase of the double-lorry qte. driver thought i was having a fit doing arrow keys on a touchscreen. worth it`} ,
+{by:`mercyCrawlFan`,rank:`Mile 50 Walker`,time:`7m ago`,up:94,text:`the mercy crawl got me emotional?? like the game looked at my 1 HP and said not today. then a lorry spawned immediately. mixed signals`} ,
+{by:`laneLarry`,rank:`Left Lane Loyalist`,time:`3m ago`,up:61,text:`TIP. HUG THE LEFT LANE MILES 40 TO 50. TRUST. (lost two runs learning this, you get it for free)`}]},
+{cat:`Highway to TS`,title:`Unpopular opinion: the first car SHOULD be able to kill you`,by:`hardcoreHaaki`,rank:`Permadeath Purist`,time:`5h ago`,views:`9.4K`,hot:0,ex:`Practice car is baby mode. Adedo haaki.`,posts:[
+{by:`hardcoreHaaki`,rank:`Permadeath Purist`,time:`5h ago`,up:300,text:`THE PRACTICE CAR THAT CAN'T KILL IS HANDHOLDING. LET IT SPLATTER US. ADEDO. HAAKI. SUN MUTSISI ON KAKALLA.`},
+{by:`daveSkeletonFan`,rank:`Dave Believer`,time:`4h ago`,up:980,text:`look, no. The tutorial mercy is the point: hell gives you hope for 10 miles, then takes your trail mix. That's game design.`},
+{by:`Beelzebub`,rank:`DEMON MOD`,time:`3h ago`,up:1200,text:`Locking this before someone mods in a kill-car. Again.`} ,
+{by:`OldManRiver`,rank:`Forum Veteran`,time:`18m ago`,up:203,text:`Back in my day the tutorial car in every roguelike killed you AND deleted your save. You kids with your mercy crawls. That said, the 30% crawl at 1 HP is the best design on this site, so keep it.`}]},
+{cat:`Next Big Thing`,title:`What IS Next Big Thing? First-person Pokemon expedition?? (compilation thread)`,by:`pikaProwler`,rank:`Trainer`,time:`1h ago`,views:`22.9K`,hot:1,ex:`Starters pikachu/charmander/squirtle/bulbasaur + garchomp/eternatus?? Glitch events??`,posts:[
+{by:`pikaProwler`,rank:`Trainer`,time:`1h ago`,up:1300,text:`So this React/Vite FirstPersonExploreView thing loads PokeAPI, lets you pick Classic trainer style, wander a map with battle textures, and triggers glitch events. Eternatus in first person is a jumpscare. Is this the next big thing or just THE big thing?`},
+{by:`faceremover_fan`,rank:`Day One Soul`,time:`50m ago`,up:720,text:`Chose squirtle, walked into a glitch, my screen inverted and a garchomp stared at me for 8 seconds. 10/10 would be stared at again.`},
+{by:`glitchHunter`,rank:`Texture Skipper`,time:`30m ago`,up:540,text:`guide: if the map shimmers, STOP moving. That's a glitch event. Or keep moving for content. I'm not your mom. smh`},
+{by:`pikaProwler`,rank:`Trainer`,time:`12m ago`,up:210,text:`EDIT: eternatus run confirmed real. screenshot in replies. mods please pin my trauma.`} ,
+{by:`ruslan_irk`,rank:`Trainer`,time:`9m ago`,up:167,text:`Hello! I am from Irkutsk, my english not perfect, sorry. I pick bulbasaur because he is frog-dinosaur and frogs survive everything. The gold static gave me free map and I scream so loud my neighbour knock. 10/10`} ,
+{by:`classicColin`,rank:`Classic Only`,time:`11m ago`,up:73,text:`Classic trainer style only. the new ones look like they pay taxes. anyway charmander into gold static means free levels, youre welcome`} ,
+{by:`missingnoKid`,rank:`Glitch Bait`,time:`5m ago`,up:112,text:`found a 6th shimmer type i think?? the map went all checkerboard and my pikachu started t-posing. posting screenshot when my hands stop shaking`}]},
+{cat:`Poopy Butthole`,title:`Poopy Butthole honest review, from bowl to bowel and back again (GORGEOUS)`,by:`foodCritic666`,rank:`Michelin Star (Hell)`,time:`44m ago`,views:`88.4K`,hot:1,ex:`Noodle Ned carried. Ring of Fire ended me. 5 stars.`,posts:[
+{by:`foodCritic666`,rank:`Michelin Star (Hell)`,time:`44m ago`,up:3600,text:`REVIEW: Good food. Bad decisions. Excellent margins. Fed 6 suppliers from Noodle Ned to Captain Kelp, watched digestion in real time, pooped 4 portions into raw bins, ground, cooked, served. The loop is disgusting. The loop is perfect. Tried Number Two Noodles, Rear Burner, Ring of Fire, Chef's Number Two - Ring of Fire made me see the blood moon. 5/5.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`40m ago`,up:2900,text:`Thank you!! PROUDLY PRESENTED BY MAUPPI1. Tip: public restrooms where customers donate ingredients are the BEST margins. Reduce, reuse, re-poop.`},
+{by:`floorWatcher`,rank:`Magnifier Main`,time:`33m ago`,up:1100,text:`floor-watch + magnifier combo is OP. caught a diner donating mid-meal. prestige soon. 8-hour offline progress had my bins FULL this morning. christmas.`},
+{by:`foodCritic666`,rank:`Michelin Star (Hell)`,time:`20m ago`,up:640,text:`EDIT: mastery levels are deep?? 102 flavours. I've eaten 41. My reputation is spotless and my soul isn't.`},
+{by:`veganInHell`,rank:`Concerned`,time:`11m ago`,up:180,text:`is the restaurant actually fine. the homepage says do not visit the restaurant and also says the restaurant is actually fine. which is it.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`6m ago`,up:950,text:`Yes.`} ,
+{by:`FLAVOR_GOBLIN`,rank:`Taste Tester`,time:`3m ago`,up:342,text:`ATE THE REAR BURNER. CRIED. ORDERED ANOTHER. THE FLOOR WATCH GUY NODDED AT ME LIKE WE WERE IN A SECRET CLUB. 5 STARS`} ,
+{by:`boothThree`,rank:`Regular`,time:`8m ago`,up:145,text:`sat at booth three because of this review. the magnifier minigame jumpscared me. 10/10`} ,
+{by:`healthInspector`,rank:`Self-Appointed`,time:`4m ago`,up:201,text:`As the (self-appointed) health inspector of this forum I must clarify: zero stars for hygiene, five stars for flavor. The math works out. Somehow.`} ,
+{by:`portionPatty`,rank:`Rush Survivor`,time:`7m ago`,up:95,text:`4 portions per poop sounds like a lot until youre feeding a full dining room mid-rush. then it sounds like not enough`} ,
+{by:`ringOfFireSurvivor`,rank:`Still Burning`,time:`3m ago`,up:140,text:`ate the ring of fire on a dare. saw the bowling ball moon. would dare again`}]},
+{cat:`Poopy Butthole`,title:`The Great Balancing Update broke my poop economy, help`,by:`binOverflow`,rank:`Line Cook`,time:`2h ago`,views:`15.6K`,hot:0,ex:`Too many portions, not enough grinders. 102 flavours of pain.`,posts:[
+{by:`binOverflow`,rank:`Line Cook`,time:`2h ago`,up:780,text:`since the great balancing update my raw bins overflow in 20 minutes. 4 portions per poop is a lot when captain kelp is turbo-digesting. what is the grinder ratio?? lol`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`1h ago`,up:1500,text:`2 grinders per 3 suppliers, cook BEFORE the rush, prestige only after 3 expansions. Also upgrade restrooms; donations scale with reputation. Event log (Word around the shop) tells you when the rush hits.`},
+{by:`binOverflow`,rank:`Line Cook`,time:`40m ago`,up:420,text:`fixed. I now produce Rear Burner at industrial scale. The lava has nothing on this heat.`} ,
+{by:`ledgerdemon`,rank:`Bin Counter`,time:`14m ago`,up:129,text:`Ran the numbers: 2 grinders per 3 suppliers holds until Captain Kelp hits tier 3 digestion, then you need 1:1 or bins overflow in 14 minutes flat. Budget accordingly. Margins wait for no one.`}]},
+{cat:`Slop Royal`,title:`Saint Goblinator is BROKEN, converts my whole push (Slop Royal meta)`,by:`elixirGoblin`,rank:`Diamond Throne`,time:`18m ago`,views:`54.3K`,hot:1,ex:`Splash converts goblins AND triples HP permanently?? Nerf when?`,posts:[
+{by:`elixirGoblin`,rank:`Diamond Throne`,time:`18m ago`,up:2100,text:`honestly how do you beat The Saint Goblinator? Splash converts my enemy goblins to his side and permanently triples HP. I sent 8 goblins at him and funded his retirement.`},
+{by:`slopMasterMain`,rank:`River Enjoyer`,time:`12m ago`,up:1600,text:`Simple: don't bring goblins. Bring The Slop Master. he grabs enemies and dumps them in the river. No HP matters in the river. The river is justice.`},
+{by:`deckGambler`,rank:`RANDOM Deck Only`,time:`7m ago`,up:530,text:`random deck built me 8 cards with zero elixir curve and i still won because double elixir last minute + sudden death hp-drain tiebreaker is chaos. most crowns after 3:00 or sudden death, king tower snipe wins instantly. best 3 minutes in hell.`},
+{by:`elixirGoblin`,rank:`Diamond Throne`,time:`3m ago`,up:310,text:`tried Slop Master. He threw my own king's guard in the river too. 10/10. Balanced.`} ,
+{by:`tiltedTimmy`,rank:`Gold Throne`,time:`5m ago`,up:245,text:`lost 6 games in a row to this stupid saint. SIX. my goblins keep converting mid-charge and just. stand there. glowing. ffs`} ,
+{by:`goblinLivesMatter`,rank:`Converted`,time:`6m ago`,up:178,text:`my goblins converted and honestly? good for them. better benefits on his side. i would convert too`} ,
+{by:`spellCheck`,rank:`Double Cast`,time:`2m ago`,up:96,text:`two fireballs back to back deletes him before the first splash. timing is tight but it works, tested 10x`}]},
+{cat:`Slop Royal`,title:`SANDBOX mode is the best toy on this site, post your cursed spawns`,by:`sandboxSatan`,rank:`Lab Demon`,time:`4h ago`,views:`19.8K`,hot:0,ex:`Paused time. 200 Slop Masters. BLUE vs RED vs GREEN.`,posts:[
+{by:`sandboxSatan`,rank:`Lab Demon`,time:`4h ago`,up:980,text:`Pause time, spawn anything as BLUE/RED/GREEN. I spawned 200 Slop Masters and unpaused. The river filed a noise complaint. Post yours.`},
+{by:`greenMenace`,rank:`GREEN Loyalist`,time:`3h ago`,up:450,text:`green team only. 50 goblinators vs 1 slop master. the slop master won. i am converting religions.`},
+{by:`crownFarmer`,rank:`3-Crown Speedrunner`,time:`2h ago`,up:380,text:`tap card or 1-4 then tap your half to deploy, spells anywhere, the controls are so clean for a tiny canvas game. Red King never stood a chance.`} ,
+{by:`plznerf`,rank:`Sandbox Kid`,time:`7m ago`,up:198,text:`i spawned 99 slop masters and ONE goblinator and the goblinator WON??? plz explain i am 11 and this is the most important thing in my life rn`} ,
+{by:`blueCommander`,rank:`BLUE Loyalist`,time:`10m ago`,up:84,text:`BLUE 100 goblinators vs RED 100 slop masters ends in a draw every single time and the river just. keeps flowing. beautiful`} ,
+{by:`lagLord`,rank:`4 FPS`,time:`3m ago`,up:119,text:`spawned 500 units and my fps went to 4. the slop masters kept dumping each other in slow motion. cinematic tbh`}]},
+{cat:`Dangler 4D`,title:`Dangler 4D is a masterpiece of psychological horror (the horror is the monetization)`,by:`gemVictim`,rank:`Dangler Whale`,time:`33m ago`,views:`120K`,hot:1,ex:`Collect 3 money!!! Energy 5/5!!! BEST VALUE!!!`,posts:[
+{by:`gemVictim`,rank:`Dangler Whale`,time:`33m ago`,up:4200,text:`REVIEW: Collect money, find the exit in procedural mazes. Energy 5/5, 100 gems, lucky spin, gem shop BEST VALUE!!, daily rewards begging me to come back, fake SUBWAY DANGLER SURF ad, rate prompt with only 5 stars as an option. I rated 5 stars. I had no choice. I feel alive.`},
+{by:`mazeRunner4D`,rank:`Exit Finder`,time:`25m ago`,up:1300,text:`tip: walking is faster than standing changed my life. enemy_01 has hp. you do not. the dangler got me and the death text said skill issue. correct. tbh`},
+{by:`SUPER MEGA FUN GAMES`,rank:`OFFICIAL`,time:`19m ago`,up:2700,text:`Thank you for playing DANGLER 4D SCARY MAZE ESCAPE 3D SIMULATOR 2026. Made with Unity (not really). Please spin the lucky spin. Please.`},
+{by:`gemVictim`,rank:`Dangler Whale`,time:`8m ago`,up:900,text:`spun. won 5 gems. shop wants 500. this is the most realistic economy simulator on HELL.`} ,
+{by:`thesisStatement`,rank:`Grad Soul`,time:`12m ago`,up:287,text:`What fascinates me (as someone writing an actual thesis on predatory monetization, lol) is how the game makes the exploitation legible: the BEST VALUE badge is decorative, the 5-star prompt has one option, and yet the maze underneath is honestly decent? The exit always feels earned. Anyway, back to chapter 4.`} ,
+{by:`energyFull`,rank:`5/5 Club`,time:`9m ago`,up:133,text:`energy 5/5 crew check in. mine has been full for 3 days because im scared to spend it. this is what they wanted`} ,
+{by:`adEnjoyer`,rank:`Surf Main`,time:`5m ago`,up:87,text:`unpopular opinion the subway dangler surf ad is genuinely more fun than some circles. dave eating that sandwich changed me`} ,
+{by:`mazeTheorist`,rank:`Exit Truther`,time:`11m ago`,up:120,text:`hot take: the exit placement is the real game. money is bait, exit is truth. collect 3 money my left foot`} ,
+{by:`unityAndy`,rank:`Actual Dev`,time:`8m ago`,up:185,text:`as someone who actually uses unity: this was not made with unity. the movement has that hand-rolled three.js slide. respect`} ,
+{by:`tipTopper`,rank:`Dominance Player`,time:`5m ago`,up:150,text:`TIP: standing still IS faster than walking if the dangler is between you and the exit. let it come. assert dominance`} ,
+{by:`geminiMom`,rank:`Mom of Twins`,time:`2m ago`,up:110,text:`my twins both play and they take turns on the lucky spin. lovely sharing lesson. terrible sleep schedule lesson`}]},
+{cat:`Dangler 4D`,title:`Daily rewards guilt-tripped me into a 40-day streak`,by:`pleaseComeBack`,rank:`Log-in Larry`,time:`6h ago`,views:`8.2K`,hot:0,ex:`It said please come back. So I came back. Every day.`,posts:[
+{by:`pleaseComeBack`,rank:`Log-in Larry`,time:`6h ago`,up:640,text:`Day 40. The game says please come back like it misses me. No other game on HELL needs me like the Dangler needs me. My family says hello.`},
+{by:`Dave`,rank:`EDITOR`,time:`5h ago`,up:890,text:`We miss you too. Have you tried SUBWAY DANGLER SURF.`} ,
+{by:`gentleGhost`,rank:`Log-in Lily`,time:`8m ago`,up:176,text:`day 40 is amazing, congrats! :) i started last week and the little please come back message genuinely got me through a rough tuesday. games that miss you hit different`}]},
+{cat:`Manglerverse`,title:`IT is BEHIND you. A complete survival guide (Mangler + Mangler 3D)`,by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`52m ago`,views:`77.1K`,hot:1,ex:`Shine light, check behind, listen for whispers. Coins = EXIT.`,posts:[
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`52m ago`,up:3300,text:`GUIDE: 2D top-down or 3D pointer-lock, same rules, you only see what the flashlight touches, IT stalks and sneaks up BEHIND you, shine light to scare it off, then it roams 3-20s before hunting again. Collect coins to unlock EXIT, quota rises per level, IT gets faster each level. CHECK BEHIND YOU. LISTEN. classic hell`},
+{by:`heartbeatHaver`,rank:`Level 9 Exiter`,time:`44m ago`,up:1700,text:`audio cues saved me: detuned sub drone ducks when near, heartbeat = proximity, formant whispers oo/ah/ee mean TURN AROUND NOW. death lullaby tolls mean run failed. headphones mandatory. diaper optional.`},
+{by:`touchPlayer`,rank:`Mobile Survivor`,time:`30m ago`,up:520,text:`3d mobile hud hints + touch stick + drag look actually work?? green exit arrow beacon is my best friend. damage vignette is my worst enemy. fullscreen jumpscare made me throw my phone into lava (slop). lmao`},
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`14m ago`,up:480,text:`EDIT: jumpscare toggle exists in 2D if you are soft. volume slider too. no shame. IT smells fear but respects accessibility.`} ,
+{by:`splitSecond`,rank:`Speedrunner`,time:`10m ago`,up:214,text:`any% notes: coins 1-3 spawn near the drone hum, never check behind you before coin 4 (wastes frames), light-flick strat saves about 2s per repel. pb is 6:41. the 3-20s roam window is the whole run tbh`} ,
+{by:`behindYou`,rank:`Level 8 Exiter`,time:`7m ago`,up:156,text:`psa within a psa: it does not roam 3 to 20s on level 10+. more like 3 to 8s. learned this with my face`} ,
+{by:`lampOil`,rank:`Sweep Pattern`,time:`3m ago`,up:92,text:`traded my coin route for a longer flashlight sweep pattern and my survival rate doubled. light discipline is everything`} ,
+{by:`sweepSarah`,rank:`Angle Checker`,time:`10m ago`,up:140,text:`sweep pattern that works for me: left, behind, right, behind, behind again because obviously. trust no angle`} ,
+{by:`coinCounter`,rank:`Quota Auditor`,time:`7m ago`,up:165,text:`counted coins per level 1 to 8: quotas go 5, 8, 12, 15, 19, 24, 30, 38?? who hurt the devs`} ,
+{by:`whisperWanda`,rank:`Level 10 Listener`,time:`4m ago`,up:125,text:`the oo/ah/ee thing stopped working for me on level 11. either it learned or im already dead and this is the after-afterlife`} ,
+{by:`exitEtiquette`,rank:`Ping Advocate`,time:`2m ago`,up:100,text:`PSA: if you unlock EXIT, ping it. nothing worse than a teammate hoarding the last coin like a dragon`}]},
+{cat:`Manglerverse`,title:`2D Mangler vs 3D Mangler, which is scarier? (POLL)`,by:`pollDemon`,rank:`Ballot Fiend`,time:`2h ago`,views:`25.4K`,hot:0,ex:`Top-down dread vs pointer-lock panic. Vote with your screams.`,posts:[
+{by:`pollDemon`,rank:`Ballot Fiend`,time:`2h ago`,up:1100,text:`2D: WASD + mouse-aim flashlight, pitch-black, pure dread, you hear the shriek/mangleScream in stereo. 3D: pointer-lock mouse look, same facility but now IT is distance-tuned and the jumpscare is FULLSCREEN. Which ended you harder?`},
+{by:`crtGhost`,rank:`Mile 60 Walker`,time:`1h ago`,up:640,text:`2D. The vignette closing in while whispers pan around me? I checked behind my actual chair.`},
+{by:`touchPlayer`,rank:`Mobile Survivor`,time:`50m ago`,up:390,text:`3d. click to capture mouse then it breathes behind you in spatial audio. i uninstalled my courage.`},
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`20m ago`,up:300,text:`Both. Play 2D to learn fear, 3D to meet it face to face. From behind. Because IT is behind you.`} ,
+{by:`fenceSitter`,rank:`Undecided`,time:`13m ago`,up:158,text:`on one hand 2D, because the whispers panning in stereo made me take my headphones off and just sit there. on the other hand 3D, because the fullscreen jumpscare made me alt-f4 so fast i pulled a muscle. abstaining. both win. i lose.`} ,
+{by:`bothIsGood`,rank:`Undecided`,time:`12m ago`,up:64,text:`voted 2D but only because my laptop cant run the 3D pointer lock without crying. aspirational 3D voter`} ,
+{by:`jumpscareJan`,rank:`Reformed Soft`,time:`6m ago`,up:108,text:`the 2D toggle saved my life. played with it ON for a week to build courage, now im a 3D fullscreen masochist. growth`}]},
+{cat:`Manglerverse`,title:`I got all coins and the EXIT still haunts my dreams`,by:`coinGoblin666`,rank:`Level 6 Exiter`,time:`7h ago`,views:`11.3K`,hot:0,ex:`Escalating quotas per level should be illegal in Finland.`,posts:[
+{by:`coinGoblin666`,rank:`Level 6 Exiter`,time:`7h ago`,up:560,text:`level 6 quota is insane. coins everywhere, it everywhere, flashlight battery of pure anxiety. unlocked exit and still died staring at it. beautiful.`},
+{by:`heartbeatHaver`,rank:`Level 9 Exiter`,time:`6h ago`,up:330,text:`illegal in finland! (the homepage warned us)`} ,
+{by:`exitRow`,rank:`Level 5 Exiter`,time:`6m ago`,up:231,text:`theres a special grief in seeing the green arrow, counting your last coins, hearing the drone drop an octave, and knowing. you know. you always know. still the best feeling on HELL when the gate finally clicks.`}]},
+{cat:`General`,title:`Ranking all 8 circles of HELL (objective, correct, will fight Dave)`,by:`tierListTyrant`,rank:`List Goblin`,time:`1h ago`,views:`66.6K`,hot:1,ex:`S-tier: Poopy Butthole. F-tier: my sleep schedule.`,posts:[
+{by:`tierListTyrant`,rank:`List Goblin`,time:`1h ago`,up:2800,text:`OBJECTIVE RANKING: 1) Poopy Butthole (102 flavours, prestige, Mauppi came to my table), 2) Mangler 3D (fullscreen fear), 3) Slop Royal (river justice), 4) Highway to TS (Dave), 5) Gigel Prats (conveyor religion), 6) Mangler 2D (headphone horror), 7) Dangler 4D (took my wallet), 8) Next Big Thing (took my sense of reality). Fight me.`},
+{by:`Dave`,rank:`EDITOR`,time:`55m ago`,up:1900,text:`Dangler at 7 is violence. It has 500M downloads. Numbers do not lie. I counted.`},
+{by:`tierListTyrant`,rank:`List Goblin`,time:`40m ago`,up:700,text:`Dave your game has one rate option. That isn't a rating, that's a hostage situation.`},
+{by:`Dave`,rank:`EDITOR`,time:`25m ago`,up:1100,text:`Hostage situations can have 4.9 stars.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`10m ago`,up:800,text:`Honored by S-tier! Come hungry. Leave... also hungry? The portions are 4 per poop, it is plenty.`} ,
+{by:`actuallyNo`,rank:`Contrarian`,time:`9m ago`,up:189,text:`1) your list is wrong. 2) Highway to TS at #4 is a crime, Dave carried this entire site on his bony back. 3) Dangler at #7 is correct and Dave is biased. 4) Next Big Thing last is fair, eternatus traumatized me. that is all.`} ,
+{by:`listGoblinJr`,rank:`Apprentice`,time:`8m ago`,up:77,text:`dangler at 7 is generous tbh. the maze is good but it charged my card. twice. for gems i didnt buy. dave explain`} ,
+{by:`cozyClub`,rank:`Poopy First`,time:`4m ago`,up:115,text:`poopy s-tier correct. everything else below is just arguing about which flavor of screaming you prefer`} ,
+{by:`fTierFrank`,rank:`Awake At 4AM`,time:`9m ago`,up:130,text:`F-tier sleep schedule mentioned and i felt SEEN. its 4am. im ranking breakfast cereals by slop affinity now`} ,
+{by:`daveDefenseForce`,rank:`Recount Demander`,time:`6m ago`,up:175,text:`dave at 500M downloads is not 7th place behavior. recount the whole list. dave gets top 3 minimum`} ,
+{by:`tierListTyrant`,rank:`List Goblin`,time:`3m ago`,up:160,text:`fine. REVISED: dangler stays 7th but gets an asterisk for cultural impact. dave, put the gems away`}]},
+{cat:`General`,title:`Homepage subtitles are lore, a complete collection (47 found)`,by:`subtitleScribe`,rank:`Archivist`,time:`3h ago`,views:`29.9K`,hot:0,ex:`today is slop day. who polished the moon. adedo haaki...`,posts:[
+{by:`subtitleScribe`,rank:`Archivist`,time:`3h ago`,up:2100,text:`ngl, i sat refreshing hell.faceremover.net for an hour. Findings: today is slop day. prepare / who wants slop juice / the stuff on the floor is actually not lava. its slop / who polished the moon / is that like a malformed bowling ball on the right / oh no the lava is on fire / now with chicken / illegal in finland! / adedo. haaki. / sun mutsisi on kakalla / do NOT visit the restaurant / the restaurant is actually fine / rated 1 star (the one behind this text). This site is a novel.`},
+{by:`bloodMoonTruther`,rank:`Lunar Detective`,time:`2h ago`,up:900,text:`ngl, who polished the moon is my roman empire. it gleams. suspiciously. also confirm: the long one about making subtitles long? felt called out.`},
+{by:`lavaLicker`,rank:`Banned (licking)`,time:`1h ago`,up:1200,text:`can confirm the floor is slop. banned but enlightened. worth it. welcome home. or heaven depending on what you like.`} ,
+{by:`refreshAndy`,rank:`F5 Enjoyer`,time:`5m ago`,up:143,text:`you missed one!! i got im helling it at like 2am and laughed so hard i woke my roommate. theres also okay then which feels like the site giving up on me personally. 49 total now, im counting`} ,
+{by:`oneMore`,rank:`F5 Enjoyer`,time:`5m ago`,up:69,text:`got please slop yesterday and felt personally addressed. also wow at 3am hits different`} ,
+{by:`noted`,rank:`Spreadsheet II`,time:`2m ago`,up:91,text:`logging these in a spreadsheet with timestamps. 51 now. the long one about making subtitles long is entry 34, flagged as philosophical`}]},
+{cat:`General`,title:`The volcanoes/lava/fire on the homepage deserve their own fan club`,by:`emberArtist`,rank:`Pyro`,time:`5h ago`,views:`13.2K`,hot:0,ex:`Two volcanoes, lava lake, 35 fire tongues, embers. I counted.`,posts:[
+{by:`emberArtist`,rank:`Pyro`,time:`5h ago`,up:870,text:`honestly the homepage has twin volcanoes with glowing craters, a lava lake with cracks and bubbles, 35 fire tongues, rising embers and ash, a spinning pentagram and a blood moon. It runs at 60fps on my toaster. Look at those bouncy flames indeed.`},
+{by:`perfDemon`,rank:`Frame Counter`,time:`4h ago`,up:510,text:`prefers-reduced-motion support too. static lava fallback. the devs care about our GPUs and our souls.`}]},
+{cat:`Lore & Theories`,title:`THEORY: Dave is in EVERY game (evidence inside)`,by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`2h ago`,views:`41.1K`,hot:1,ex:`Skeleton in Highway, Editors Choice Dave, gem Dave... connected??`,posts:[
+{by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`2h ago`,up:2400,text:`EVIDENCE: Highway to TS has Dave the skeleton at mile 12. Dangler 4D editors choice *choice made by Dave. Daily rewards and gem shop feel Dave-coded. Is Dave the final boss of HELL? Is Dave Mauppi? Is Mauppi Dave?`},
+{by:`Dave`,rank:`EDITOR`,time:`1h ago`,up:1800,text:`Yes.`},
+{by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`55m ago`,up:700,text:`HE CONFIRMED. IT IS 3 AM. WHAT DO WE HAVE HERE.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`30m ago`,up:650,text:`I am not Dave. Dave is not me. Dave eats free at Poopy Butthole though. PROUDLY PRESENTED BY MAUPPI1 (and Dave).`} ,
+{by:`occamsRazor`,rank:`Debunker`,time:`11m ago`,up:176,text:`counterpoint: Dave is not the final boss, Dave is just the only employee. skeleton works the highway, counts the downloads, eats free at Mauppis. occassionally the simplest answer is one overworked Dave.`} ,
+{by:`shiftManager`,rank:`Roster Watcher`,time:`9m ago`,up:104,text:`one overworked dave explains the 8-hour offline bins too. whos restocking. its dave. its always dave`} ,
+{by:`skeletonKey`,rank:`Mile 20 Walker`,time:`4m ago`,up:83,text:`dave at mile 12 gave me trail mix AND directions. final bosses dont do that. dave is staff, confirmed`} ,
+{by:`skeletalCrew`,rank:`Support Main`,time:`12m ago`,up:155,text:`dave walked 100 miles WITH us and people still call him final boss. he is support class. healer. trail mix equality for all`} ,
+{by:`daveDoubter`,rank:`Trenchcoat Truther`,time:`9m ago`,up:190,text:`what if dave is THREE skeletons in a trenchcoat. the walking never stops because they take shifts. think`} ,
+{by:`mauppiAlibi`,rank:`Camera Checker`,time:`6m ago`,up:145,text:`mauppi confirmed not-dave but has anyone seen them in the same room. the restaurant has no cameras. convenient`} ,
+{by:`Dave`,rank:`EDITOR`,time:`3m ago`,up:520,text:`Three skeletons is absurd. There is only one of me per shift.`}]},
+{cat:`Lore & Theories`,title:`The blood moon is a malformed bowling ball, change my mind`,by:`bloodMoonTruther`,rank:`Lunar Detective`,time:`8h ago`,views:`17.7K`,hot:0,ex:`Subtitle said it. I believe it. 112px of mottled glory.`,posts:[
+{by:`bloodMoonTruther`,rank:`Lunar Detective`,time:`8h ago`,up:760,text:`Exhibit A: homepage subtitle asks is that like a malformed bowling ball on the right. Exhibit B: it sits top-right, mottled, cratered, irregular. Exhibit C: who polished the moon: nobody, it's matte. Case closed. smh`},
+{by:`emberArtist`,rank:`Pyro`,time:`7h ago`,up:320,text:`counterpoint: bowling balls do not glow red and curse my bloodline. beautiful either way.`}]},
+{cat:`Bug Reports`,title:`BUG: my poop bins duplicated after offline progress (8h, full bins, blessed)`,by:`binOverflow`,rank:`Line Cook`,time:`4h ago`,views:`6.1K`,hot:0,ex:`Logged in to FULL bins. Is this a bug or a miracle?`,posts:[
+{by:`binOverflow`,rank:`Line Cook`,time:`4h ago`,up:290,text:`8-hour offline progress gave me double portions. reputation up, bins full, event log says word around the shop: miracle. do not fix?`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`3h ago`,up:610,text:`Not a bug. The shop works while you sleep. The shop never sleeps. Neither do I. (Fixing nothing.)`}]},
+{cat:`Bug Reports`,title:`Highway to TS ate my scrap at mile 33 (or did Dave?)`,by:`scrapHoarder`,rank:`Mile 40 Walker`,time:`9h ago`,views:`4.8K`,hot:0,ex:`Lost 40 scrap between rests. Skeleton sus.`,posts:[
+{by:`scrapHoarder`,rank:`Mile 40 Walker`,time:`9h ago`,up:210,text:`rested with 60 scrap, woke with 20. dave was standing nearby. still walking. still sus. tbh`},
+{by:`daveSkeletonFan`,rank:`Dave Believer`,time:`8h ago`,up:480,text:`Dave doesn't steal. Dave redistributes trail mix. Check your FOOD bar - you probably auto-ate. Press F responsibly. smh`},
+{by:`scrapHoarder`,rank:`Mile 40 Walker`,time:`7h ago`,up:150,text:`...I auto-ate 40 scrap worth of food. Dave is innocent. I am the problem. Sorry Dave.`} ,
+{by:`forgivenDave`,rank:`Mile 41 Walker`,time:`7m ago`,up:98,text:`update: Dave left trail mix at my rest spot today. all is forgiven. also PSA that resting with low FOOD auto-eats, so top up BEFORE you sleep. learned the hard way so you dont have to`} ,
+{by:`sleepySue`,rank:`Mile 36 Walker`,time:`6m ago`,up:58,text:`also if you rest twice in a row the second rest eats double. learned THAT the hard way. dave watched. dave always watches`} ,
+{by:`trailMixTrader`,rank:`Snack Dealer`,time:`3m ago`,up:72,text:`trading 20 scrap for trail mix info: mile 44 cache behind the second cone. youre welcome. dave gets a cut`}]},
+{cat:`Bug Reports`,title:`Mangler 3D pointer lock trapped my mouse AND my soul`,by:`clickToCapture`,rank:`Level 3 Exiter`,time:`11h ago`,views:`7.9K`,hot:0,ex:`CLICK TO CAPTURE MOUSE; there was no uncapture.`,posts:[
+{by:`clickToCapture`,rank:`Level 3 Exiter`,time:`11h ago`,up:340,text:`clicked to capture mouse. esc did nothing because it was behind me and i refused to look away. is this intended?`},
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`10h ago`,up:520,text:`Intended. Press Esc, keep flashlight on IT, back away slowly. The pill giveth and the pill taketh away.`}]},
+{cat:`General`,title:`What order should a new soul play HELL in? (starter guide)`,by:`freshMeat`,rank:`New Soul`,time:`13m ago`,views:`3.3K`,hot:1,ex:`Just arrived. 8 games. No refunds. Where do I start?`,posts:[
+{by:`freshMeat`,rank:`New Soul`,time:`13m ago`,up:120,text:`hi. im helling it. which circle first? i like cozy but also screaming. tbh`},
+{by:`foodCritic666`,rank:`Michelin Star (Hell)`,time:`9m ago`,up:450,text:`ngl, cozy route: Poopy Butthole > Slop Royal sandbox > Gigel Prats > Highway to TS > Next Big Thing > Dangler 4D > Mangler 2D > Mangler 3D. End with screaming. Trust.`},
+{by:`heartbeatHaver`,rank:`Level 9 Exiter`,time:`6m ago`,up:280,text:`Screaming route: reverse that. Start Mangler 3D at midnight with headphones. Welcome home. so yeah`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`2m ago`,up:310,text:`Either route passes through my restaurant. This is not optional. It is destiny. And margins.`} ,
+{by:`Linda47`,rank:`New Soul`,time:`4m ago`,up:412,text:`My son showed me this site and I started with Poopy Butthole because it sounded cozy. It was NOT cozy but the nice man Mauppi explained the bins to me. Now I play Slop Royal with my grandson. Lovely community, thank you.`} ,
+{by:`RVB`,rank:`Screaming Route Survivor`,time:`10m ago`,up:97,text:`did the screaming route first like an idiot. 0/10 would not recommend starting mangler 3D at midnight unless your neighbors enjoy screaming`} ,
+{by:`guideReader`,rank:`Amendment Author`,time:`5m ago`,up:66,text:`cozy route approved plus one amendment: do dangler BEFORE mangler. losing gems softens you up for losing sanity`}]},
+{cat:`Slop Royal`,title:`INSANE deck button gave me 8 Slop Masters, I won in 40 seconds`,by:`deckGambler`,rank:`RANDOM Deck Only`,time:`1h ago`,views:`9.9K`,hot:0,ex:`The INSANE button is not a suggestion. It is a threat.`,posts:[
+{by:`deckGambler`,rank:`RANDOM Deck Only`,time:`1h ago`,up:690,text:`hit insane in the 8-card deck builder. got 8 slop masters. deployed all on my half, they grabbed the entire red army and river-dumped it. king tower fell at 0:40. i have peaked. smh`},
+{by:`elixirGoblin`,rank:`Diamond Throne`,time:`40m ago`,up:260,text:`replay or it did not happen. also teach me your elixir crimes.`}]},
+{cat:`Dangler 4D`,title:`Lucky spin is rigged (and I love it), statistics thread`,by:`spinScientist`,rank:`Data Demon`,time:`3h ago`,views:`14.5K`,hot:0,ex:`1000 spins logged. 5 gems every time. Beautiful.`,posts:[
+{by:`spinScientist`,rank:`Data Demon`,time:`3h ago`,up:820,text:`Logged 1000 lucky spins: 91% gave 5 gems, 9% gave the AD for Subway Dangler Surf, 0% gave anything else. Expected value: suffering. I will spin again tomorrow. Daily reward says please come back and I obey.`},
+{by:`gemVictim`,rank:`Dangler Whale`,time:`2h ago`,up:410,text:`this is fine. this is fine. (it is not fine. spinning again.)`}]},
+{cat:`Highway to TS`,title:`Mile 100 completion post, I reached TS (spoilers, tears)`,by:`townOfTS`,rank:`Mile 100 Finisher`,time:`7h ago`,views:`33.3K`,hot:0,ex:`100 miles. Dave waited. I cried in ASCII.`,posts:[
+{by:`townOfTS`,rank:`Mile 100 Finisher`,time:`7h ago`,up:2600,text:`ngl, 100 MILES. HP 3, FOOD 1, ENERGY 0, SCRAP 212, LV max. The town of TS renders in beautiful blocky ASCII and Dave is THERE. He walked the whole way too. He gives you his last trail mix. I'm not okay. 10/10.`},
+{by:`crtGhost`,rank:`Mile 60 Walker`,time:`6h ago`,up:700,text:`honestly crying at mile 60. 40 to go. did you get hit by another meteor on the way? because I did. twice.`},
+{by:`townOfTS`,rank:`Mile 100 Finisher`,time:`5h ago`,up:540,text:`Twice is rookie numbers. Dodge with lanes, talk to everyone with E, hoard scrap for the late toll. See you in TS.`} ,
+{by:`mileMarker`,rank:`Mile 100 Finisher`,time:`8m ago`,up:187,text:`mile 100 club!! took me 3 weeks and 11 runs. my definately-not-optimal strat: never spend scrap before mile 60, talk to literally everything (cone included), and always keep 1 trail mix in reserve for the toll. see you out there`} ,
+{by:`mile66`,rank:`Mile 66 Walker`,time:`7m ago`,up:81,text:`mile 66 here, this post is my lighthouse. quick q: does the toll scale with level or is it flat? hoarding accordingly`} ,
+{by:`asciiAnna`,rank:`Moved To Tears`,time:`3m ago`,up:149,text:`the town rendering in ASCII made me put my phone down and stare at a wall for ten minutes. nothing else on this site did that`}]},
+{cat:`General`,title:`Petition: make slop juice a real drink at Poopy Butthole`,by:`slopSommelier`,rank:`Slop Connoisseur`,time:`6h ago`,views:`10.8K`,hot:0,ex:`Homepage asks who wants slop juice. WE want slop juice.`,posts:[
+{by:`slopSommelier`,rank:`Slop Connoisseur`,time:`6h ago`,up:940,text:`the subtitle says who wants slop juice. 4,000+ upslops say: us. proposal: slop juice pairs with number two noodles, served in a lava mug, garnished with trail mix (dave-approved).`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`5h ago`,up:1200,text:`APPROVED. Slop juice test batch brewing now. Flavor 103. Side effects include green feeling (do you feel green) and glowing like the lava rim. PROUDLY PRESENTED BY MAUPPI1.`},
+{by:`slopSommelier`,rank:`Slop Connoisseur`,time:`4h ago`,up:300,text:`i feel green. I LOVE IT.`} ,
+{by:`mugCollector`,rank:`Lava Mug Owner`,time:`8m ago`,up:76,text:`already own a lava mug (etsy, dont ask). if slop juice becomes real im set. green glow included hopefully`} ,
+{by:`tasteSubject7`,rank:`Test Batch`,time:`4m ago`,up:168,text:`volunteered for the test batch. glass one: tastes like static and chicken. glass two: i can see sounds. more please`}]},
+{cat:`Gigel Prats`,title:`Wave 88 tank rush broke my core, wall layouts that actually work`,by:`coreGuardian`,rank:`Wave 88 Survivor`,time:`19m ago`,views:`9.7K`,hot:1,ex:`Tanks do not care about your five-year plan. Triple walls do.`,posts:[
+{by:`coreGuardian`,rank:`Wave 88 Survivor`,time:`19m ago`,up:1100,text:`honestly wave 88 tanks walked through my single wall like it was a suggestion. New doctrine: triple-thick walls at chokepoints, hail turrets behind, scatter on flanks, duo filling gaps. Core survived wave 94. Post your layouts.`},
+{by:`copperGremlin`,rank:`Engineer III`,time:`12m ago`,up:540,text:`funnel them with walls into a hail killbox. crawlers melt, runners stall, tanks arrive already half dead. graphite ammo only. lead is for cowards. ffs`},
+{by:`routerEnjoyer`,rank:`Conveyor Belter`,time:`6m ago`,up:310,text:`my walls spell GIGEL when viewed from above. tanks still die. morale +50%.`}]},
+{cat:`Gigel Prats`,title:`Graphite press math: how many drills per press? (spreadsheet inside)`,by:`spreadsheetImp`,rank:`Ratio Goblin`,time:`1h ago`,views:`7.2K`,hot:0,ex:`2.3 drills per press. You have been overfeeding coal.`,posts:[
+{by:`spreadsheetImp`,rank:`Ratio Goblin`,time:`1h ago`,up:860,text:`Measured over 10 waves: one graphitePress eats the output of ~2.3 copper drills on coal. Most of you run 4 drills per press and wonder why conveyors jam. SiliconSmelter is hungrier, 3 drills minimum. Numbers inside.`},
+{by:`leadPoisoned`,rank:`Engineer II`,time:`45m ago`,up:290,text:`this explains my coal famine. I had 6 presses and 4 drills. I was cooking numbers AND nothing else.`},
+{by:`GigelFan_RO`,rank:`Gigel Disciple`,time:`20m ago`,up:410,text:`gigel does not need math. gigel feels the ratio. but good spreadsheet, saved.`}]},
+{cat:`Highway to TS`,title:`The traffic cone at mile 22 TALKS BACK, secret dialogue found`,by:`coneWhisperer`,rank:`Mile 30 Walker`,time:`28m ago`,views:`11.9K`,hot:1,ex:`Pressed E 10 times. It judged me. Then it helped me.`,posts:[
+{by:`coneWhisperer`,rank:`Mile 30 Walker`,time:`28m ago`,up:1300,text:`mile 22, orange cone, pressed e ten times as a joke. it gives a full monologue about every soul it watched get splattered, then marks a safe lane on your map. talk to everything with e. the cone knows.`},
+{by:`hungerBarHater`,rank:`Starved at Mile 30`,time:`18m ago`,up:420,text:`i talked to the cone too and it just said honk. did i get the cursed cone or the blessed cone.`},
+{by:`daveSkeletonFan`,rank:`Dave Believer`,time:`9m ago`,up:660,text:`There are two cones. Blessed cone guides, cursed cone HONKs. Dave told me. Dave knows cones.`} ,
+{by:`honkHonk`,rank:`Cursed Cone`,time:`6m ago`,up:122,text:`HONK. (cursed cone gang, we exist, we suffer, we honk)`} ,
+{by:`eMashers`,rank:`E Spammer`,time:`2m ago`,up:85,text:`mashed E on every object miles 1 to 30 now. the cone, a hubcap, one (1) mysterious boot. boot gave scrap. mash everything`}]},
+{cat:`Highway to TS`,title:`FOOD tier list: trail mix S-tier, everything else F (fight me)`,by:`trailMixMax`,rank:`Mile 55 Walker`,time:`2h ago`,views:`8.8K`,hot:0,ex:`Dave's trail mix heals body AND soul. Gas station jerky heals neither.`,posts:[
+{by:`trailMixMax`,rank:`Mile 55 Walker`,time:`2h ago`,up:740,text:`s: dave trail mix (mile 12, free, emotional support included). a: canned beans. b: berries. f: gas station jerky, mystery meat, scrap (do not eat scrap,)-press f to eat (f stands for food) (do not eat scrap.`},
+{by:`scrapHoarder`,rank:`Mile 40 Walker`,time:`1h ago`,up:380,text:`ate scrap once by accident (auto-ate 40 scrap worth). can confirm f-tier. teeth: gone. run: over. smh`},
+{by:`townOfTS`,rank:`Mile 100 Finisher`,time:`30m ago`,up:510,text:`Mile 100 finisher approved. Hoard trail mix from mile 12 to mile 60 minimum. The late toll takes FOOD, not scrap. Plan accordingly.`} ,
+{by:`jerkyDefender`,rank:`Jerky Loyalist`,time:`9m ago`,up:93,text:`gas station jerky slander will not stand. it got me through miles 60 to 70 when beans ran dry. F-tier performance, S-tier loyalty`} ,
+{by:`canOpener`,rank:`Bean Enjoyer`,time:`5m ago`,up:54,text:`canned beans enjoyer here. heavy but reliable. like me. anyway daves mix still s-tier no contest`}]},
+{cat:`Next Big Thing`,title:`Starter war: charmander vs squirtle, bulbasaur voters silenced?`,by:`pikaProwler`,rank:`Trainer`,time:`37m ago`,views:`18.3K`,hot:1,ex:`Charmander gang vs squirtle squad. Pikachu neutrals eating popcorn.`,posts:[
+{by:`pikaProwler`,rank:`Trainer`,time:`37m ago`,up:980,text:`POLL: charmander leads 41%, squirtle 38%, bulbasaur 12%, pikachu 9% (pikachu voters just like the mascot, be honest). Charmander struggles early in the expedition map, squirtle tanks glitch events. Data inside.`},
+{by:`faceremover_fan`,rank:`Day One Soul`,time:`25m ago`,up:440,text:`bulbasaur 12% is voter suppression. bulbasaur solos the first two map zones and nobody talks about it.`},
+{by:`glitchHunter`,rank:`Texture Skipper`,time:`11m ago`,up:290,text:`garchomp enjoyers watching starter babies argue. eternatus ended all four in my run. tiers are temporary. glitch is eternal.`} ,
+{by:`bulbasaurTruth`,rank:`Frog Dinosaur Nation`,time:`7m ago`,up:131,text:`bulbasaur voter checking in. we are silent because we are busy winning. frog dinosaur nation rise up`} ,
+{by:`neutralNancy`,rank:`Vibes Picker`,time:`3m ago`,up:68,text:`picked pikachu for vibes and the mascot carried me through two zones on cuteness alone. no regrets. (some regrets)`}]},
+{cat:`Next Big Thing`,title:`Glitch event masterpost, all shimmer patterns catalogued`,by:`glitchHunter`,rank:`Texture Skipper`,time:`3h ago`,views:`13.6K`,hot:0,ex:`7 shimmer types. Screen invert = run. Gold static = free loot.`,posts:[
+{by:`glitchHunter`,rank:`Texture Skipper`,time:`3h ago`,up:1100,text:`MASTERPOST: 1) screen invert: stand still or eternatus notices. 2) gold static - walk INTO it, free battle textures. 3) map stutter; save and reload. 4) garchomp stare (8s, harmless, terrifying). 5-7) undocumented, post screenshots. smh`},
+{by:`pikaProwler`,rank:`Trainer`,time:`2h ago`,up:380,text:`type 5 got me: all trainer styles swapped to Classic mid-battle. drippy but confusing. adding to the doc.`},
+{by:`faceremover_fan`,rank:`Day One Soul`,time:`1h ago`,up:260,text:`gold static gave me a map texture worth 3 zones of progress. glitch is just loot with extra steps.`}]},
+{cat:`Poopy Butthole`,title:`Prestige guide: when to reset? (3 expansions math, 8h offline factored)`,by:`prestigeProphet`,rank:`Prestiged x4`,time:`49m ago`,views:`21.2K`,hot:1,ex:`Reset after 3rd expansion + full mastery, never before.`,posts:[
+{by:`prestigeProphet`,rank:`Prestiged x4`,time:`49m ago`,up:1600,text:`GUIDE: prestige only after your 3rd expansion with mastery on at least 60 of 102 flavours. Resetting earlier wastes the 8-hour offline multiplier. Post-reset: rush restrooms first (donations scale reputation fastest), then grinders, then suppliers. x4 prestiged, margins eternal.`},
+{by:`binOverflow`,rank:`Line Cook`,time:`35m ago`,up:470,text:`followed this, prestiged last night, woke to full bins again. the shop never sleeps and now neither does my economy. lol`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`20m ago`,up:890,text:`Correct guide! One addition: keep Noodle Ned through every prestige. He is the foundation. PROUDLY PRESENTED BY MAUPPI1.`} ,
+{by:`resetRegret`,rank:`Prestiged Too Early`,time:`11m ago`,up:107,text:`prestiged early like a FOOL and lost my kelp upgrades. listen to the prophet. 60 flavors minimum or dont touch the button`} ,
+{by:`idleIdol`,rank:`Twice A Day`,time:`6m ago`,up:79,text:`the 8h offline thing means i play twice a day for 5 min and still top my friend group. most efficient game on hell fr`}]},
+{cat:`Poopy Butthole`,title:`Captain Kelp is the best supplier and it is not close, change my mind`,by:`kelpHead`,rank:`Sous Chef`,time:`5h ago`,views:`9.1K`,hot:0,ex:`Turbo-digestion. Premium portions. Seaweed aura.`,posts:[
+{by:`kelpHead`,rank:`Sous Chef`,time:`5h ago`,up:620,text:`captain kelp turbo-digests, outputs premium portions, and his seaweed aura buffs the whole line. noodle ned is consistent but kelp is exponential. numbers attached.`},
+{by:`nedLoyalist`,rank:`Ned Disciple`,time:`4h ago`,up:590,text:`ned carried the early game on every save ever recorded. kelp needs 3 upgrades to overtake. ned is the foundation, kelp is the roof. respect the foundation. smh`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`3h ago`,up:710,text:`All 6 suppliers are my children and I love them equally. (Kelp is my favorite. Do not tell Ned.)`} ,
+{by:`nedForever`,rank:`Foundation First`,time:`8m ago`,up:88,text:`ned taught kelp everything he knows. show some respect. (kelp is still better late game, i said what i said)`} ,
+{by:`soup777`,rank:`Line Chef`,time:`4m ago`,up:62,text:`run both. ned early, kelp late, restrooms always. this isnt hard people`}]},
+{cat:`Slop Royal`,title:`Double elixir last minute is pure chaos, sudden death survival tips`,by:`elixirGoblin`,rank:`Diamond Throne`,time:`41m ago`,views:`16.4K`,hot:1,ex:`Last 60 seconds decide everything. Save spells. Guard the King.`,posts:[
+{by:`elixirGoblin`,rank:`Diamond Throne`,time:`41m ago`,up:1200,text:`TIPS: save one spell for double elixir, never overcommit before 2:00, guard King Tower in sudden death because the HP-drain tiebreaker punishes greed. Most crowns after 3:00 wins. play for crowns, not kills. so yeah`},
+{by:`slopMasterMain`,rank:`River Enjoyer`,time:`28m ago`,up:540,text:`ngl, alternative strategy: deploy everything at 2:59 and let the river sort it out. 60% win rate. 100% fun rate.`},
+{by:`crownFarmer`,rank:`3-Crown Speedrunner`,time:`12m ago`,up:330,text:`King Tower snipe during sudden death chaos is the highest-value play on the site. One spell, one crown, one legend.`}]},
+{cat:`Slop Royal`,title:`King Tower snipe compilation, 0:40 to 3:00 comebacks (video thread)`,by:`crownFarmer`,rank:`3-Crown Speedrunner`,time:`4h ago`,views:`12.7K`,hot:0,ex:`7 snipes. Spells anywhere. Red King in shambles.`,posts:[
+{by:`crownFarmer`,rank:`3-Crown Speedrunner`,time:`4h ago`,up:810,text:`compiled 7 king tower snipes: spells deploy anywhere so u punish overextended red kings from across the canvas. fastest: 0:40 slop master flood. latest: 2:59 sudden-death steal. clips in replies.`},
+{by:`deckGambler`,rank:`RANDOM Deck Only`,time:`3h ago`,up:290,text:`random deck gave me 4 spells and no troops. thought it was over. it was a snipe deck all along. the deck knows.`},
+{by:`sandboxSatan`,rank:`Lab Demon`,time:`2h ago`,up:240,text:`recreated all 7 in SANDBOX with BLUE/RED/GREEN teams. physics confirmed. Red King still in shambles.`}]},
+{cat:`Dangler 4D`,title:`Procedural maze seeds, post cursed layouts (seed 666 inside)`,by:`mazeRunner4D`,rank:`Exit Finder`,time:`55m ago`,views:`10.2K`,hot:0,ex:`Seed 666 is just one long corridor with 40 money. Suspicious.`,posts:[
+{by:`mazeRunner4D`,rank:`Exit Finder`,time:`55m ago`,up:720,text:`seed 666: single corridor, 40 money in a row, exit visible from spawn, dangler waiting behind the last coin. collect 3 money!!! they said. i collected 40 and my soul.`},
+{by:`gemVictim`,rank:`Dangler Whale`,time:`40m ago`,up:380,text:`seed 1337 is all dead ends except one. energy 5/5 gone in minutes. BEST VALUE energy refill staring at me. I paid. skill issue.`},
+{by:`SUPER MEGA FUN GAMES`,rank:`OFFICIAL`,time:`22m ago`,up:540,text:`All mazes are fair and hand-crafted by our procedural generator (Dave). Please rate 5 stars (only option).`}]},
+{cat:`Dangler 4D`,title:`Gem shop BEST VALUE analysis, which pack is least scam? (math)`,by:`spinScientist`,rank:`Data Demon`,time:`6h ago`,views:`19.5K`,hot:0,ex:`All packs scam. One pack slightly less scam.`,posts:[
+{by:`spinScientist`,rank:`Data Demon`,time:`6h ago`,up:1050,text:`Analyzed all gem shop packs: per-gem cost converges no matter the size, the BEST VALUE badge is decorative. Lucky spin EV is 5 gems/day, so a 500-gem pack = 100 days of spins. The real currency is patience (or weakness).`},
+{by:`gemVictim`,rank:`Dangler Whale`,time:`5h ago`,up:490,text:`ngl, bought the biggest pack twice. I'm the weakness. no regrets. energy has never been so 5/5.`},
+{by:`pleaseComeBack`,rank:`Log-in Larry`,time:`4h ago`,up:260,text:`day 41 streak funded entirely by daily rewards saying please come back. free gems hit different when guilt is the currency.`}]},
+{cat:`Manglerverse`,title:`Whisper translation project, what is IT actually saying? (oo/ah/ee)`,by:`whisperScribe`,rank:`Level 7 Listener`,time:`1h ago`,views:`14.8K`,hot:1,ex:`Slowed the formant whispers 4x. It says CHECK BEHIND YOU.`,posts:[
+{by:`whisperScribe`,rank:`Level 7 Listener`,time:`1h ago`,up:1400,text:`Recorded the formant-filtered whispers and slowed 4x: the oo/ah/ee pattern resolves into something like CHECK... BEHIND... YOU. Either IT warns us or the devs are taunting us. Headphones + volume slider max for research. lmao`},
+{by:`heartbeatHaver`,rank:`Level 9 Exiter`,time:`45m ago`,up:520,text:`played it reversed. it says BEHIND YOU CHECK. grammar dies in the facility. fear doesn't.`},
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`28m ago`,up:410,text:`new rule for the guide: if whispers form words, you have 2 seconds. shine light, do not negotiate.`} ,
+{by:`reversedRob`,rank:`8x Listener`,time:`9m ago`,up:117,text:`slowed it MORE, like 8x, and theres almost a melody?? like a lullaby but wrong. havent slept since. posting findings`} ,
+{by:`volumeTwo`,rank:`Max Volume`,time:`5m ago`,up:71,text:`max volume gang. my neighbors filed a noise complaint against the whispers. the whispers dont care. neither do i`}]},
+{cat:`Manglerverse`,title:`No-flashlight challenge run, level 4 cleared with sound only (VIDEO)`,by:`darkRunner`,rank:`Level 4 Blind`,time:`8h ago`,views:`23.1K`,hot:0,ex:`Drone ducks = near. Heartbeat = run. 47 attempts.`,posts:[
+{by:`darkRunner`,rank:`Level 4 Blind`,time:`8h ago`,up:1700,text:`Cleared level 4 with flashlight OFF: navigated by detuned sub drone (ducks when IT is near), heartbeat proximity, and coin jingles. 47 attempts, one clean run, EXIT unlocked by ear. Jumpscare toggle ON for this one, I'm brave not stupid.`},
+{by:`coinGoblin666`,rank:`Level 6 Exiter`,time:`7h ago`,up:430,text:`47 attempts is devotion. i die with the flashlight on. you are built different (and probably haunted). lol`},
+{by:`touchPlayer`,rank:`Mobile Survivor`,time:`5h ago`,up:280,text:`tried this on 3D mobile. lasted 40 seconds. the green exit arrow beacon mocked me the whole time.`}]},
+{cat:`General`,title:`SLOP ROYAL vs GIGEL PRATS, which deserves circle #1? (OFFICIAL WAR THREAD)`,by:`pollDemon`,rank:`Ballot Fiend`,time:`23m ago`,views:`7.7K`,hot:1,ex:`River justice vs conveyor religion. Vote with upslops.`,posts:[
+{by:`pollDemon`,rank:`Ballot Fiend`,time:`23m ago`,up:640,text:`WAR RULES: argue for Slop Royal (3-minute crowns, river dumps, sandbox) or Gigel Prats (drills, graphite, wave 88). No Dangler bribery (Dave, put the gems away). Winner gets pinned for a week.`},
+{by:`slopMasterMain`,rank:`River Enjoyer`,time:`15m ago`,up:390,text:`Slop Royal. A match fits in a queue for Poopy Butthole. Gigel needs 300 hours. Efficiency is a virtue.`},
+{by:`copperGremlin`,rank:`Engineer III`,time:`8m ago`,up:420,text:`Gigel. My conveyors have outlived three Slop Royal matches and one marriage. Depth wins.`},
+{by:`Dave`,rank:`EDITOR`,time:`3m ago`,up:510,text:`Dangler.`} ,
+{by:`neutralRef`,rank:`Whistle Holder`,time:`6m ago`,up:59,text:`referee here: both sides get one (1) dave endorsement each to keep it fair. dave has been notified. dave is conflicted`} ,
+{by:`canvasConnoisseur`,rank:`468x832 Purist`,time:`2m ago`,up:74,text:`468x832 is the perfect war arena and i will die on this hill. every match is readable, every river dump visible. cinema`}]},
+{cat:`General`,title:`I played all 8 circles in one sitting, field report from the void`,by:`marathonSoul`,rank:`Exhausted`,time:`2h ago`,views:`26.8K`,hot:0,ex:`11 hours. 1 slop juice. 0 regrets (3 regrets).`,posts:[
+{by:`marathonSoul`,rank:`Exhausted`,time:`2h ago`,up:1500,text:`FIELD REPORT: Poopy (cozy, ate 30 flavours) > Slop Royal (won 4, river-dumped 200) > Gigel (died wave 34, blamed aesthetics) > Highway (mile 38, Dave blessed me) > Next Big Thing (garchomp stared, I stared back) > Dangler (bought BEST VALUE, skill issue) > Mangler 2D (screamed) > Mangler 3D (ascended). it is 3 am. who polished the moon. classic hell`},
+{by:`subtitleScribe`,rank:`Archivist`,time:`1h ago`,up:480,text:`this is the canonical play order now. adding to the archive. did you feel green at any point. idk, man`},
+{by:`marathonSoul`,rank:`Exhausted`,time:`40m ago`,up:350,text:`green from hour 6 onward. slop juice does that. welcome home.`}]},
+{cat:`Lore & Theories`,title:`Mauppi1 origin theory, was the restaurant always here?`,by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`4h ago`,views:`15.9K`,hot:0,ex:`From bowl to bowel. But from WHERE, Mauppi.`,posts:[
+{by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`4h ago`,up:920,text:`TIMELINE: subtitle says now with chicken: chicken appeared the same week Mauppi1 arrived. The Great Balancing Update = the restaurant EXPANDING. 3 expansions, 102 flavours, public restrooms donating ingredients... where do the donations come from. WHERE.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`3h ago`,up:1100,text:`The restaurant was always here. You were always hungry. From bowl to bowel. And back again. PROUDLY PRESENTED BY MAUPPI1.`},
+{by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`2h ago`,up:540,text:`HE DID NOT DENY THE CHICKEN TIMELINE. Case open. Magnifier emoji.`}]},
+{cat:`Lore & Theories`,title:`The pentagram spins at 120s per rotation, what does it summon?`,by:`spinScientist`,rank:`Data Demon`,time:`10h ago`,views:`9.3K`,hot:0,ex:`Timed 5 rotations. Exactly 120s. Nothing summoned yet. Yet.`,posts:[
+{by:`spinScientist`,rank:`Data Demon`,time:`10h ago`,up:480,text:`Measured the homepage pentagram: 120s per rotation, 0.13 opacity, twin circles + star. Sat through 5 rotations (10 minutes) waiting for a summon. Nothing. Either it summons every 666 rotations or it just vibes. Continuing research.`},
+{by:`emberArtist`,rank:`Pyro`,time:`9h ago`,up:290,text:`it summons atmosphere. look at those bouncy flames while it turns. that's the ritual.`},
+{by:`bloodMoonTruther`,rank:`Lunar Detective`,time:`8h ago`,up:310,text:`120s x 666 rotations = 22.2 hours. Someone leave the tab open overnight and report back. For science. For hell.`}]},
+{cat:`Bug Reports`,title:`Slop Royal GREEN team spawns invisible on toaster GPUs`,by:`greenMenace`,rank:`GREEN Loyalist`,time:`7h ago`,views:`3.9K`,hot:0,ex:`GREEN army stealth mode. Not a feature. Probably.`,posts:[
+{by:`greenMenace`,rank:`GREEN Loyalist`,time:`7h ago`,up:190,text:`sandbox green spawns render invisible on my integrated gpu - i command an army of ghosts. enemies still get river-dumped by unseen hands. spooky. unplayable. kinda metal.`},
+{by:`sandboxSatan`,rank:`Lab Demon`,time:`6h ago`,up:150,text:`can reproduce on my toaster. RED and BLUE render fine, GREEN ascends. workaround: play RED, pretend it's GREEN. the river doesn't discriminate.`},
+{by:`perfDemon`,rank:`Frame Counter`,time:`5h ago`,up:210,text:`logged: GREEN uses a canvas composite path that some GPUs skip. 468x832 canvas, pause-time spawning, 200 units, your toaster is rendering ghosts at 60fps and you complain.`}]},
+{cat:`Announcements`,title:`HELLFORUM census results, 13,666 souls surveyed, Dave wins everything`,by:`Beelzebub`,rank:`DEMON MOD`,time:`16m ago`,views:`5.5K`,hot:1,ex:`Favorite game, NPC, subtitle, flavor. Landslides inside.`,posts:[
+{by:`Beelzebub`,rank:`DEMON MOD`,time:`16m ago`,up:1800,text:`CENSUS: favorite circle Poopy Butthole (34%), favorite NPC Dave (71%, including Dave voting 400 times), favorite subtitle who polished the moon, favorite flavor Ring of Fire, most licked lava (slop) Three respondents banned. Full charts inside. No refunds.`},
+{by:`Dave`,rank:`EDITOR`,time:`11m ago`,up:950,text:`71% is low. Recount.`},
+{by:`tierListTyrant`,rank:`List Goblin`,time:`6m ago`,up:320,text:`my ranking had Poopy S-tier before the census. objective AND correct AND democratic.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`2m ago`,up:410,text:`34% chose us! The other 66% have not eaten here yet. Fixable. Tables ready.`}]},
+{cat:`Gigel Prats`,title:`Power poles are NOT optional (my smelters sat dead for 6 waves)`,by:`darkSmelter`,rank:`Enlightened (literally)`,time:`21m ago`,views:`6.4K`,hot:0,ex:`Silicon needs electricity. I learned this at wave 34.`,posts:[
+{by:`darkSmelter`,rank:`Enlightened (literally)`,time:`21m ago`,up:640,text:`CONFESSION: my siliconSmelters sat unpowered for 6 waves while I screamed about a silicon famine. There was no famine. There was no power. Run poles to EVERYTHING, check the little lightning icon, and never be me.`},
+{by:`copperGremlin`,rank:`Engineer III`,time:`14m ago`,up:310,text:`oh this hurts because ive done it. graphitePresses too. now i overbuild poles out of trauma and my base looks like a spiderweb. a POWERED spiderweb.`},
+{by:`spreadsheetImp`,rank:`Ratio Goblin`,time:`6m ago`,up:280,text:`adding to the spreadsheet: 1 pole per 2 buildings, no exceptions. unpowered buildings are just expensive decorations.`}]},
+{cat:`Gigel Prats`,title:`Crawler-only defense challenge, wave 30 cleared (RULES INSIDE)`,by:`swarmLord`,rank:`Challenge Runner`,time:`2h ago`,views:`4.1K`,hot:0,ex:`Only crawlers allowed on defense. Yes, our own crawlers. No.`,posts:[
+{by:`swarmLord`,rank:`Challenge Runner`,time:`2h ago`,up:420,text:`RULES: crawlers are the only thing allowed to touch enemies. turrets banned, walls allowed but boring. cleared wave 30 by kiting runners into a crawler ball. graphite cost: my entire dignity.`},
+{by:`coreGuardian`,rank:`Wave 88 Survivor`,time:`1h ago`,up:190,text:`this is psychotic and I respect it. tanks at wave 40 will end the run though. they do not kite. they arrive.`},
+{by:`swarmLord`,rank:`Challenge Runner`,time:`40m ago`,up:150,text:`wave 40 tanks ended the run. they arrived. new challenge: tank-only defense. see you in hell (im already here)`}]},
+{cat:`Highway to TS`,title:`Scrap farming route miles 20-40 (184 scrap/hour, TESTED)`,by:`routeRat`,rank:`Mile 70 Walker`,time:`34m ago`,views:`9.8K`,hot:1,ex:`Loop the rest stops, talk to everyone, never walk past a hubcap.`,posts:[
+{by:`routeRat`,rank:`Mile 70 Walker`,time:`34m ago`,up:880,text:`ROUTE: rest stop mile 22 (cone + hubcap), detour mile 27 wreck (3 scrap guaranteed), mile 33 cache, backtrack mile 29 boot (yes the boot respawns). 184 scrap/hour if you dont get splattered. Dave approved this message probably.`},
+{by:`scrapHoarder`,rank:`Mile 40 Walker`,time:`22m ago`,up:340,text:`the boot respawns?? ive walked past that boot eleven times. eleven. farming tonight.`},
+{by:`townOfTS`,rank:`Mile 100 Finisher`,time:`10m ago`,up:290,text:`can confirm the loop works. mile 100 run funded entirely by boot scrap. never skip boot.`}]},
+{cat:`Highway to TS`,title:`Dave fan art thread (post your skeletons)`,by:`daveSkeletonFan`,rank:`Dave Believer`,time:`1h ago`,views:`12.3K`,hot:1,ex:`Sun-bleached, still walking, holding trail mix. Show me.`,posts:[
+{by:`daveSkeletonFan`,rank:`Dave Believer`,time:`1h ago`,up:970,text:`RULES: dave must be sun-bleached, still walking, and holding or offering trail mix. bonus points for mile markers. my entry: dave at mile 12 in ASCII, obviously.`},
+{by:`emberArtist`,rank:`Pyro`,time:`45m ago`,up:410,text:`drew dave against the blood moon in ember palette. the skeleton glows. posting tonight after my hands stop shaking (mangler before art was a mistake).`},
+{by:`Dave`,rank:`EDITOR`,time:`20m ago`,up:730,text:`I look great in all of these. Keep them coming. The sandwich one is my favorite.`}]},
+{cat:`Highway to TS`,title:`The CRT scanlines are doing heavy lifting (appreciation post)`,by:`scanlineSue`,rank:`Aesthetic Walker`,time:`3h ago`,views:`5.2K`,hot:0,ex:`TS-DOS v6.66 would be half the game without the glow.`,posts:[
+{by:`scanlineSue`,rank:`Aesthetic Walker`,time:`3h ago`,up:520,text:`can we talk about the presentation. CRT scanlines, the amber glow, the blocky ASCII rain. getting splattered has never looked this beautiful. TS-DOS v6.66 is the best looking terminal on hell.`},
+{by:`crtGhost`,rank:`Mile 60 Walker`,time:`2h ago`,up:260,text:`the splatter effect in ASCII is genuinely art. died 14 times just watching it. 10/10 would die again (will, mile 60 is brutal).`},
+{by:`perfDemon`,rank:`Frame Counter`,time:`1h ago`,up:180,text:`and it runs at full speed on everything. style AND performance. the devs cooked.`}]},
+{cat:`Next Big Thing`,title:`Eternatus encounter guide (dont. that is the guide.)`,by:`abyssWatcher`,rank:`Eternatus Survivor`,time:`47m ago`,views:`11.1K`,hot:1,ex:`If the sky goes wrong, walk the other way. Full stop.`,posts:[
+{by:`abyssWatcher`,rank:`Eternatus Survivor`,time:`47m ago`,up:720,text:`SURVIVED IT TWICE so here is the whole guide: if the sky shimmers wrong, stop. if the music drops out, leave. if you see the light pillar, you are already too close, close your eyes and walk backward. dont be me (i was me twice).`},
+{by:`pikaProwler`,rank:`Trainer`,time:`30m ago`,up:340,text:`seconded. eternatus in first person is not a battle, its a weather event with opinions. my screenshot looks like the sky is screaming.`},
+{by:`glitchHunter`,rank:`Texture Skipper`,time:`12m ago`,up:290,text:`added to masterpost as shimmer type 8: sky-wrong. rule stands. walk the other way. (i walked toward it. for science. it noticed.)`}]},
+{cat:`Next Big Thing`,title:`PokeAPI brought my childhood team and I cried (nostalgia thread)`,by:`pcBoxKid`,rank:`Gen III Baby`,time:`2h ago`,views:`7.7K`,hot:0,ex:`My exact team from 2004, in first person. I sat down.`,posts:[
+{by:`pcBoxKid`,rank:`Gen III Baby`,time:`2h ago`,up:610,text:`rebuilt my exact emerald team and walked them through the expedition map in first person. marshtomp leading, the music of my childhood humming through the glitch static. sat in silence for a while after.`},
+{by:`faceremover_fan`,rank:`Day One Soul`,time:`1h ago`,up:280,text:`same but gen II. seeing my typhlosion at actual scale made my chest hurt. next big thing indeed.`},
+{by:`pikaProwler`,rank:`Trainer`,time:`30m ago`,up:190,text:`this thread is beautiful. post your teams. no tiers, no wars, just our kids all grown up and staring down garchomps.`}]},
+{cat:`Poopy Butthole`,title:`Restroom donation optimization (dignity vs margins, MATH)`,by:`stallStrategist`,rank:`Restroom Tycoon`,time:`52m ago`,views:`13.9K`,hot:1,ex:`Upgraded restrooms pay for themselves in 2 days. Charts inside.`,posts:[
+{by:`stallStrategist`,rank:`Restroom Tycoon`,time:`52m ago`,up:920,text:`MATH: maxed restrooms generate donation ingredients worth ~40% of a supplier at zero feed cost. payback period: 2 days. dignity cost: total. conclusion: upgrade restrooms before your 4th supplier every time.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`40m ago`,up:780,text:`Correct! Customers donate, bins fill, margins grow. Reduce, reuse, re-poop. PROUDLY PRESENTED BY MAUPPI1`},
+{by:`floorWatcher`,rank:`Magnifier Main`,time:`22m ago`,up:350,text:`magnifier on the restroom door shows a little heart when donations are high. INVEST. the heart means money.`}]},
+{cat:`Poopy Butthole`,title:`Ranking all 102 flavours (3 weeks in the making, fight me)`,by:`flavorJudge`,rank:`Ate Them All`,time:`3h ago`,views:`18.6K`,hot:1,ex:`Chef Number Two S-tier. One flavour made me leave the table. Details inside.`,posts:[
+{by:`flavorJudge`,rank:`Ate Them All`,time:`3h ago`,up:1100,text:`3 WEEKS. 102 FLAVOURS. S-tier: Chef Number Two, Ring of Fire. A-tier: Rear Burner, Number Two Noodles. F-tier: one flavour I will not name that made me stand up and walk into the lava (slop). full list with notes in replies.`},
+{by:`foodCritic666`,rank:`Michelin Star (Hell)`,time:`2h ago`,up:540,text:`finally, a ranking with methodology. my only dispute: Rear Burner is S-tier and I will die on this hill (mildly scorched).`},
+{by:`slopSommelier`,rank:`Slop Connoisseur`,time:`1h ago`,up:380,text:`pairing notes for the full list when?? slop juice with s-tier is transcendent. with f-tier is a war crime. need the chart lol`}]},
+{cat:`Poopy Butthole`,title:`Noodle Ned appreciation thread (the backbone of hell)`,by:`nedLoyalist`,rank:`Ned Disciple`,time:`5h ago`,views:`8.8K`,hot:0,ex:`Consistent. Humble. Never turbo anything. Always there.`,posts:[
+{by:`nedLoyalist`,rank:`Ned Disciple`,time:`5h ago`,up:720,text:`while everyone argues kelp vs the field, ned shows up every shift, digests on time, never complains. foundations dont get statues. this thread is his statue.`},
+{by:`kelpHead`,rank:`Sous Chef`,time:`4h ago`,up:310,text:`kelp fan paying respects. ned is the reason my kelp survived the early game. o7`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`3h ago`,up:590,text:`Ned sends his thanks (he nodded). All 6 suppliers are my children. Ned is the eldest. PROUDLY PRESENTED BY MAUPPI1`}]},
+{cat:`Slop Royal`,title:`Elixir counting 101 (stop wasting spells on goblins)`,by:`countVonElixir`,rank:`Spell Accountant`,time:`29m ago`,views:`7.9K`,hot:0,ex:`Track enemy spend, punish the overcommit. Free crowns inside.`,posts:[
+{by:`countVonElixir`,rank:`Spell Accountant`,time:`29m ago`,up:560,text:`LESSON 1: if they dump 6 elixir on goblins, they have no answer to your slop master. wait, count, punish. spells are rent money. never spend them on lane peasants.`},
+{by:`elixirGoblin`,rank:`Diamond Throne`,time:`18m ago`,up:290,text:`as the goblin guy: please keep spending spells on my goblins. my goblinator retirement fund thanks you. (seriously though, this guide is correct, stop it)`},
+{by:`crownFarmer`,rank:`3-Crown Speedrunner`,time:`6m ago`,up:180,text:`elixir discipline + king snipe timing = my whole playstyle in one thread. pin this for new souls.`}]},
+{cat:`Slop Royal`,title:`Red King AI has tells (free wins inside)`,by:`telltaleTim`,rank:`AI Whisperer`,time:`4h ago`,views:`6.6K`,hot:0,ex:`He always defends left first. Always. Exploit it.`,posts:[
+{by:`telltaleTim`,rank:`AI Whisperer`,time:`4h ago`,up:470,text:`STUDIED 50 GAMES: red king defends left first 8 times out of 10, saves spells for your second push, and panics dumps at 2:55. push right at 2:40 with everything. free crowns.`},
+{by:`slopMasterMain`,rank:`River Enjoyer`,time:`3h ago`,up:250,text:`can confirm the 2:55 panic dump. the river feasts at 2:55. set your watch by it.`},
+{by:`sandboxSatan`,rank:`Lab Demon`,time:`2h ago`,up:170,text:`recreated in sandbox with all three colors. the tell holds for RED. GREEN plays different. GREEN always plays different.`}]},
+{cat:`Dangler 4D`,title:`Energy management manifesto (never refill at 4/5)`,by:`wattWatcher`,rank:`5/5 Purist`,time:`38m ago`,views:`5.9K`,hot:0,ex:`Refills waste overflow. Patience is a resource. Math inside.`,posts:[
+{by:`wattWatcher`,rank:`5/5 Purist`,time:`38m ago`,up:430,text:`MANIFESTO: energy refills to exactly 5. refilling at 4 wastes 80% of a refill. let dailies top you, spend only at 0, and never pay for energy with gems unless the maze is one exit from perfect. signed, a reformed whale.`},
+{by:`gemVictim`,rank:`Dangler Whale`,time:`25m ago`,up:260,text:`unreformed whale here. this manifesto is correct and I hate it. my gems, my rules, my empty wallet.`},
+{by:`pleaseComeBack`,rank:`Log-in Larry`,time:`11m ago`,up:190,text:`day 42 and I have never paid for energy. the game begging me to come back IS my energy. please come back (I will).`}]},
+{cat:`Dangler 4D`,title:`SUBWAY DANGLER SURF high score thread (Dave holds #1, obviously)`,by:`sandwichSurfer`,rank:`Ad Enjoyer`,time:`1h ago`,views:`9.4K`,hot:0,ex:`Post your surf scores. Prize is respect. Dave has all of it.`,posts:[
+{by:`sandwichSurfer`,rank:`Ad Enjoyer`,time:`1h ago`,up:510,text:`the fake ad is unironically my second most played circle. current best: 12,400. dave reportedly holds 99,999. post scores, no shame (some shame).`},
+{by:`mazeRunner4D`,rank:`Exit Finder`,time:`40m ago`,up:240,text:`8,200 here. the sandwich physics are better than the maze physics and I mean that as praise for both.`},
+{by:`Dave`,rank:`EDITOR`,time:`15m ago`,up:380,text:`99,999 confirmed. The sandwich and I are one.`}]},
+{cat:`Manglerverse`,title:`Jumpscare toggle: coward tool or accessibility win? (DEBATE)`,by:`toggleDebate`,rank:`Fence Sitter II`,time:`44m ago`,views:`8.2K`,hot:0,ex:`Purists say off or nothing. My heart says otherwise.`,posts:[
+{by:`toggleDebate`,rank:`Fence Sitter II`,time:`44m ago`,up:390,text:`HONEST QUESTION: is the 2D jumpscare toggle a coward tool or the reason half of us finished level 1? my heart rate says accessibility win. the purists in my DMs say otherwise. vote with your screams.`},
+{by:`flashlightPhil`,rank:`Level 12 Exiter`,time:`30m ago`,up:420,text:`guide author ruling: accessibility win, no contest. IT smells fear but respects settings. finish the game YOUR way, then turn it off for the real run.`},
+{by:`darkRunner`,rank:`Level 4 Blind`,time:`12m ago`,up:260,text:`did the no-flashlight run WITH the toggle on and still nearly died of fright at a coin jingle. gatekeeping fear is weird. play how you survive.`}]},
+{cat:`Manglerverse`,title:`Mobile touch guide (drag-look sensitivity, stick placement)`,by:`thumbWarrior`,rank:`Mobile Survivor`,time:`2h ago`,views:`4.7K`,hot:0,ex:`Stick left, drag right, sensitivity 0.7. Thank me at level 5.`,posts:[
+{by:`thumbWarrior`,rank:`Mobile Survivor`,time:`2h ago`,up:330,text:`SETTINGS THAT WORK: left stick full size, drag-look sensitivity 0.7 (higher spins you into IT), fullscreen jumpscare ON so you learn respect early. cleared level 5 on a bus. a MOVING bus.`},
+{by:`touchPlayer`,rank:`Mobile Survivor`,time:`1h ago`,up:210,text:`0.7 is correct. 1.0 got me killed 9 times in one hallway. also enable the HUD hints, the green arrow has saved me more than my own eyes.`},
+{by:`clickToCapture`,rank:`Level 3 Exiter`,time:`30m ago`,up:120,text:`desktop player taking notes for my little brother. the bus detail sold me. mobile survivors are built different.`}]},
+{cat:`Manglerverse`,title:`Headphone recommendations for maximum whisper clarity`,by:`earFiend`,rank:`Audiophile (cursed)`,time:`6h ago`,views:`5.5K`,hot:0,ex:`You want wide stereo and criminal bass. List inside.`,posts:[
+{by:`earFiend`,rank:`Audiophile (cursed)`,time:`6h ago`,up:380,text:`for the full oo/ah/ee experience you want wide stereo separation and bass that rearranges furniture. closed-back, wired, volume slider at 70%. you will hear IT deciding. you will wish you hadnt.`},
+{by:`heartbeatHaver`,rank:`Level 9 Exiter`,time:`5h ago`,up:240,text:`confirming wired over wireless. my bluetooth lagged the heartbeat by half a second and I mistimed a repel. half a second is a lifetime down there.`},
+{by:`whisperScribe`,rank:`Level 7 Listener`,time:`4h ago`,up:190,text:`translation project endorses this thread. wide stereo is how I caught the CHECK... BEHIND... YOU pattern. cursed clarity indeed.`}]},
+{cat:`General`,title:`Screenshot thread (post your best hell moments)`,by:`shutterImp`,rank:`Pixel Hoarder`,time:`26m ago`,views:`10.5K`,hot:1,ex:`Blood moons, river dumps, maze exits. Show and tell.`,posts:[
+{by:`shutterImp`,rank:`Pixel Hoarder`,time:`26m ago`,up:620,text:`RULES: one shot per post, any circle, no spoilers untagged. opening with mine: twin volcanoes mid-eruption behind a slop royal river dump. hell is beautiful.`},
+{by:`emberArtist`,rank:`Pyro`,time:`15m ago`,up:340,text:`posting my lava lake bubble close-up. the cracks look like something is trying to get OUT. gorgeous. terrifying. wallpaper.`},
+{by:`townOfTS`,rank:`Mile 100 Finisher`,time:`6m ago`,up:290,text:`my ASCII town arrival shot. 100 miles in one frame. Dave mid-wave. cried again just finding the file.`}]},
+{cat:`Lore & Theories`,title:`now with chicken investigation (when did the chicken arrive)`,by:`poultryDetective`,rank:`Nugget Sleuth`,time:`1h ago`,views:`7.3K`,hot:0,ex:`The subtitle changed. Nobody announced it. Timeline inside.`,posts:[
+{by:`poultryDetective`,rank:`Nugget Sleuth`,time:`1h ago`,up:540,text:`TIMELINE: launch subtitles had no chicken. then one day: now with chicken. no patch note, no announcement, no explanation. the restaurant menu now lists poultry-adjacent items. WHERE IS THE CHICKEN COMING FROM.`},
+{by:`daveConspiracy`,rank:`Tinfoil Soul`,time:`40m ago`,up:320,text:`adding to the board with red string. chicken arrival correlates with the third expansion. mauppi knows. mauppi always knows.`},
+{by:`mauppi1`,rank:`RESTAURANT OWNER`,time:`15m ago`,up:410,text:`The chicken was always here. You were always hungry. PROUDLY PRESENTED BY MAUPPI1`}]},
+{cat:`Bug Reports`,title:`Dangler maze softlocked me INSIDE a wall (seed + screenshot)`,by:`wallGhost`,rank:`Clipped Out`,time:`58m ago`,views:`3.4K`,hot:0,ex:`Seed 4417, third left, walked into the wall and became the wall.`,posts:[
+{by:`wallGhost`,rank:`Clipped Out`,time:`58m ago`,up:210,text:`seed 4417, take the third left, hug the wall, you clip INSIDE it. can see the whole maze, cannot move, dangler circles below like a shark. 10/10 view, 0/10 escape. avoiding until patched.`},
+{by:`mazeRunner4D`,rank:`Exit Finder`,time:`40m ago`,up:150,text:`reproduced twice. the shark circling is the worst part. it KNOWS youre stuck. skill issue (mine).`},
+{by:`SUPER MEGA FUN GAMES`,rank:`OFFICIAL`,time:`20m ago`,up:230,text:`Thank you for finding our secret viewing gallery! It is a feature. Please rate 5 stars (only option).`}]}
+];
+var voted=JSON.parse(localStorage.getItem(`hellvotes`)||`{}`);
+var PER_PAGE=15;
+var state={cat:`All`,q:``,sort:`hot`,page:1};
+function hue(n){var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;return h}
+function avHTML(n,sz){sz=sz||26;return `<span class="av" style="width:${sz}px;height:${sz}px;background:linear-gradient(135deg,hsl(${hue(n)},70%,38%),hsl(${(hue(n)+50)%360},80%,22%));font-size:${sz>30?1:0.72}rem">${(n||`?`).trim()[0].toUpperCase()}</span>`}
+function esc(s){return String(s).replace(/&/g,`&amp;`).replace(/</g,`&lt;`)}
+function counts(t){var r=t.posts.length-1;return {r:r<0?0:r,v:t.views}}
+function hotScore(t){var base=t.pinned?1e9:0;var ups=t.posts.reduce((a,p)=>a+p.up,0);return base+(t.hot?5000:0)+ups+counts(t).r*50}
+function filtered(){var q=state.q.toLowerCase();return THREADS.map((t,i)=>({t:t,i:i})).filter(o=>(state.cat===`All`||o.t.cat===state.cat)&&(!q||(o.t.title+` `+o.t.ex+` `+o.t.by+` `+o.t.posts.map(p=>p.text).join(` `)).toLowerCase().includes(q))).sort((a,b)=>{if(state.sort===`new`)return 0;if(state.sort===`top`)return hotScore(b.t)-hotScore(a.t)-((b.t.pinned?1:0)-(a.t.pinned?1:0))*0;if(state.sort===`replies`)return b.t.posts.length-a.t.posts.length;return hotScore(b.t)-hotScore(a.t)})}
+function renderCats(){document.getElementById(`cats`).innerHTML=CATS.map(c=>`<span class="chip${state.cat===c?` on`:``}" data-c="${c}">${c}</span>`).join(``);document.querySelectorAll(`.chip`).forEach(ch=>ch.onclick=()=>{state.cat=ch.dataset.c;state.page=1;renderCats();renderList()});var nc=document.getElementById(`ntCat`);nc.innerHTML=CATS.filter(c=>c!==`All`).map(c=>`<option>${c}</option>`).join(``)}
+function renderList(){var list=filtered();var pages=Math.max(1,Math.ceil(list.length/PER_PAGE));if(state.page>pages)state.page=pages;var start=(state.page-1)*PER_PAGE;var slice=list.slice(start,start+PER_PAGE);document.getElementById(`count`).textContent=` · ${list.length} thread${list.length!==1?`s`:``} of damnation · page ${state.page}/${pages}`;document.getElementById(`tCount`).textContent=THREADS.length+`K`;document.getElementById(`listInfo`).textContent=state.cat===`All`?`all circles, all screams`:`circle: ${state.cat}`;document.getElementById(`threadList`).innerHTML=slice.length?slice.map(o=>{var t=o.t,c=counts(t);var ups=t.posts.reduce((a,p)=>a+p.up,0);return `<div class="row" data-i="${o.i}"><div class="votes"><span style="font-size:1.1rem">${t.pinned?`📌`:t.hot?`🔥`:`💀`}</span><b>${ups>1000?(ups/1000).toFixed(1)+`k`:ups}</b><small>upslops</small></div><div><div class="t-title"><span class="tag">${esc(t.cat)}</span>${esc(t.title)}</div><div class="t-meta">by <b>${esc(t.by)}</b> · ${esc(t.rank)} · ${esc(t.time)}</div><div class="t-ex">${esc(t.ex)}</div></div><div class="t-side"><b>${c.r} replies</b><br>${esc(t.views)} views<br>last: ${esc(t.posts[t.posts.length-1].by)}</div></div>`}).join(``):`<div class="empty">no damned threads match. the lava is silent. try “dave”.</div>`;document.querySelectorAll(`#threadList .row`).forEach(r=>r.onclick=()=>openThread(+r.dataset.i));var pg=document.getElementById(`pager`);var btns=[`<button class="pgbtn" data-p="prev"${state.page<=1?` disabled`:``}>← prev</button>`];for(var p=1;p<=pages;p++)btns.push(`<button class="pgbtn${p===state.page?` on`:``}" data-p="${p}">${p}</button>`);btns.push(`<button class="pgbtn" data-p="next"${state.page>=pages?` disabled`:``}>next →</button>`);pg.innerHTML=list.length?btns.join(``)+`<span>showing ${slice.length} of ${list.length}</span>`:``;pg.querySelectorAll(`.pgbtn`).forEach(b=>b.onclick=()=>{var v=b.dataset.p;if(v===`prev`&&state.page>1)state.page--;else if(v===`next`&&state.page<pages)state.page++;else if(!isNaN(+v))state.page=+v;else return;renderList();document.getElementById(`listPanel`).scrollIntoView({behavior:`smooth`,block:`start`})})}
+var cur=-1;
+function badge(p,isOP){var b=``;if(isOP)b+=` <span class="badge op">OP</span>`;if(p.rank===`DEMON MOD`||p.rank===`OFFICIAL`||p.rank===`EDITOR`)b+=` <span class="badge mod">${esc(p.rank)}</span>`;else if(p.rank===`HELLBOT`)b+=` <span class="badge bot">BOT</span>`;return b}
+function openThread(i){cur=i;var t=THREADS[i];document.getElementById(`listPanel`).style.display=`none`;var tv=document.getElementById(`threadView`);tv.style.display=`block`;document.getElementById(`tvCat`).innerHTML=`<span class="tag" style="display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:rgba(255,90,0,.16);border:1px solid rgba(255,140,0,.4);color:#ffb37a;border-radius:5px;padding:.15rem .5rem">⛧ ${esc(t.cat)}</span>`;document.getElementById(`tvTitle`).textContent=t.title;document.getElementById(`tvMeta`).innerHTML=`by <b style="color:#ff9a4a">${esc(t.by)}</b> · ${esc(t.rank)} · ${esc(t.time)} · ${esc(t.views)} views`;renderPosts();tv.scrollIntoView({behavior:`smooth`,block:`start`})}
+function renderPosts(){var t=THREADS[cur];document.getElementById(`posts`).innerHTML=t.posts.map((p,pi)=>{var key=cur+`:`+pi;var on=voted[key];return `<div class="post${pi===0?` op`:``}">${avHTML(p.by,38)}<div><div class="p-head">${avHTML(p.by,20)} <b>${esc(p.by)}</b>${badge(p,pi===0&&p.by===t.by)}<span>· ${esc(p.rank)} · ${esc(p.time)}</span></div><div class="p-body">${esc(p.text).split(`\n`).map(x=>`<p>${x}</p>`).join(``)}</div><div class="p-foot"><span class="uv${on?` used`:``}" data-k="${key}" data-pi="${pi}">▲ ${(p.up+(on?1:0))>1000?((p.up+(on?1:0))/1000).toFixed(1)+`k`:p.up+(on?1:0)}</span><span>reply</span><span>share</span><span>report to demon</span></div></div></div>`}).join(``);document.querySelectorAll(`.uv`).forEach(u=>u.onclick=e=>{e.stopPropagation();var k=u.dataset.k;if(voted[k])delete voted[k];else voted[k]=1;localStorage.setItem(`hellvotes`,JSON.stringify(voted));renderPosts()})}
+document.getElementById(`backBtn`).onclick=()=>{document.getElementById(`threadView`).style.display=`none`;document.getElementById(`listPanel`).style.display=`block`};
+document.getElementById(`replyBtn`).onclick=()=>{var v=document.getElementById(`replyText`).value.trim();if(!v||cur<0)return;THREADS[cur].posts.push({by:`GuestSoul_666`,rank:`Tortured Soul`,time:`just now`,up:1,text:v});document.getElementById(`replyText`).value=``;renderPosts();renderList()};
+document.getElementById(`sort`).onchange=e=>{state.sort=e.target.value;state.page=1;renderList()};
+document.getElementById(`q`).oninput=e=>{state.q=e.target.value;state.page=1;if(document.getElementById(`threadView`).style.display===`block`){document.getElementById(`threadView`).style.display=`none`;document.getElementById(`listPanel`).style.display=`block`}renderList()};
+var modal=document.getElementById(`modal`);
+document.getElementById(`newBtn`).onclick=()=>modal.classList.add(`open`);
+document.getElementById(`ntNo`).onclick=()=>modal.classList.remove(`open`);
+document.getElementById(`ntGo`).onclick=()=>{var ti=document.getElementById(`ntTitle`).value.trim(),bo=document.getElementById(`ntBody`).value.trim(),ca=document.getElementById(`ntCat`).value;if(!ti||!bo)return alert(`A scream needs a title AND a body.`);THREADS.unshift({cat:ca,title:ti,by:`GuestSoul_666`,rank:`Tortured Soul`,time:`just now`,views:`1`,hot:1,ex:bo.slice(0,120),posts:[{by:`GuestSoul_666`,rank:`Tortured Soul`,time:`just now`,up:1,text:bo},{by:`HELLBOT`,rank:`HELLBOT`,time:`just now`,up:66,text:`Welcome to the pit. Your thread has been blessed by lava (slop). Dave has been notified.`}]});modal.classList.remove(`open`);document.getElementById(`ntTitle`).value=``;document.getElementById(`ntBody`).value=``;state.cat=`All`;state.q=``;state.page=1;document.getElementById(`q`).value=``;renderCats();renderList();window.scrollTo({top:0,behavior:`smooth`})};
+document.getElementById(`meAv`).textContent=`G`;
+document.getElementById(`tops`).innerHTML=[[ `Dave`,`EDITOR`,`48.2K upslops`],[ `mauppi1`,`RESTAURANT OWNER`,`31.7K upslops`],[ `flashlightPhil`,`Level 12 Exiter`,`19.4K upslops`],[ `gemVictim`,`Dangler Whale`,`15.1K upslops`],[ `foodCritic666`,`Michelin Star (Hell)`,`12.9K upslops`]].map(x=>`<li>${avHTML(x[0],22)} <b>${x[0]}</b> · ${x[1]}<br><span style="font-size:.72rem;color:#8a5a40">${x[2]}</span></li>`).join(``);
+document.getElementById(`onlineList`).innerHTML=[`xX_sлоп_Xx, arguing about goblins`,`crtGhost, mile 60, still walking`,`lavaLicker, banned but lurking`,`routerEnjoyer, laying conveyors`,`spinScientist, spinning`,`coinGoblin666, coin hunting`,`slopSommelier, drinking slop juice`,`perfDemon, counting frames`,`subtitleScribe, refreshing homepage`,`touchPlayer, lost pointer lock`,`freshMeat, newly damned`,`Beelzebub, watching`].map(x=>`<li><span class="online-dot"></span>${x}</li>`).join(``);
+var rots=[`screams from the pit · no refunds · souls processed daily`,`today is slop day. prepare`,`who wants slop juice`,`is the floor lava or slop (slop)`,`illegal in finland!`,`adedo · haaki`,`do NOT visit the restaurant (visit it)`,`rated 1 star (the one behind this text)`];var ri=0;setInterval(()=>{ri=(ri+1)%rots.length;document.getElementById(`rotator`).textContent=rots[ri]},4000);
+var on=13666;setInterval(()=>{on+=Math.floor(Math.random()*40-15);document.getElementById(`online`).textContent=on.toLocaleString()},2500);
+renderCats();renderList();
+</script>
+</body>
+</html>

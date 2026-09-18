@@ -248,7 +248,7 @@ const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,0.05,220);
 camera.rotation.order='YXZ';
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 
-scene.add(new THREE.AmbientLight(0x30100c,0.35));
+const ambient=new THREE.AmbientLight(0x30100c,0.35);scene.add(ambient);
 const moon=new THREE.DirectionalLight(0x220a06,0.25);moon.position.set(4,10,2);scene.add(moon);
 
 // flashlight rig: spotlight + target + tiny fill + visible cone mesh
@@ -257,21 +257,55 @@ scene.add(flash);scene.add(flash.target);
 const fill=new THREE.PointLight(0xff9a50,1.2,7,1.6);scene.add(fill);
 const EYE=1.62;
 
-// floor / ceiling textures painted once
-function concreteTex(base,line,blotch){
+// grimy concrete, repainted fresh for every facility from the active theme
+function concreteTex(base,line,blotch,grimeB,extra){
   const s=document.createElement('canvas');s.width=s.height=256;const g=s.getContext('2d');
   g.fillStyle=base;g.fillRect(0,0,256,256);
-  for(let i=0;i<900;i++){g.fillStyle=`rgba(${20+Math.random()*40|0},${18+Math.random()*30|0},${14+Math.random()*22|0},0.25)`;
+  for(let i=0;i<1400;i++){g.fillStyle=`rgba(${20+Math.random()*40|0},${18+Math.random()*30|0},${14+Math.random()*22|0},0.28)`;
     g.fillRect(Math.random()*256,Math.random()*256,2,2);}
+  // large grime washes
+  for(let i=0;i<(extra||6);i++){g.fillStyle=grimeB;g.beginPath();
+    g.ellipse(Math.random()*256,Math.random()*256,30+Math.random()*50,18+Math.random()*30,Math.random()*3,0,7);g.fill();}
+  // cracks
+  g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=1.5;
+  for(let i=0;i<3;i++){g.beginPath();let x=Math.random()*256,y=Math.random()*256;g.moveTo(x,y);
+    for(let k=0;k<5;k++){x+=(Math.random()-.5)*70;y+=(Math.random()-.5)*70;g.lineTo(x,y);}g.stroke();}
+  // damp streaks running down
+  for(let i=0;i<10;i++){const x=Math.random()*256;g.fillStyle='rgba(0,0,0,.22)';
+    g.fillRect(x,Math.random()*120,2+Math.random()*4,40+Math.random()*120);}
   g.strokeStyle=line;g.lineWidth=3;g.strokeRect(1,1,254,254);
   g.strokeStyle='rgba(0,0,0,.5)';g.beginPath();g.moveTo(128,0);g.lineTo(128,256);g.moveTo(0,128);g.lineTo(256,128);g.stroke();
-  for(let i=0;i<4;i++){g.fillStyle=blotch;g.beginPath();
+  for(let i=0;i<5;i++){g.fillStyle=blotch;g.beginPath();
     g.ellipse(Math.random()*256,Math.random()*256,14+Math.random()*22,8+Math.random()*12,Math.random()*3,0,7);g.fill();}
   const t=new THREE.CanvasTexture(s);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;
 }
-const floorTex=concreteTex('#23251f','rgba(90,100,80,.35)','rgba(90,40,20,.28)');
-const wallTex=concreteTex('#4a4234','rgba(0,0,0,.55)','rgba(120,20,20,.25)');
-wallTex.repeat.set(1,1);
+// facility themes — one rolled at random every level
+const THEMES=[
+  {name:'ASH',     floor:'#23251f',wall:'#4a4234',floorTint:0x9a968c,wallTint:0xbdb49e,ceil:0x0b0a09,
+   trim:0xff6a00,glyph:0x991111,fog:0x000000,fogD:0.055,amb:0x30100c,moon:0x220a06},
+  {name:'SULFUR',  floor:'#2b2a1c',wall:'#4d442c',floorTint:0x9a9070,wallTint:0xc0a86e,ceil:0x0d0b06,
+   trim:0xffc400,glyph:0x8a6a00,fog:0x0a0800,fogD:0.06,amb:0x38300c,moon:0x2a2006},
+  {name:'MORGUE',  floor:'#1c2624',wall:'#33443e',floorTint:0x8a988f,wallTint:0x9fb0a8,ceil:0x060b0a,
+   trim:0x00ffc8,glyph:0x0a6a55,fog:0x000a08,fogD:0.06,amb:0x0c3830,moon:0x062a22},
+  {name:'VOID',    floor:'#221c2b',wall:'#443452',floorTint:0x8f8a98,wallTint:0xa89fb0,ceil:0x0a060d,
+   trim:0xb44dff,glyph:0x5a2299,fog:0x0a000a,fogD:0.06,amb:0x300c38,moon:0x22062a},
+  {name:'ABATTOIR',floor:'#2b1c1a',wall:'#52332c',floorTint:0x98807a,wallTint:0xc08a7a,ceil:0x0d0605,
+   trim:0xff2200,glyph:0xcc1111,fog:0x0a0000,fogD:0.065,amb:0x38100c,moon:0x2a0a06},
+];
+let theme=THEMES[0];
+let floorTex=null,wallTex=null;
+const glowTexShared=(()=>{const s=document.createElement('canvas');s.width=s.height=64;const g=s.getContext('2d');
+  const gr=g.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,'rgba(255,220,120,1)');
+  gr.addColorStop(.4,'rgba(255,170,0,.45)');gr.addColorStop(1,'rgba(255,150,0,0)');
+  g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(s);})();
+function disposeGroup(gr){ // geometries + materials + textures (except shared coin glow)
+  const geos=new Set(),mats=new Set(),texs=new Set();
+  gr.traverse(n=>{if(n.geometry)geos.add(n.geometry);
+    const ms=Array.isArray(n.material)?n.material:(n.material?[n.material]:[]);
+    ms.forEach(mt=>{mats.add(mt);
+      Object.values(mt).forEach(v=>{if(v&&v.isTexture&&v!==glowTexShared)texs.add(v);});});});
+  geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());texs.forEach(t=>t.dispose());
+}
 
 let level3D=new THREE.Group();scene.add(level3D);
 let coinMeshes=[],exitGroup=null,exitLight=null,exitPos=new THREE.Vector3();
@@ -282,30 +316,35 @@ function tileUV(geo,rep){
   return geo;
 }
 function buildLevelMesh(){
-  while(level3D.children.length){const o=level3D.children.pop();
-    o.traverse?.(n=>{n.geometry?.dispose?.();});}
+  // exit light lives on the scene, not the level group — remove it or it haunts every future level
+  if(exitLight){scene.remove(exitLight);if(exitLight.dispose)exitLight.dispose();exitLight=null;}
+  disposeGroup(level3D);
+  while(level3D.children.length)level3D.children.pop();
+  // fresh grime every facility
+  floorTex=concreteTex(theme.floor,'rgba(90,100,80,.35)','rgba(90,40,20,.28)','rgba(0,0,0,.30)',6);
+  wallTex=concreteTex(theme.wall,'rgba(0,0,0,.55)','rgba(120,20,20,.25)','rgba(0,0,0,.35)',8);
   coinMeshes=[];exitGroup=null;
   const W=GW*TS,D=GH*TS;
   const fRepX=W/TS,fRepZ=D/TS;
   const fgeo=tileUV(new THREE.PlaneGeometry(W,D),1);
   floorTex.repeat.set(fRepX,fRepZ);
-  const floor=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:floorTex,roughness:.95,metalness:.02,color:0x9a968c}));
+  const floor=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:floorTex,roughness:.95,metalness:.02,color:theme.floorTint}));
   floor.rotation.x=-Math.PI/2;floor.position.set(W/2,0,D/2);level3D.add(floor);
   const ceil=new THREE.Mesh(new THREE.PlaneGeometry(W,D),
-    new THREE.MeshStandardMaterial({color:0x0b0a09,roughness:1}));
+    new THREE.MeshStandardMaterial({color:theme.ceil,roughness:1}));
   ceil.rotation.x=Math.PI/2;ceil.position.set(W/2,WALL_H,D/2);level3D.add(ceil);
   // walls via InstancedMesh
   const cells=[];
   for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[y*GW+x]===1)cells.push([x,y]);
   const wgeo=new THREE.BoxGeometry(TS,WALL_H,TS);
-  const wmat=new THREE.MeshStandardMaterial({map:wallTex,roughness:.9,metalness:.05,color:0xbdb49e});
+  const wmat=new THREE.MeshStandardMaterial({map:wallTex,roughness:.9,metalness:.05,color:theme.wallTint});
   const inst=new THREE.InstancedMesh(wgeo,wmat,cells.length);
   const M=new THREE.Matrix4();
   cells.forEach(([x,y],i)=>{M.makeTranslation((x+.5)*TS,WALL_H/2,(y+.5)*TS);inst.setMatrixAt(i,M);});
   inst.instanceMatrix.needsUpdate=true;level3D.add(inst);
   // hazard trim: thin emissive strip along floor of each wall tile (cheap: one more instanced plane set)
   const trimGeo=new THREE.BoxGeometry(TS,0.06,0.06);
-  const trimMat=new THREE.MeshStandardMaterial({color:0x201005,emissive:0xff6a00,emissiveIntensity:.55});
+  const trimMat=new THREE.MeshStandardMaterial({color:0x201005,emissive:theme.trim,emissiveIntensity:.55});
   const trims=[];
   for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++){
     if(grid[y*GW+x]!==1)continue;
@@ -313,8 +352,8 @@ function buildLevelMesh(){
   const trim=new THREE.InstancedMesh(trimGeo,trimMat,Math.max(1,trims.length));
   trims.forEach(([x,y],i)=>{M.makeTranslation((x+.5)*TS,0.12,(y+.5)*TS+TS/2-0.05);trim.setMatrixAt(i,M);});
   trim.count=trims.length;trim.instanceMatrix.needsUpdate=true;level3D.add(trim);
-  // red warning glyphs on some walls
-  const glyphMat=new THREE.MeshBasicMaterial({color:0x991111});
+  // warning glyphs on some walls, tinted by theme
+  const glyphMat=new THREE.MeshBasicMaterial({color:theme.glyph});
   for(let i=0;i<40;i++){
     const x=(Math.random()*GW)|0,y=(Math.random()*GH)|0;
     if(grid[y*GW+x]!==1)continue;
@@ -325,10 +364,7 @@ function buildLevelMesh(){
   // coins
   const coinGeo=new THREE.CylinderGeometry(.32,.32,.08,20);
   const coinMat=new THREE.MeshStandardMaterial({color:0xffc400,emissive:0xffaa00,emissiveIntensity:1.4,metalness:.9,roughness:.25});
-  const glowTex=(()=>{const s=document.createElement('canvas');s.width=s.height=64;const g=s.getContext('2d');
-    const gr=g.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,'rgba(255,220,120,1)');
-    gr.addColorStop(.4,'rgba(255,170,0,.45)');gr.addColorStop(1,'rgba(255,150,0,0)');
-    g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(s);})();
+  const glowTex=glowTexShared;
   for(const c of coins){
     const grp=new THREE.Group();grp.position.set(w2x(c.tx),1.1,w2z(c.ty));
     const m=new THREE.Mesh(coinGeo,coinMat);m.rotation.x=Math.PI/2;grp.add(m);
@@ -351,26 +387,30 @@ function buildLevelMesh(){
   level3D.add(exitGroup);
 }
 
-/* ---- MANGLER 3D body ---- */
+/* ---- MANGLER 3D body: near-black chitin crawler ---- */
 const mang3D=new THREE.Group();scene.add(mang3D);
-const fleshMat=new THREE.MeshStandardMaterial({color:0x6b5546,roughness:.85});
-const darkMat=new THREE.MeshStandardMaterial({color:0x241b16,roughness:.9});
-const boneMat=new THREE.MeshStandardMaterial({color:0x8f8268,roughness:.6});
-const eyeMat=new THREE.MeshStandardMaterial({color:0xffb300,emissive:0xff8c00,emissiveIntensity:3});
-const mawMat=new THREE.MeshBasicMaterial({color:0x0a0505});
+const fleshMat=new THREE.MeshStandardMaterial({color:0x161009,roughness:.5,metalness:.35});
+const darkMat=new THREE.MeshStandardMaterial({color:0x0c0906,roughness:.6,metalness:.2});
+const shellMat=new THREE.MeshStandardMaterial({color:0x090604,roughness:.32,metalness:.5});
+const boneMat=new THREE.MeshStandardMaterial({color:0x3a3128,roughness:.6});
+const clawMat=new THREE.MeshStandardMaterial({color:0x4a4038,roughness:.45,metalness:.3});
+const eyeMat=new THREE.MeshStandardMaterial({color:0xffb300,emissive:0xff8c00,emissiveIntensity:4});
+const mawMat=new THREE.MeshBasicMaterial({color:0x000000});
 const bloodMat=new THREE.MeshStandardMaterial({color:0x8c1414,roughness:.5,emissive:0x550000,emissiveIntensity:.4});
 let mangLegs=[],mangEyes=[],mangJaw=null,mangSpikes=[];
 (function buildMangler(){
   const torso=new THREE.Mesh(new THREE.SphereGeometry(.55,14,10),fleshMat);
-  // use plain sphere scaled gaunt
   torso.scale.set(1.5,.75,.9);torso.position.y=.75;mang3D.add(torso);
+  // glossy elytra shell over the back
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.56,14,10),shellMat);
+  shell.scale.set(1.45,.62,.85);shell.position.y=.92;mang3D.add(shell);
   for(let i=0;i<4;i++){const rib=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,6,18),darkMat);
     rib.position.set(-.3+i*.22,.75,0);rib.rotation.y=Math.PI/2;mang3D.add(rib);}
   for(let i=0;i<5;i++){const sp=new THREE.Mesh(new THREE.ConeGeometry(.07,.4,6),boneMat);
     sp.position.set(-.5+i*.28,1.25,0);mang3D.add(sp);mangSpikes.push(sp);}
   const wound=new THREE.Mesh(new THREE.SphereGeometry(.16,8,8),bloodMat);
   wound.position.set(-.1,.75,.42);wound.scale.set(1,.7,.4);mang3D.add(wound);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),new THREE.MeshStandardMaterial({color:0x7a6753,roughness:.8}));
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),fleshMat);
   head.position.set(.85,.95,0);head.scale.set(1.3,.8,.8);mang3D.add(head);
   mangJaw=new THREE.Mesh(new THREE.BoxGeometry(.34,.12,.3),mawMat);
   mangJaw.position.set(1.02,.78,0);mang3D.add(mangJaw);
@@ -378,20 +418,20 @@ let mangLegs=[],mangEyes=[],mangJaw=null,mangSpikes=[];
     const t=new THREE.Mesh(new THREE.ConeGeometry(.02,.12,4),new THREE.MeshStandardMaterial({color:0xc8c0b0}));
     t.position.set(.95+i*.06,.86,.1*(i%2?1:-1));t.rotation.x=Math.PI;mang3D.add(t);}
   for(let i=0;i<6;i++){
-    const e=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),eyeMat);
+    const e=new THREE.Mesh(new THREE.SphereGeometry(.058,8,8),eyeMat);
     e.position.set(.78+(i%3)*.1,1.0+((i/3)|0)*.12-.06,(i%2?.12:-.12));mang3D.add(e);mangEyes.push(e);}
-  const pool=new THREE.Mesh(new THREE.CircleGeometry(.8,16),
-    new THREE.MeshBasicMaterial({color:0x660000,transparent:true,opacity:.35}));
-  pool.rotation.x=-Math.PI/2;pool.position.y=.02;mang3D.add(pool);
+  // jointed crawler legs: hip high, knee out, shin down, claws ON THE FLOOR
   for(const s of [-1,1])for(let i=0;i<3;i++){
     const leg=new THREE.Group();
-    const upper=new THREE.Mesh(new THREE.CylinderGeometry(.07,.05,.9,6),fleshMat);
-    upper.position.y=.45;leg.add(upper);
-    for(let k=-1;k<=1;k++){const cl=new THREE.Mesh(new THREE.ConeGeometry(.03,.22,5),
-      new THREE.MeshStandardMaterial({color:0xc9bfa8}));
-      cl.position.set((k*.07),-.05,(k*.04));cl.rotation.x=Math.PI;leg.add(cl);}
-    leg.position.set(-.35+i*.35,.55,s*.4);
-    leg.rotation.x=s*.7;mang3D.add(leg);mangLegs.push({g:leg,s,i});}
+    const thigh=new THREE.Mesh(new THREE.CylinderGeometry(.075,.055,.55,6),fleshMat);
+    thigh.position.set(0,-.2,s*.16);thigh.rotation.x=s*.55;leg.add(thigh);
+    const shin=new THREE.Mesh(new THREE.CylinderGeometry(.05,.028,.65,6),darkMat);
+    shin.position.set(0,-.62,s*.36);shin.rotation.x=-s*.3;leg.add(shin);
+    for(let k=-1;k<=1;k++){const cl=new THREE.Mesh(new THREE.ConeGeometry(.028,.24,5),clawMat);
+      cl.position.set(k*.07,-.98,s*.44);cl.rotation.x=Math.PI+k*.15;leg.add(cl);}
+    leg.position.set(-.38+i*.38,.9,s*.3);
+    leg.userData.base=s*.12;leg.userData.ph=i*2.1+(s>0?Math.PI:0); // tripod-gait phase
+    mang3D.add(leg);mangLegs.push(leg);}
 })();
 
 /* ================= GAME STATE ================= */
@@ -403,7 +443,7 @@ const volEl=document.getElementById('vol'),volvEl=document.getElementById('volv'
 volEl.addEventListener('input',()=>{volvEl.textContent=volEl.value+'%';setVol(volEl.value/100);});
 
 let player={x:0,z:0,yaw:0,pitch:0,r:.45,speed:5.2,stepSnd:0,bob:0,moving:false};
-let mang={x:0,z:0,r:.5,state:'roam',roamT:4,speed:3.2,fear:0,pathT:0,wx:0,wz:0,whisperT:0,seen:0,fx:0,fz:0,fleeGX:undefined,fleeGY:undefined,litPrev:false};
+let mang={x:0,z:0,r:.5,state:'roam',roamT:4,speed:3.4,fear:0,pathT:0,wx:0,wz:0,whisperT:0,path:null,pi:0,chase:false,loseT:0,stall:0,detT:0,lx:0,lz:0,fleeGX:undefined,litPrev:false};
 let keys={},running=false,started=false,dying=false,deathT=0,deathShown=false,flick=0,last=performance.now();
 let locked=false,jumpscareOn=true;
 const lockpill=document.getElementById('lockpill');
@@ -479,13 +519,16 @@ function angDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+
 
 function reset(lv){
   const s=genLevel(lv);
+  theme=THEMES[(Math.random()*THEMES.length)|0]; // new grime every facility
+  scene.fog.color.setHex(theme.fog);scene.fog.density=theme.fogD;
+  ambient.color.setHex(theme.amb);moon.color.setHex(theme.moon);
   buildLevelMesh();
   player.x=w2x(s.x);player.z=w2z(s.y);player.yaw=Math.random()*6.28;player.pitch=0;player.stepSnd=0;
   const m0=randOpenFar(player.x,player.z,26);
   mang.x=w2x(m0.x);mang.z=w2z(m0.y);mang.state='roam';mang.roamT=3+Math.random()*5;
-  mang.speed=3.4;mang.fear=0;mang.pathT=0;mang.wx=mang.x;mang.wz=mang.z;mang.whisperT=2;mang.seen=0;
+  mang.speed=3.4;mang.fear=0;mang.pathT=0;mang.wx=mang.x;mang.wz=mang.z;mang.whisperT=2;
   mang.fleeGX=undefined;mang.litPrev=false;
-  mang.path=null;mang.stall=0;mang.detT=0;mang.lx=mang.x;mang.lz=mang.z;
+  mang.path=null;mang.pi=0;mang.stall=0;mang.detT=0;mang.lx=mang.x;mang.lz=mang.z;
   mang.chase=false;mang.loseT=0;
   dying=false;deathT=0;deathShown=false;
   document.getElementById('scare').style.display='none';
@@ -632,15 +675,15 @@ function loop(t){
   const inCone=Math.abs(yawRel)<0.42;
   const FLASH_R=27; // beam reach, cut 25% (was 36)
   const lit=inCone&&distM<FLASH_R&&los(player.x,player.z,m.x,m.z);
-  if(lit){m.fear+=dt*4.5;m.seen+=dt;}else{m.fear=Math.max(0,m.fear-dt*1.2);m.seen=Math.max(0,m.seen-dt);}
+  if(lit){m.fear+=dt*4.5;}else{m.fear=Math.max(0,m.fear-dt*1.2);}
   if(m.fear>=0.55){ // scared off — slips away silently, far across the map (2D parity: no shriek here)
-    m.state='roam';m.roamT=3+Math.random()*17;m.fear=0;m.chase=false;
+    m.state='roam';m.roamT=3+Math.random()*12;m.fear=0;m.chase=false;
     const f=randOpenFar(player.x,player.z,50);m.wx=w2x(f.x);m.wz=w2z(f.y);}
   // tile behind player (2.2 tiles back, same as 2D)
   const behindX=player.x+Math.sin(player.yaw)*8.8,behindZ=player.z+Math.cos(player.yaw)*8.8;
   const btx=Math.max(0,Math.min(GW-1,Math.floor(behindX/TS))),bty=Math.max(0,Math.min(GH-1,Math.floor(behindZ/TS)));
   let tgt=null,speed=m.speed;
-  if(lit){
+  if(lit){ // STATE: burning — flee the beam
     speed=18.0; // a glimpse and it's gone — 3.5x your walk speed
     m.chase=false;
     if(!m.litPrev){m.litPrev=true;
@@ -662,25 +705,29 @@ function loop(t){
         if(d>bd){bd=d;ox=wxx;oz=wzz;}}
       tgt={x:ox,z:oz};}
   }
-  else if(m.state==='roam'){
-    m.litPrev=false;m.fleeGX=undefined;speed=3.1;m.chase=false;
+  else if(m.state==='roam'){ // STATE: roam — drift until the urge to hunt hits
+    m.litPrev=false;m.fleeGX=undefined;speed=3.4;m.chase=false;
     if(Math.hypot(m.wx-m.x,m.wz-m.z)<1.2){const n=randNeighborOpen();m.wx=w2x(n.x);m.wz=w2z(n.y);}
     tgt={x:m.wx,z:m.wz};
     if((m.roamT-=dt)<=0){m.state='hunt';huntSting();}
-  }else{
+  }else{ // STATE: hunt — circle to behind the player, or run them down if seen
     m.litPrev=false;m.fleeGX=undefined;
-    speed=3.6+Math.min(4.0,level*0.4); // 2D-equivalent level scaling (was capped 4x too low)
+    speed=3.6+Math.min(4.0,level*0.4);
     const seesPlayer=los(m.x,m.z,player.x,player.z);
     let gx=btx,gy=bty;if(grid[gy*GW+gx]===1){gx=ptx;gy=pty;}
     m.pathT-=dt;
     if(m.pathT<=0){m.pathT=.3;const p=bfsPath(mtx,mty,gx,gy);
-      if(p&&p.length){m.path=p;m.wx=w2x(p[0].x);m.wz=w2z(p[0].y);}else{m.path=null;m.wx=behindX;m.wz=behindZ;}}
-    // corner cutting: steer for the second node once close to the first,
-    // so it rounds corners instead of grinding into them
-    let aimX=m.wx,aimZ=m.wz;
-    if(m.path&&m.path.length>1){
-      const nx0=w2x(m.path[0].x),nz0=w2z(m.path[0].y);
-      if(Math.hypot(nx0-m.x,nz0-m.z)<1.8){aimX=w2x(m.path[1].x);aimZ=w2z(m.path[1].y);}
+      if(p&&p.length){m.path=p;m.pi=0;}else m.path=null;}
+    // walk the path front-to-back: the index only advances, so the aim
+    // point can never flip-flop between nodes (that was the jitter)
+    let aimX=behindX,aimZ=behindZ;
+    if(m.path&&m.path.length){
+      while(m.pi<m.path.length-1){
+        const n=m.path[m.pi];
+        if(Math.hypot(w2x(n.x)-m.x,w2z(n.y)-m.z)<1.3)m.pi++;else break;
+      }
+      const node=m.path[Math.min(m.pi,m.path.length-1)];
+      m.wx=w2x(node.x);m.wz=w2z(node.y);aimX=m.wx;aimZ=m.wz;
     }
     tgt={x:aimX,z:aimZ};
     // committed chase with hysteresis: engage on a clear sighting and hold
@@ -730,25 +777,20 @@ function loop(t){
     moveCircle3D(m,Math.sin(a)*speed*dt,Math.cos(a)*speed*dt);m.yawA=a;}
   m.lx=m.x;m.lz=m.z;
 
-  /* ---- pose mangler mesh ---- */
+  /* ---- pose mangler mesh (model head points +X) ---- */
   const mt=performance.now()/1000;
   mang3D.position.set(m.x,Math.abs(Math.sin(mt*7))*.06,m.z);
-  mang3D.rotation.y=(m.yawA??0);
-  // face travel direction; body model faces +X so offset
-  mang3D.rotation.y=(m.yawA??0)-Math.PI/2+Math.PI/2;
-  mang3D.rotation.y=Math.atan2(fwd.x,fwd.z)*0+ (m.yawA||0);
-  // make model face movement: model head is +X, so rotate accordingly
   mang3D.rotation.y=(m.yawA||0)-Math.PI/2;
-  mangLegs.forEach((L,i)=>{L.g.rotation.x=L.s*(.7+Math.sin(mt*9+i*1.7)*.45);});
+  mangLegs.forEach(L=>{L.rotation.x=L.userData.base+Math.sin(mt*11+L.userData.ph)*.38;});
   mangSpikes.forEach((s,i)=>{s.rotation.z=Math.sin(mt*3+i)*.15;});
   if(mangJaw)mangJaw.position.y=.78+Math.sin(mt*11)*.03;
   const blink=lit?0xffffff:0xffb300;
   mangEyes.forEach(e=>e.material.color.setHex(blink));
-  eyeMat.emissiveIntensity=lit?5:2+Math.sin(mt*6)*.6;
+  eyeMat.emissiveIntensity=lit?6:3+Math.sin(mt*6)*.8;
   // dread vignette (proximity pressure)
   dmgEl.style.opacity=Math.max(0,1-distM/22)*.9;
 
-  hudL.textContent=`FACILITY ${level}`;
+  hudL.textContent=`FACILITY ${level} · ${theme.name}`;
   hudC.textContent=`COINS ${gotCoins}/${needCoins}${exitOpen?' — EXIT OPEN, RUN!':''}`;
   hudC.style.color=exitOpen?'#0f0':'#fc0';
 

@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = __dirname;
-const IGNORED = new Set(["node_modules", ".git", ".github", "build.js", "package.json", "package-lock.json"]);
+const IGNORED = new Set(["node_modules", ".git", ".github", "forum", "build.js", "package.json", "package-lock.json"]);
 
 function slugToTitle(slug) {
   return slug
@@ -191,6 +191,47 @@ function buildIndex() {
       gap: 1.4rem;
       perspective: 1200px;
     }
+    .forum-banner {
+      max-width: 920px;
+      margin: 0 auto 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: inherit;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(255,90,0,0.22) 0%, transparent 55%),
+        linear-gradient(165deg, #2e1408 0%, #1a0802 45%, #0b0301 100%);
+      border: 1px solid rgba(255,160,60,0.55);
+      border-radius: 6px 18px 6px 18px;
+      padding: 1.1rem 1.3rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 30px rgba(255,60,0,0.25), inset 0 1px 0 rgba(255,200,100,0.25);
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .forum-banner:hover {
+      transform: translateY(-4px);
+      border-color: #ff7a1a;
+      box-shadow: 0 18px 60px rgba(255,60,0,0.45), 0 0 50px rgba(255,100,0,0.3), inset 0 1px 0 rgba(255,200,100,0.4);
+    }
+    .forum-flame {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 52px; height: 52px; border-radius: 50%; flex: none;
+      font-size: 1.5rem;
+      background: radial-gradient(circle at 35% 30%, #ff5a00, #8b0d00 70%);
+      border: 1px solid rgba(255,180,80,0.6);
+      box-shadow: 0 0 18px rgba(255,80,0,0.7);
+    }
+    .forum-banner h2 {
+      font-family: 'Pirata One', serif; font-weight: 400; font-size: 1.7rem; line-height: 1;
+      background: linear-gradient(180deg, #fff3c4 0%, #ffbe4a 30%, #ff6a00 60%, #c41e00 85%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 0 14px rgba(255,80,0,0.4));
+    }
+    .forum-banner p { font-size: 0.82rem; color: #c98a5f; font-style: italic; font-family: Georgia, serif; margin-top: 0.2rem; }
+    .forum-cta { margin-left: auto; flex: none; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #ffe9c4; background: radial-gradient(circle at 35% 30%, #ff5a00, #8b0d00 70%); border-radius: 999px; padding: 0.65rem 1.1rem; box-shadow: 0 0 14px rgba(255,60,0,0.6); }
+    .forum-live { display: inline-block; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #7dff8a; border: 1px solid rgba(125,255,138,0.4); border-radius: 999px; padding: 0.25rem 0.7rem; margin-bottom: 0.4rem; }
     .card {
       position: relative;
       display: block;
@@ -407,6 +448,15 @@ function buildIndex() {
       <p class="subtitle" id="sub"></p>
       <p class="disclaimer"><span>⚠ ${entries.length} project${entries.length !== 1 ? "s" : ""} of pure AI slop ⚠</span></p>
     </div>
+    <a class="forum-banner" href="/forum/">
+      <span class="forum-flame">🔥</span>
+      <span>
+        <span class="forum-live">● 13,666 souls online</span>
+        <h2>FORUM — screams from the pit</h2>
+        <p>Reviews, guides, lore and slopposting across all 8 circles. Dave is waiting.</p>
+      </span>
+      <span class="forum-cta">enter ⛧</span>
+    </a>
     ${
       entries.length
         ? `<div class="grid">${entries
@@ -424,7 +474,7 @@ function buildIndex() {
             .join("\n      ")}</div>`
         : `<p class="empty">your mother is taking a shit</p>`
     }
-    <footer>est. MMXXVI &nbsp;·&nbsp; <b>no refunds</b> &nbsp;·&nbsp; souls processed daily</footer>
+    <footer>est. MMXXVI &nbsp;·&nbsp; <b>no refunds</b> &nbsp;·&nbsp; souls processed daily &nbsp;·&nbsp; <a href="/forum/" style="color:#ff9a4a;text-decoration:none;font-weight:800">forum</a></footer>
   </div>
 <script>
 (function () {
