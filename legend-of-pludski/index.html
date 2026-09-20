@@ -35,8 +35,30 @@
   #name { font-family: Impact, sans-serif; font-size:1.5rem; color:#ffbe4a; letter-spacing:1px; }
   #name.glow { animation: rapture 0.4s infinite alternate; }
   @keyframes rapture { from { text-shadow:0 0 8px #fff; } to { text-shadow:0 0 26px #fff, 0 0 50px #ff0; transform:translateY(-2px); } }
-  #text { font-size:1.05rem; line-height:1.65; min-height:120px; margin-bottom:16px; white-space:pre-wrap; }
+  #text {
+    font-size:1.22rem; line-height:1.7; min-height:120px; margin-bottom:10px;
+    white-space:pre-wrap; overflow-wrap:break-word; position:relative;
+    background:rgba(0,0,0,0.55); border:2px solid #ffbe4a; border-radius:10px;
+    padding:14px 14px 20px; color:#fff2d9;
+    text-shadow:0 1px 0 #000, 0 0 14px rgba(255,150,0,0.35);
+    box-shadow:inset 0 0 24px rgba(255,120,0,0.12), 0 0 18px rgba(255,80,0,0.18);
+  }
+  #text.typing { border-color:#ffbe4a; cursor:pointer; }
+  #text.typing::after {
+    content:"▌"; position:absolute; right:10px; bottom:4px;
+    color:#ffbe4a; font-weight:bold; pointer-events:none;
+    animation:caretblink 0.7s steps(1) infinite;
+  }
+  @keyframes caretblink { 50% { opacity:0; } }
+  #skiprow { display:flex; justify-content:flex-end; margin-bottom:10px; min-height:36px; }
+  #skipbtn {
+    flex:none; width:auto; text-align:center; font-size:0.85rem; font-weight:bold;
+    padding:6px 14px; background:#3a1404; color:#ffbe4a; border:1px solid #ffbe4a;
+    border-radius:99px; letter-spacing:1px;
+  }
+  #skipbtn:hover { background:#7a1500; color:#fff; }
   #btns { display:flex; flex-direction:column; gap:8px; }
+  #btns:empty { display:none; }
   button {
     font-family:inherit; font-size:1rem; text-align:left; cursor:pointer;
     background:#1c0a03; color:#ffd9a0; border:1px solid #a34d12;
@@ -76,6 +98,7 @@
       <div style="flex:1"><div class="barlabel">PLUDSKI: <span id="ehpt">140</span></div><div class="bar"><div id="ehp"></div></div></div>
     </div>
     <div id="text"></div>
+    <div id="skiprow"><button id="skipbtn" style="display:none">⏩ SKIP ▸</button></div>
     <div id="btns"></div>
   </div></div>
   <a id="back" href="/">← back to HELL</a>
@@ -145,6 +168,55 @@ function trackBuffer(t) {
   } catch (e) {}
   return null;
 }
+// Per-letter speech samples for Päivi & Pludski (sfx/speech/<voice>/<a-z>.ogg).
+// Fetch starts at page boot (no AudioContext needed); decoding happens once
+// AC exists. typeBlip falls back to oscillator until a sample is decoded.
+let speechCache = {}; // "päivi/a" -> AudioBuffer
+let speechRaw = {};   // "päivi/a" -> ArrayBuffer (pre-decode)
+let speechFailed = {}; // urls that 404'd, so we stop retrying them
+function speechURL(voice, letter) {
+  return encodeURI("sfx/speech/" + voice + "/" + letter + ".ogg");
+}
+function fetchSpeechRaw() {
+  try {
+    const voices = ["päivi", "pludski"];
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    for (const v of voices) {
+      for (const ch of letters) {
+        const key = v + "/" + ch;
+        if (speechRaw[key] || speechFailed[key]) continue;
+        fetch(speechURL(v, ch)).then(r => {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.arrayBuffer();
+        }).then(ab => {
+          speechRaw[key] = ab;
+          decodeSpeechKey(key);
+        }).catch(err => {
+          speechFailed[key] = true;
+          try { console.warn("[pludski] speech fetch failed:", speechURL(v, ch), err); } catch (_) {}
+        });
+      }
+    }
+  } catch (e) {}
+}
+function decodeSpeechKey(key) {
+  try {
+    if (speechCache[key] || !speechRaw[key] || !AC) return;
+    // slice: decodeAudioData detaches the buffer, keep the original for retry
+    AC.decodeAudioData(speechRaw[key].slice(0)).then(buf => {
+      speechCache[key] = buf;
+    }).catch(err => {
+      try { console.warn("[pludski] speech decode failed:", key, err); } catch (_) {}
+    });
+  } catch (e) {}
+}
+function decodeSpeech() {
+  try {
+    for (const key of Object.keys(speechRaw)) decodeSpeechKey(key);
+  } catch (e) {}
+}
+// Start fetching samples immediately at page boot so they're warm by dialogue.
+fetchSpeechRaw();
 // Pre-build every buffer up front so attacks never hitch the music.
 function prebuild() {
   sfxCache = {};
@@ -156,6 +228,7 @@ function prebuild() {
   }
   for (const k of Object.keys(TRACKS)) trackBuffer(TRACKS[k]);
   audioReady = true;
+  decodeSpeech();
 }
 function sfx(kind, note, vol) {
   try {
@@ -258,14 +331,154 @@ function refreshBar() {
   $("lore").textContent = lore;
   $("kit").textContent = "🧪" + bombs + " 🙏" + potions + " ⚔️+" + atk + " ❤️" + pmax;
 }
-function setScene(face, name, text, buttons, glow) {
-  $("face").textContent = face;
-  $("name").textContent = name;
-  $("name").classList.toggle("glow", !!glow);
-  $("text").textContent = text;
-  $("bars").style.display = "none";
+/* ── RPG DIALOGUE: fast typewriter, skip button, options appear only when done.
+   Layout-stability: before typing we synchronously paint the FULL text,
+   measure its final height, and lock #text min-height to it — so buttons/
+   skip sit at their final positions from frame one and nothing rescales
+   or jumps while letters appear. (No paint happens mid-measure because
+   we clear it back in the same synchronous block.) */
+let typeTimer = null, typeFull = "", typeIdx = 0, typePending = null, typing = false;
+const TYPE_CHAR_MS = 26, TYPE_NEWLINE_MS = 280;
+// One fixed voice per story character. Fully deterministic, no randomness.
+// sample: per-letter ogg set in sfx/speech/<sample>/ (päivi, pludski);
+// others use the fixed oscillator pip [f, w].
+const VOICES = {
+  "SLOP": { f: 240, w: "square" },
+  "OBAMA": { f: 400, w: "triangle" },
+  "DAVE": { f: 175, w: "sawtooth" },
+  "SATAN": { f: 130, w: "sawtooth" },
+  "PÄIVI": { f: 680, w: "sine", sample: "päivi" },
+  "PLUDSKI (ENRAGED)": { f: 580, w: "sawtooth", sample: "pludski" },
+  "PLUDSKI": { f: 520, w: "square", sample: "pludski" },
+  "MAUPPI": { f: 500, w: "triangle" },
+  "STATUE": { f: 300, w: "triangle" },
+  "CHURCH": { f: 600, w: "sine" },
+  "TOWNSFOLK": { f: 460, w: "triangle" },
+  "TRIAL": { f: 350, w: "square" },
+  "GUILTY": { f: 350, w: "square" },
+  "GATES": { f: 330, w: "triangle" },
+  "PLUDSKITOPIA": { f: 440, w: "square" },
+  "RAPTURED": { f: 150, w: "sawtooth" },
+  "JAIL": { f: 280, w: "triangle" },
+  "END": { f: 440, w: "square" },
+};
+let typeVoice = { f: 440, w: "square", sample: null };
+function voiceFor(name) {
+  const n = (name || "").toUpperCase();
+  for (const k of Object.keys(VOICES)) { if (n.indexOf(k) !== -1) return VOICES[k]; }
+  return { f: 440, w: "square", sample: null };
+}
+function hideSkip() { try { $("skipbtn").style.display = "none"; } catch (e) {} }
+function showSkip() { try { $("skipbtn").style.display = ""; } catch (e) {} }
+function stopTyping() {
+  if (typeTimer) { clearTimeout(typeTimer); clearInterval(typeTimer); typeTimer = null; }
+  typing = false; typePending = null;
+  try { $("text").classList.remove("typing"); } catch (e) {}
+  hideSkip();
+}
+function typeBlip(ch) {
+  // Päivi & Pludski: play their per-letter speech sample
+  // (sfx/speech/<voice>/<a-z>.ogg). Fixed rate, fixed volume, no randomness.
+  // Everyone else: one fixed oscillator pip for the speaker. Same chain
+  // (sfxGain only) either way — music untouched.
+  try {
+    if (!audioReady || !AC || !sfxGain) return;
+    if (AC.state !== "running") return;
+    if (typeVoice.sample && ch) {
+      let L = ch.toLowerCase();
+      if (L >= "a" && L <= "z") {
+        if (L === "w") L = "v"; // folders ship a–z minus w; w reuses v
+        const key = typeVoice.sample + "/" + L;
+        decodeSpeechKey(key); // in case raw arrived but isn't decoded yet
+        const buf = speechCache[key];
+        if (buf) {
+          const s = AC.createBufferSource();
+          s.buffer = buf;
+          s.playbackRate.value = 1.0;
+          const g = AC.createGain();
+          g.gain.value = 0.8;
+          s.connect(g); g.connect(sfxGain);
+          s.start();
+          return;
+        }
+      }
+    }
+    const t = AC.currentTime;
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    o.type = typeVoice.w;
+    o.frequency.setValueAtTime(typeVoice.f, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+    o.connect(g); g.connect(sfxGain);
+    o.start(t); o.stop(t + 0.055);
+  } catch (e) {}
+}
+function lockToFinalHeight(finalText) {
+  const t = $("text");
+  // Synchronous measure: full text -> height -> clear. No paint in between.
+  t.classList.remove("typing");
+  t.textContent = finalText;
+  const h = t.offsetHeight;
+  t.textContent = "";
+  t.style.minHeight = Math.max(120, h) + "px";
+}
+function finishTyping() {
+  if (!typing) return;
+  if (typeTimer) { clearTimeout(typeTimer); clearInterval(typeTimer); typeTimer = null; }
+  typing = false;
+  const t = $("text");
+  t.textContent = typeFull;
+  t.classList.remove("typing");
+  hideSkip();
+  const f = typePending; typePending = null;
+  if (f) f();
+}
+try {
+  $("skipbtn").onclick = e => { try { e.stopPropagation(); } catch (_) {} finishTyping(); };
+} catch (e) {}
+// Keyboard fast-forward: Enter/Space completes text (never hijacks name input).
+try {
+  document.addEventListener("keydown", e => {
+    if (!typing) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+      e.preventDefault();
+      finishTyping();
+    }
+  });
+} catch (e) {}
+function typeText(finalText, onDone, voice) {
+  stopTyping();
+  lockToFinalHeight(finalText);
+  typeVoice = voice || typeVoice;
+  typeFull = finalText; typeIdx = 0; typePending = onDone || null;
+  const t = $("text");
+  t.textContent = "";
+  t.classList.add("typing");
+  // Empty text: finish immediately so options never get stuck hidden.
+  if (!finalText) { finishTyping(); return; }
+  showSkip();
+  typing = true;
+  t.onclick = () => finishTyping();
+  // Char-by-char via chained timeouts so newlines can pause longer.
+  const step = () => {
+    if (!typing) return;
+    typeIdx += 1;
+    if (typeIdx >= typeFull.length) { finishTyping(); return; }
+    t.textContent = typeFull.slice(0, typeIdx);
+    const c = typeFull[typeIdx - 1];
+    if (c !== " " && c !== "\n" && c !== "\r" && c !== "\t") typeBlip(c);
+    typeTimer = setTimeout(step, c === "\n" ? TYPE_NEWLINE_MS : TYPE_CHAR_MS);
+  };
+  typeTimer = setTimeout(step, TYPE_CHAR_MS);
+}
+function renderButtons(list) {
   const b = $("btns"); b.innerHTML = "";
-  buttons.forEach(([label, fn, cls, dis]) => {
+  try { $("text").onclick = null; } catch (e) {}
+  list.forEach(([label, fn, cls, dis]) => {
     const btn = document.createElement("button");
     btn.textContent = label;
     if (cls) btn.className = cls;
@@ -273,7 +486,16 @@ function setScene(face, name, text, buttons, glow) {
     btn.onclick = () => { sfx("click", 0, 0.35); fn(); };
     b.appendChild(btn);
   });
+}
+function setScene(face, name, text, buttons, glow) {
+  stopTyping();
+  $("face").textContent = face;
+  $("name").textContent = name;
+  $("name").classList.toggle("glow", !!glow);
+  $("bars").style.display = "none";
+  $("btns").innerHTML = ""; // keep hidden until text is done
   refreshBar();
+  typeText(text, () => renderButtons(buttons), voiceFor(name));
 }
 function hitShake() {
   // Scrapped: even the compositor-only shake janked the music on some
@@ -284,27 +506,35 @@ function hitShake() {
 function intro() {
   lore = 0; talked = {}; met = {}; visited = {};
   atk = 0; bombs = 1; potions = 2; pmax = 110;
+  stopTyping();
   playMusic("town");
   $("face").textContent = "🚪";
   $("name").textContent = "THE GATES";
   $("name").classList.remove("glow");
   $("bars").style.display = "none";
-  $("text").textContent = "You stand before PLUDSKITOPIA.\nA sign reads: \"POP. 666. FOUNDED BY PLUDSKI (beloved, flawless, never did anything wrong).\"\n\nFirst, trespasser: WHAT IS YOUR NAME?";
-  const b = $("btns"); b.innerHTML = "";
-  const inp = document.createElement("input");
-  inp.maxLength = 16; inp.placeholder = "enter your name...";
-  const btn = document.createElement("button");
-  btn.textContent = "ENTER PLUDSKITOPIA →";
-  btn.className = "big";
-  btn.onclick = () => {
-    player = (inp.value.trim() || "DAVE 2").toUpperCase().slice(0, 16);
-    enableMusic();
-    hub("You push open the gates. Birds sing. Somewhere, a statue of Pludski winks at you. Probably.");
-  };
-  b.appendChild(inp); b.appendChild(btn);
-  inp.focus();
-  inp.onkeydown = e => { if (e.key === "Enter") btn.click(); };
+  $("btns").innerHTML = "";
   refreshBar();
+  typeVoice = voiceFor("GATES");
+  typeText("You stand before PLUDSKITOPIA.\nA sign reads: \"POP. 666. FOUNDED BY PLUDSKI (beloved, flawless, never did anything wrong).\"\n\nFirst, trespasser: WHAT IS YOUR NAME?", () => {
+    const b = $("btns"); b.innerHTML = "";
+    try { $("text").onclick = null; } catch (e) {}
+    const inp = document.createElement("input");
+    inp.maxLength = 16; inp.placeholder = "enter your name...";
+    const btn = document.createElement("button");
+    btn.textContent = "ENTER PLUDSKITOPIA →";
+    btn.className = "big";
+    btn.onclick = () => {
+      player = (inp.value.trim() || "DAVE 2").toUpperCase().slice(0, 16);
+      enableMusic();
+      hub("You push open the gates. Birds sing. Somewhere, a statue of Pludski winks at you. Probably.");
+    };
+    b.appendChild(inp); b.appendChild(btn);
+    inp.focus();
+    inp.onkeydown = e => {
+      if (e.key === "Enter") btn.click();
+      try { e.stopPropagation(); } catch (_) {}
+    };
+  });
 }
 
 /* ── 2. TOWN ── */
@@ -414,25 +644,30 @@ function drawBars() {
   $("ehp").style.width = Math.max(0, ehp / 140 * 100) + "%";
 }
 function fightTurn(msg) {
+  stopTyping();
   drawBars();
   $("face").textContent = ehp <= 70 ? "🌟😡" : "🌟";
   $("name").textContent = ehp <= 70 ? "PLUDSKI (ENRAGED)" : "PLUDSKI";
   $("name").classList.add("glow");
-  $("text").textContent = msg;
+  $("btns").innerHTML = "";
   refreshBar();
-  const b = $("btns"); b.innerHTML = "";
-  const moves = [
-    ["🗡️ BONK (" + (10 + atk) + "–" + (15 + atk) + " dmg)", () => strike("bonk"), "", false],
-    ["🧪 SLOP BOMB (26–38, x" + bombs + ")", () => strike("bomb"), "", bombs <= 0],
-    ["🙏 PRAY (heal 16–24, x" + potions + ")", () => strike("pray"), "", potions <= 0],
-    ["🛡️ BRACE (halve next hit)", () => strike("guard"), "", false],
-  ];
-  moves.forEach(([label, fn, cls, dis]) => {
-    const btn = document.createElement("button");
-    btn.textContent = label; if (dis) btn.disabled = true;
-    btn.onclick = fn; // no click blip here: each move plays its own sound
-    b.appendChild(btn);
-  });
+  const foeVoice = voiceFor($("name").textContent);
+  typeText(msg, () => {
+    const b = $("btns"); b.innerHTML = "";
+    try { $("text").onclick = null; } catch (e) {}
+    const moves = [
+      ["🗡️ BONK (" + (10 + atk) + "–" + (15 + atk) + " dmg)", () => strike("bonk"), "", false],
+      ["🧪 SLOP BOMB (26–38, x" + bombs + ")", () => strike("bomb"), "", bombs <= 0],
+      ["🙏 PRAY (heal 16–24, x" + potions + ")", () => strike("pray"), "", potions <= 0],
+      ["🛡️ BRACE (halve next hit)", () => strike("guard"), "", false],
+    ];
+    moves.forEach(([label, fn, cls, dis]) => {
+      const btn = document.createElement("button");
+      btn.textContent = label; if (dis) btn.disabled = true;
+      btn.onclick = fn; // no click blip here: each move plays its own sound
+      b.appendChild(btn);
+    });
+  }, foeVoice);
 }
 function strike(move) {
   turns++;
