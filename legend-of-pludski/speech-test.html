@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>SPEECH LAB (hidden test page)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Georgia, serif; background:#0d0202; color:#f5d9b8; min-height:100vh; display:flex; justify-content:center; padding:24px 12px 60px; }
+  #app { width:min(620px,100%); }
+  h1 { text-align:center; font-size:1.4rem; color:#ffcc33; font-family:Impact,sans-serif; letter-spacing:2px; margin-bottom:4px; }
+  #sub { text-align:center; color:#c98a5f; font-style:italic; margin-bottom:16px; font-size:0.85rem; }
+  .card { background:linear-gradient(170deg,#220d05,#0e0301); border:2px solid #ff7a1a; border-radius:14px; padding:18px; margin-bottom:14px; }
+  .row { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  button { font-family:inherit; font-size:0.95rem; cursor:pointer; background:#1c0a03; color:#ffd9a0; border:1px solid #a34d12; border-radius:8px; padding:8px 12px; }
+  button:hover { background:#3a1404; border-color:#ff7a1a; }
+  button.on { background:#7a1500; color:#fff; border-color:#ffb300; font-weight:bold; }
+  #status { font-size:0.85rem; color:#ffb066; margin-bottom:12px; }
+  #grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(52px,1fr)); gap:6px; margin-bottom:6px; }
+  #grid button { text-align:center; padding:8px 4px; font-size:0.9rem; }
+  #grid button.ok { border-color:#4f4; }
+  #grid button.bad { border-color:#f44; opacity:0.5; }
+  #grid button small { display:block; font-size:0.6rem; color:#c98a5f; }
+  textarea { width:100%; font-size:1rem; padding:10px; border-radius:8px; border:1px solid #a34d12; background:#000; color:#ffe9c4; font-family:inherit; min-height:76px; margin-bottom:8px; }
+  #log { font-size:0.75rem; color:#c98a5f; white-space:pre-wrap; max-height:150px; overflow-y:auto; }
+  #now { font-size:1.6rem; text-align:center; min-height:2.2em; color:#ffbe4a; margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>🔊 SPEECH LAB</h1>
+  <p id="sub">hidden test page — not linked from the site. audio starts on first click.</p>
+  <div class="card">
+    <div class="row">
+      <button id="v-paivi" class="on">PÄIVI</button>
+      <button id="v-pludski">PLUDSKI</button>
+    </div>
+    <div id="status">loading…</div>
+    <div id="now"></div>
+    <div id="grid"></div>
+    <p id="sub" style="margin:6px 0 0">w reuses v (folders ship a–z minus w), same as the game.</p>
+  </div>
+  <div class="card">
+    <textarea id="txt">Päivi? Oh, that sweet dead SAINT. Definitely not Pludski!</textarea>
+    <div class="row">
+      <button id="speak">▶ SPEAK (game timing)</button>
+      <button id="stop">⏹ STOP</button>
+    </div>
+  </div>
+  <div class="card"><div id="log"></div></div>
+</div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const VOICES = ["päivi", "pludski"];
+let voice = "päivi";
+let AC = null, master = null;
+let raw = {}, buf = {}, failed = {}; // "päivi/a" -> data
+let speakTimer = null;
+
+function log(m) { $("log").textContent += m + "\n"; }
+function url(v, l) { return encodeURI("sfx/speech/" + v + "/" + l + ".ogg"); }
+function refreshStatus() {
+  const ok = Object.keys(buf).filter(k => k.indexOf(voice + "/") === 0).length;
+  const bad = Object.keys(failed).filter(k => k.indexOf(voice + "/") === 0).length;
+  $("status").textContent = voice.toUpperCase() + ": loaded " + ok + "/25 · failed " + bad;
+  document.querySelectorAll("#grid button").forEach(b => {
+    const k = voice + "/" + b.dataset.l;
+    b.classList.toggle("ok", !!buf[k]);
+    b.classList.toggle("bad", !!failed[k]);
+  });
+}
+function ensureAC() {
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0.8; master.connect(AC.destination);
+  }
+  if (AC.state === "suspended") AC.resume();
+}
+function decodeKey(key) {
+  if (buf[key] || !raw[key] || !AC) return;
+  AC.decodeAudioData(raw[key].slice(0)).then(b => { buf[key] = b; refreshStatus(); })
+    .catch(e => log("decode failed: " + key + " " + e));
+}
+function playLetter(v, letter) {
+  ensureAC();
+  let L = letter.toLowerCase();
+  if (L === "ä") L = "e"; // no ä sample; nearest voice match
+  if (L < "a" || L > "z") return;
+  if (L === "w") L = "v";
+  const key = v + "/" + L;
+  decodeKey(key);
+  const b = buf[key];
+  $("now").textContent = letter.toUpperCase() + (b ? "" : " (not loaded — fallback silence)");
+  if (!b) return;
+  const s = AC.createBufferSource();
+  s.buffer = b; s.playbackRate.value = 1.0;
+  s.connect(master); s.start();
+}
+// Fetch everything at boot (no AC needed); decode on first click.
+for (const v of VOICES) {
+  for (let i = 0; i < 26; i++) {
+    const ch = String.fromCharCode(97 + i);
+    const key = v + "/" + ch;
+    fetch(url(v, ch)).then(r => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.arrayBuffer();
+    }).then(ab => { raw[key] = ab; if (AC) decodeKey(key); })
+    .catch(e => { failed[key] = true; log("fetch failed: " + url(v, ch) + " " + e.message); refreshStatus(); });
+  }
+}
+const grid = $("grid");
+for (let i = 0; i < 26; i++) {
+  const ch = String.fromCharCode(97 + i);
+  const b = document.createElement("button");
+  b.dataset.l = ch;
+  b.innerHTML = ch.toUpperCase() + (ch === "w" ? "<small>→v</small>" : "<small>&nbsp;</small>");
+  b.onclick = () => playLetter(voice, ch);
+  grid.appendChild(b);
+}
+$("v-paivi").onclick = () => { voice = "päivi"; $("v-paivi").classList.add("on"); $("v-pludski").classList.remove("on"); refreshStatus(); };
+$("v-pludski").onclick = () => { voice = "pludski"; $("v-pludski").classList.add("on"); $("v-paivi").classList.remove("on"); refreshStatus(); };
+$("stop").onclick = () => { if (speakTimer) { clearTimeout(speakTimer); speakTimer = null; } };
+// Mirrors the game's phonetic pacing (always the ×1.25 slow voices here).
+function letterMult(c) {
+  const L = c.toLowerCase();
+  if ("aeiouyäöå".indexOf(L) !== -1) return 1.5;
+  if ("pbtdkgc".indexOf(L) !== -1) return 0.7;
+  if (L === "q") return 0.8;
+  if ("mn".indexOf(L) !== -1) return 1.25;
+  if ("lr".indexOf(L) !== -1) return 1.2;
+  if ("fshzxvj".indexOf(L) !== -1) return 1.15;
+  if (",;:".indexOf(L) !== -1) return 2.0;
+  if (".!?…".indexOf(L) !== -1) return 3.0;
+  return 1.0;
+}
+$("speak").onclick = () => {
+  ensureAC();
+  if (speakTimer) clearTimeout(speakTimer);
+  const text = $("txt").value;
+  let i = 0;
+  const step = () => {
+    if (i >= text.length) { speakTimer = null; return; }
+    const c = text[i++];
+    if (c !== " " && c !== "\n" && c !== "\r" && c !== "\t") playLetter(voice, c);
+    let base;
+    if (c === "\n") base = 280;
+    else if (c === " " || c === "\t" || c === "\r") base = 55;
+    else base = 26 * letterMult(c);
+    speakTimer = setTimeout(step, base * 1.25); // slow voices, same as game
+  };
+  step();
+};
+refreshStatus();
+</script>
+</body>
+</html>
