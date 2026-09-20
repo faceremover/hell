@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEGEND OF PLUDSKI</title>
+<script src="pl_synth.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: Georgia, serif;
+    background: #0d0202 radial-gradient(ellipse 80% 50% at 50% 0%, #3d0d00 0%, #0d0202 60%);
+    color: #f5d9b8; min-height:100vh; display:flex; justify-content:center;
+    padding: 24px 12px 60px;
+  }
+  #game { width:min(620px,100%); }
+  h1 {
+    text-align:center; font-size: clamp(2rem,7vw,3.2rem); letter-spacing:2px;
+    color:#ffcc33; text-shadow:0 0 24px #ff5500, 0 3px 0 #400;
+    margin-bottom:4px; font-family: Impact, sans-serif;
+  }
+  #sub { text-align:center; color:#c98a5f; font-style:italic; margin-bottom:16px; font-size:0.95rem; }
+  #lorebar {
+    text-align:center; font-size:0.75rem; letter-spacing:2px; margin-bottom:14px;
+    color:#ffb066; border:1px solid #a33; border-radius:99px; padding:6px;
+    background:rgba(0,0,0,0.5);
+  }
+  #card {
+    background:linear-gradient(170deg,#220d05,#0e0301);
+    border:2px solid #ff7a1a; border-radius:14px; padding:22px;
+    box-shadow:0 0 40px rgba(255,80,0,0.25); min-height:320px;
+  }
+  #who { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  #face { font-size:3rem; line-height:1; filter:drop-shadow(0 0 12px rgba(255,120,0,0.6)); }
+  #name { font-family: Impact, sans-serif; font-size:1.5rem; color:#ffbe4a; letter-spacing:1px; }
+  #name.glow { animation: rapture 0.4s infinite alternate; }
+  @keyframes rapture { from { text-shadow:0 0 8px #fff; } to { text-shadow:0 0 26px #fff, 0 0 50px #ff0; transform:translateY(-2px); } }
+  #text { font-size:1.05rem; line-height:1.65; min-height:120px; margin-bottom:16px; white-space:pre-wrap; }
+  #btns { display:flex; flex-direction:column; gap:8px; }
+  button {
+    font-family:inherit; font-size:1rem; text-align:left; cursor:pointer;
+    background:#1c0a03; color:#ffd9a0; border:1px solid #a34d12;
+    border-radius:8px; padding:10px 12px;
+  }
+  button:hover:not(:disabled) { background:#3a1404; border-color:#ff7a1a; }
+  button:disabled { opacity:0.35; cursor:default; }
+  button.big { text-align:center; font-weight:bold; background:#7a1500; color:#fff; border-color:#ffb300; }
+  button.big:hover { background:#a32000; }
+  input {
+    width:100%; font-size:1.2rem; padding:10px; margin:10px 0;
+    border-radius:8px; border:1px solid #a34d12; background:#000; color:#ffe9c4;
+    font-family:inherit; text-align:center;
+  }
+  .bars { display:flex; gap:10px; margin-bottom:12px; font-size:0.85rem; }
+  .bar { flex:1; background:#000; border:1px solid #666; border-radius:6px; overflow:hidden; }
+  .bar > div { height:14px; transition:width 0.3s; }
+  #php { background:linear-gradient(90deg,#0f0,#4f4); width:100%; }
+  #ehp { background:linear-gradient(90deg,#f00,#f80); width:100%; }
+  .barlabel { margin-bottom:4px; }
+  #back { display:block; margin:18px auto 0; text-align:center; color:#c98a5f; font-size:0.85rem; }
+  #musicrow { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  #musbtn { flex:none; width:auto; text-align:center; font-size:0.85rem; padding:6px 12px; }
+  #nowplay { font-size:0.75rem; letter-spacing:1px; color:#8a6a4a; font-style:italic; }
+</style>
+</head>
+<body>
+<div id="game">
+  <h1>⚔ LEGEND OF PLUDSKI ⚔</h1>
+  <p id="sub">a small hilarious story-driven experience. music by bunga himself.</p>
+  <div id="lorebar">LORE: <span id="lore">0</span>/5 &nbsp;·&nbsp; <span id="kit">🧪1 🙏2 ⚔️+0</span> &nbsp;·&nbsp; PLUDSKITOPIA</div>
+  <div id="musicrow"><button id="musbtn">🔇 MUSIC: OFF</button><span id="nowplay"></span></div>
+  <div id="card"><div id="shake">
+    <div id="who"><span id="face">🏘️</span><span id="name">???</span></div>
+    <div class="bars" id="bars" style="display:none">
+      <div style="flex:1"><div class="barlabel">YOU: <span id="phpt">100</span></div><div class="bar"><div id="php"></div></div></div>
+      <div style="flex:1"><div class="barlabel">PLUDSKI: <span id="ehpt">140</span></div><div class="bar"><div id="ehp"></div></div></div>
+    </div>
+    <div id="text"></div>
+    <div id="btns"></div>
+  </div></div>
+  <a id="back" href="/">← back to HELL</a>
+</div>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+/* HOW TO ADD MUSIC: make a song at https://phoboslab.org/synth/ ,
+   export the song data array, paste into TRACKS below. That's it.
+   town = square, talk = dialogue/investigation, boss = fight, ending = jail.
+   Engine: pl_synth.min.js (vendored, MIT © Dominic Szablewski) */
+const TRACKS = {
+  town:   { label: "♫ Pludskitopia Stroll", song: [5752,[[[4,0,0,0,232,1,5,0,0,0,95,1,10,143,8179,2116,199,2,286,203],[1,1,1,1,1,1,1,1],[[157,0,0,0,157,0,0,159,152,0,152,0,152,0,154,0,147,0,0,0,147,0,0,0,147,0,0,0,147,0,159]]],[[7,0,0,0,168,3,9,0,0,0,128,3,0,169,1829,2962,229],[1,2,1,2],[[147,147,147,147,145,145,147,0,144,144,147,0,159,0,161,0,147,147,147,147,142,142,147,0,142,142,147,0,159,0,161],[147,147,147,147,145,145,147,0,144,144,147,0,159,0,161,0,147,0,147,0,147,0,147,0,151,151,147,0,149,149,147],[159]]],[[7,0,0,0,230,3,8,0,10,0,71,3,0,3355,1125,3781,138,0,0,0,0,0,6,74],[1,1,1,1,1,1,1,1],[[140,0,145,0,147,0,145,0,140,0,144,0,147,0,144,0,139,0,142,0,147,0,142,0,139,0,142,0,147,0,142]]],[[7,0,0,0,200,2,8,0,19,0,175,3,12,15,2000,3355,211,0,0,0,0,0,6],[0,0,0,3,1,2,1,2],[[151,0,154,0,156,156,154,0,151,0,151,151,151,0,147,0,149,0,0,0,147,0,144,0,142],[151,154,154,0,154,0,154,0,156,156,154,0,151,0,151,151,149,0,149,149,151,151,149,149,151,0,149,0,147],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,147,147,147]]]]] },
+  boss:   { label: "♫ I'M RAPTURING IT (boss)", song: [5088,[[[8,0,0,0,163,3,8,0,0,1,59,3,0,119,1969,307,192,0,0,0,0,0,7,146],[1,1,1,1,2,2,2,2],[[142,145,142,142,144,142,142,141,142,145,142,142,144,142,145,149,142,145,142,142,144,142,141,142,142,145,142,142,144,145,149,137],[135,138,142,147,150,147,142,138,135,138,142,149,150,149,142,138,135,138,142,147,150,147,142,137,138,142,147,150,154,150,149,147]]],[[5,0,0,0,192,1,7,0,0,0,192,3,0,200,2000,2116,192],[1,1,1,1,2,2,2,2],[[142,142,0,142,142,0,142,142,138,138,0,138,138,0,138,138,141,141,0,141,141,0,141,141,141,141,0,141,141,0,141,149],[147,147,147,0,147,147,147,0,147,147,147,0,147,147,142,142,147,147,147,0,147,147,147,0,147,147,147,154,147,147,142,142]]],[[7,0,0,0,175,2,7,0,14,0,128,2,0,80,3564,5274,210,1,4,255,0,51,10,0,0,0,13,0,3],[1,2,1,2,3,3,3,3],[[157,0,161,0,162,162,161,0,157,0,157,157,157,0,154,0,156,0,0,0,154,0,153,0,149],[157,161,161,0,161,0,161,0,162,162,161,0,157,0,154,154,156,0,156,156,157,157,156,156,157,0,156,0,149,150,149],[154,154,154,154,152,152,154,0,152,152,154,0,166,0,167,0,154,154,154,154,152,152,154,0,155,155,154,0,167,0,166]]]]] },
+  ending: { label: "♫ Executed in Pludskitopia", song: [8269,[[[4,1,0,0,217,3,5,8,0,0,43,3,0,1569,3355,10613,199,0,286,147],[1,1,1,1,1,1,1,1],[[157,0,0,0,157,0,0,159,152,0,152,0,152,0,154,0,147,0,0,0,147,0,0,0,147,0,0,0,147,0,159]]],[[9,1,0,0,167,0,11,8,0,0,7,0,0,22,0,10613,206,0,0,0,6,53],[1,2,1,2],[[147,147,147,147,145,145,147,0,143,143,147,0,155,0,159,0,147,147,147,147,142,142,147,0,142,142,147,0,154,0,159],[147,147,147,147,145,145,147,0,143,143,147,0,159,0,161,0,147,0,147,0,147,0,147,0,150,150,147,0,149,149,147],[159]]],[[7,1,0,0,230,3,8,1,10,0,71,3,0,1569,1125,7814,138,0,0,0,6,85,6,74],[1,1,1,1,1,1,1,1],[[140,0,145,0,147,0,145,0,140,0,143,0,147,0,143,0,138,0,142,0,147,0,142,0,138,0,142,0,147,0,142]]],[[7,1,0,0,234,2,6,1,13,0,0,0,74,80,15,15666,246,2,2358,118,6,45,6],[0,0,0,3,1,2,1,2],[[150,0,154,0,155,155,154,0,150,0,150,150,150,0,147,0,149,0,0,0,147,0,140,0,142],[150,154,154,0,154,0,154,0,155,155,154,0,150,0,147,147,149,0,149,149,150,150,149,149,150,0,149,0,147],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,147,147,147]]]]] },
+  talk:   { label: "♫ Investigation (dialogue)", song: [7350,[[[6,0,0,1,145,3,7,0,0,0,0,0,61,51,0,2601,192],[1,1,1,1],[[137,0,156,156,0,0,156,0,137,0,156,156,0,0,156,0,137,0,156,156,0,0,156,0,137,0,156,156,0,0,156],[0,0,0,0,0,0,0,0,144]]],[[5,0,0,0,255,3,0,0,0,0,192,0,0,200,2000,2777,192],[1,1,1,1],[[147,0,0,147,142,0,0,142,147,0,0,147,142,142,0,145,147,0,0,147,142,0,0,142,147,0,0,147,142,142,0,145]]],[[7,0,0,0,188,3,7,0,0,0,0,0,0,200,2000,1029,192],[0,1,1],[[0,147,154,147,153,147,152,147,150,0,147,0,145,146,0,147,0,147,154,147,153,147,152,147,150,152,150,147,145,146,0,147]]]]] },
+};
+const SFXBANK = {
+  click: [7,3,180,1,180,2,8,,9,1,160,2,,700,500,900,200,3,900,200,,,,1,,1,5,200],
+  lore:  [0,0,200,1,300,2,8,,4,1,200,2,,3000,1500,20000,200,4,1000,200,,,,1,,1,4,200],
+  bonk:  [8,1,90,0,150,1,8,,12,0,90,2,,7000,300,30000,255,1,300,255,,,,1,,1,2,255],
+  hurt:  [5,2,70,0,120,1,8,,6,0,60,2,,5000,800,25000,255,2,500,255,,,,1,,1,3,255],
+};
+
+/* ── AUDIO: music and sfx on separate gains, buffers pre-built ── */
+let AC = null, synth = null, musicGain = null, sfxGain = null, musicAnalyser = null;
+let musicOn = false, audioReady = false, musicSrc = null, musicName = null;
+let sfxCache = {};
+function audio() {
+  if (!AC) {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    synth = pl_synth_init(AC);
+    musicGain = AC.createGain(); musicGain.gain.value = 0.5;
+    musicAnalyser = AC.createAnalyser(); musicAnalyser.fftSize = 512;
+    musicGain.connect(musicAnalyser); musicAnalyser.connect(AC.destination);
+    sfxGain = AC.createGain(); sfxGain.gain.value = 0.9; sfxGain.connect(AC.destination);
+  }
+  if (AC.state === "suspended") AC.resume();
+  return AC;
+}
+// Tracker exports sometimes truncate an instrument's trailing zeros.
+// Missing params poison the synth math with NaN and render a 0-sample
+// song (which used to murder the music on dialogue entry). Pad them.
+function padSong(song) {
+  for (const pat of song[1]) {
+    while (pat[0].length < 26) pat[0].push(0);
+  }
+  return song;
+}
+// Safety net: an out-of-range synth param renders NaN, and playing a
+// NaN buffer mutes the whole AudioContext (music included). Scrub every
+// rendered buffer once at build time so this can never happen again.
+function clean(buf) {
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) if (!isFinite(d[i])) d[i] = 0;
+  }
+  return buf;
+}
+function trackBuffer(t) {
+  if (t.buffer) return t.buffer;
+  if (!t.song) return null;
+  try {
+    if (!t._padded) { padSong(t.song); t._padded = true; }
+    const b = clean(synth.song(t.song));
+    if (b.getChannelData(0).length > 0) { t.buffer = b; return b; }
+  } catch (e) {}
+  return null;
+}
+// Pre-build every buffer up front so attacks never hitch the music.
+function prebuild() {
+  sfxCache = {};
+  for (const k of Object.keys(SFXBANK)) {
+    sfxCache[k + "147"] = clean(synth.sound(SFXBANK[k], 147));
+    sfxCache[k + "120"] = clean(synth.sound(SFXBANK[k], 120));
+    sfxCache[k + "150"] = clean(synth.sound(SFXBANK[k], 150));
+    sfxCache[k + "165"] = clean(synth.sound(SFXBANK[k], 165));
+  }
+  for (const k of Object.keys(TRACKS)) trackBuffer(TRACKS[k]);
+  audioReady = true;
+}
+function sfx(kind, note, vol) {
+  try {
+    if (!audioReady) return;
+    if (AC.state === "suspended") AC.resume();
+    const key = kind + (note || 147);
+    const buf = sfxCache[key] || sfxCache[kind + "147"];
+    if (!buf) return;
+    const s = AC.createBufferSource();
+    s.buffer = buf;
+    const g = AC.createGain();
+    g.gain.value = (vol === undefined ? 0.9 : vol);
+    s.connect(g); g.connect(sfxGain);
+    s.start();
+  } catch (e) {}
+}
+function loopEndFor(buf) {
+  // Trim the render tail (up to ~1s of near-silence on some tracks) so
+  // loop=true actually loops instead of pausing on every pass.
+  const L = buf.getChannelData(0), R = buf.getChannelData(1);
+  let last = L.length - 1;
+  while (last > 0 && Math.abs(L[last]) < 0.01 && Math.abs(R[last]) < 0.01) last--;
+  return Math.min(buf.duration, last / AC.sampleRate + 0.05);
+}
+function playMusic(name, force) {
+  musicName = name;
+  if (!musicOn || !audioReady) return;
+  if (!force && musicSrc && musicSrc._track === name) return; // same song: keep playing, don't restart
+  const t = TRACKS[name];
+  const buf = t && trackBuffer(t);
+  if (!buf) return; // broken track: leave whatever is playing alone
+  stopMusic();
+  try {
+    if (AC.state === "suspended") AC.resume();
+    // Simple native loop: one source per track, loop handled by the
+    // audio thread. No JS timer chain, no crossfade overlap, so nothing
+    // on the main thread (SFX, button re-renders) can gap it.
+    const src = AC.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.loopStart = 0;
+    src.loopEnd = loopEndFor(buf);
+    src.connect(musicGain);
+    src._track = name;
+    src._dead = false;
+    // Self-healing without sniffing: a loop=true source only ends when
+    // killed/stopped, so restart only on unexpected death — never on a
+    // quiet passage (the old RMS watchdog false-triggered on sparse
+    // tracks like the dialogue theme and restarted them at random).
+    src.onended = () => {
+      try {
+        if (!src._dead && musicOn && musicName === name) playMusic(name, true);
+      } catch (e) {}
+    };
+    src.start();
+    musicSrc = src;
+    $("nowplay").textContent = "now playing: " + t.label;
+  } catch (e) {}
+}
+function stopMusic() {
+  const s = musicSrc; musicSrc = null;
+  if (s) { s._dead = true; s.onended = null; try { s.stop(); } catch (e) {} }
+}
+// Tension silence: stop the music and clear the desired track so nothing
+// restarts it. The next playMusic() call resumes.
+function silenceMusic() {
+  musicName = null;
+  stopMusic();
+  try { $("nowplay").textContent = ""; } catch (e) {}
+}
+$("musbtn").onclick = () => {
+  musicOn = !musicOn;
+  $("musbtn").textContent = musicOn ? "🔊 MUSIC: ON" : "🔇 MUSIC: OFF";
+  if (musicOn) {
+    audio();
+    if (!audioReady) prebuild(); // one-time hitch, on an explicit click
+    playMusic(musicName || "town");
+  } else { stopMusic(); $("nowplay").textContent = ""; }
+};
+// Autoplay: called from the name-enter click (a real user gesture).
+function enableMusic() {
+  if (musicOn) return;
+  musicOn = true;
+  $("musbtn").textContent = "🔊 MUSIC: ON";
+  audio();
+  if (!audioReady) prebuild();
+  playMusic(musicName || "town");
+}
+
+/* ── GAME STATE ── */
+let player = "YOU";
+let lore = 0;
+let talked = {};   // char -> true (lore taken)
+let met = {};      // char -> true (met at all, for repeat jokes)
+let visited = {};  // place -> true (boon taken)
+let atk = 0, bombs = 1, potions = 2, pmax = 110;
+let php = 110, ehp = 140, guard = false, turns = 0;
+
+function refreshBar() {
+  $("lore").textContent = lore;
+  $("kit").textContent = "🧪" + bombs + " 🙏" + potions + " ⚔️+" + atk + " ❤️" + pmax;
+}
+function setScene(face, name, text, buttons, glow) {
+  $("face").textContent = face;
+  $("name").textContent = name;
+  $("name").classList.toggle("glow", !!glow);
+  $("text").textContent = text;
+  $("bars").style.display = "none";
+  const b = $("btns"); b.innerHTML = "";
+  buttons.forEach(([label, fn, cls, dis]) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    if (cls) btn.className = cls;
+    if (dis) btn.disabled = true;
+    btn.onclick = () => { sfx("click", 0, 0.35); fn(); };
+    b.appendChild(btn);
+  });
+  refreshBar();
+}
+function hitShake() {
+  // Scrapped: even the compositor-only shake janked the music on some
+  // machines, so the attack visual is gone entirely. No-op on purpose.
+}
+
+/* ── 1. NAME ENTRY ── */
+function intro() {
+  lore = 0; talked = {}; met = {}; visited = {};
+  atk = 0; bombs = 1; potions = 2; pmax = 110;
+  playMusic("town");
+  $("face").textContent = "🚪";
+  $("name").textContent = "THE GATES";
+  $("name").classList.remove("glow");
+  $("bars").style.display = "none";
+  $("text").textContent = "You stand before PLUDSKITOPIA.\nA sign reads: \"POP. 666. FOUNDED BY PLUDSKI (beloved, flawless, never did anything wrong).\"\n\nFirst, trespasser: WHAT IS YOUR NAME?";
+  const b = $("btns"); b.innerHTML = "";
+  const inp = document.createElement("input");
+  inp.maxLength = 16; inp.placeholder = "enter your name...";
+  const btn = document.createElement("button");
+  btn.textContent = "ENTER PLUDSKITOPIA →";
+  btn.className = "big";
+  btn.onclick = () => {
+    player = (inp.value.trim() || "DAVE 2").toUpperCase().slice(0, 16);
+    enableMusic();
+    hub("You push open the gates. Birds sing. Somewhere, a statue of Pludski winks at you. Probably.");
+  };
+  b.appendChild(inp); b.appendChild(btn);
+  inp.focus();
+  inp.onkeydown = e => { if (e.key === "Enter") btn.click(); };
+  refreshBar();
+}
+
+/* ── 2. TOWN ── */
+const TALKS = {
+  slop: { face: "🟢", name: "SLOP", boon: "🧪 +1 SLOP BOMB",
+    t1: "SLOP: \"GLORP. I am SLOP, town mascot. Pludski invented me in his bathtub.\"\n\nYOU: \"Wow, an inventor!\"\n\nSLOP: \"Then he drank my brother. Said he 'needed the protein'. GLORP.\"\n\nSLOP hands you a wriggling bomb. \"FOR MY BROTHER,\" it whispers.",
+    t2: "SLOP: \"Glorp. Pludski once entered a charity swim and got out drier than he went in. The water parted out of respect. And fear.\"\n\nYou nod. That's the most evil thing you've heard all day." },
+  obama: { face: "🕶️", name: "OBAMA", boon: "🙏 +1 PRAYER",
+    t1: "OBAMA: \"Let me be clear. Pludski? Great guy. Tremendous guy.\"\n\nOBAMA: \"...He drone-striked my birthday party. Twice. I still find cake in the yard.\"\n\nOBAMA: \"Take this prayer. Certified hope. And watch the church — Päivi's been glowing. Like, literally.\"",
+    t2: "OBAMA: \"Fun fact: Pludski challenged me to a push-up contest, lost, then declared himself winner and built a statue about it. It's the big one. You can't miss it.\"\n\nHe sighs the sigh of a man who has seen things." },
+  dave: { face: "💀", name: "DAVE", boon: "⚔️ +4 BONK (hubcap upgrade)",
+    t1: "DAVE: \"sup. i'm dave.\"\n\nDAVE: \"pludski owed me 20 bucks. then he 'died'. convenient. real convenient, pludski.\"\n\nDAVE: \"also he stole my wife. and my horse. the horse was named Pludski Jr. out of respect. he ate it.\"\n\nDAVE hands you a GLINTING HUBCAP. \"Bonk responsibly. For Pludski Jr.\"",
+    t2: "DAVE: \"people ask how I died. mile 12. heat. hubris. mostly hubris.\"\n\nDAVE: \"pludski said 'walk it off'. so here I am. walking. forever.\"\n\nA single tear. Iconic." },
+  satan: { face: "😈", name: "SATAN", boon: "🧪 +1 HELLFIRE BOMB",
+    t1: "SATAN: \"Hey. Big fan, mortal. Love your work dying and coming here.\"\n\nSATAN: \"So, Pludski. Even *I* think that guy was a bit much. He tried to TAX Hell. He sent ME a parking ticket. I AM the landlord.\"\n\nSATAN: \"He's not dead. Nobody that annoying stays dead. Take a hellfire bomb. On the house.\"\n\nIt is warm. It whispers your name.",
+    t2: "SATAN: \"Between you and me? Pludski's file is the only one downstairs marked DO NOT ADMIT. Twice. He admitted himself. With a stamp.\"\n\nSatan shudders. The temperature drops 10 degrees." },
+  paivi: { face: "⛪", name: "PÄIVI RÄSÄNEN", boon: "📿 +1 PRAYER (blessed, allegedly)",
+    t1: "PÄIVI: \"Pludski? Oh, that sweet dead SAINT. Definitely dead. Definitely not alive. Definitely not me wearing a fake mustache.\"\n\nPÄIVI: \"Stop investigating, sinner. Go home. Eat soup.\"\n\nHer eyes glow faintly. She smiles with too many teeth. She presses a rosary into your hand. It is humming.",
+    t2: "PÄIVI: \"Still here? The soup. Eat it. SOUP.\"\n\nThe church bell rings despite there being no bell. Or church. Wait — there IS a church. Was there always a church?" },
+};
+const ORDER = ["slop", "obama", "dave", "satan", "paivi"];
+function applyBoon(k) {
+  if (k === "slop" || k === "satan") bombs++;
+  if (k === "obama" || k === "paivi") potions++;
+  if (k === "dave") atk += 4;
+}
+function hub(note) {
+  playMusic("town");
+  let t = note ? note + "\n\n" : "";
+  t += "— PLUDSKITOPIA TOWN SQUARE —\nTalk to the locals. Soak in the legacy of PLUDSKI (beloved saint, probably innocent).";
+  if (lore === 0) t += "\n\nNobody has told you anything yet. The statue gleams. The tavern smells like soup.";
+  else if (lore < 3) t += "\n\nHmm. Pludski sounds... kind of a dick?";
+  else if (lore < 5) t += "\n\nOkay. Pludski was a HUGE asshole. And the church on the hill has its lights on. All of them. At noon.";
+  else t += "\n\nIt's all clear now. PLUDSKI was evil — and someone in this town is hiding something. Someone... holy.";
+  const btns = [];
+  for (const k of ORDER) {
+    const done = talked[k];
+    btns.push([(done ? "✓ " : "💬 ") + TALKS[k].name + (done ? "" : " (?)"), () => talk(k), "", false]);
+  }
+  btns.push(["🗿 Examine the STATUE", statue, "", false]);
+  btns.push(["🍲 Visit the TAVERN", tavern, "", false]);
+  if (lore >= 5) btns.push(["⛪ Go to the CHURCH on the hill", confront, "big", false]);
+  setScene("🏘️", "PLUDSKITOPIA (" + player + ")", t, btns);
+}
+function talk(k) {
+  playMusic("talk");
+  const c = TALKS[k];
+  const first = !talked[k];
+  met[k] = true;
+  const txt = (first ? c.t1 : c.t2) + (first ? "\n\n[" + c.boon + "]" : "");
+  setScene(c.face, c.name, txt, [[first ? "📜 ABSORB LORE (+1)" : "← back to square", () => {
+    if (first) { talked[k] = true; lore++; applyBoon(k); sfx("lore", 150); }
+    hub();
+  }, "big", false]]);
+}
+function statue() {
+  playMusic("talk");
+  const seen = visited.statue;
+  let txt;
+  if (lore <= 0) txt = "A 30-foot golden PLUDSKI. Plaque: \"HE NEVER DID ANYTHING WRONG.\" A pigeon lands on it, reads the plaque, and flies away in disgust.";
+  else if (lore < 3) txt = "You look closer. The plaque's fine print: \"...except the swim. And the birthday. And the horse.\" Someone scratched DAVE WUZ HERE into the shin.";
+  else txt = "The statue seems to sweat. Engraved on the base, freshly scratched: \"20 BUCKS. — D.\" You feel watched. Blessed, even. (+10 max HP, obviously divine.)";
+  setScene("🗿", "STATUE OF PLUDSKI", txt, [[seen ? "← back to square" : "✨ Feel blessed (+10 max HP)", () => {
+    if (!seen) { visited.statue = true; pmax += 10; sfx("lore", 165); }
+    hub();
+  }, "big", false]]);
+}
+function tavern() {
+  playMusic("talk");
+  const seen = visited.tavern;
+  const txt = seen
+    ? "MAUPPI polishes a glass with soup. \"Back for more? Soup's all we got. Soup is all there ever was.\""
+    : "🍲 MAUPPI'S SOUP TAVERN. The bartender, MAUPPI, slides you a bowl.\n\nMAUPPI: \"On the house. Pludski once sent my soup back. Said it 'lacked fear'. What does that MEAN.\"\n\nMAUPPI: \"Take a prayer too. You'll need it where you're going. Don't ask how I know.\"\n\nThe soup tastes like lore. (+1 PRAYER)";
+  setScene("🍲", "MAUPPI'S TAVERN", txt, [[seen ? "← back to square" : "🥣 Accept soup (+1 PRAYER)", () => {
+    if (!seen) { visited.tavern = true; potions++; sfx("lore", 150); }
+    hub();
+  }, "big", false]]);
+}
+
+/* ── 3. CONFRONT ── */
+function confront() {
+  playMusic("talk");
+  setScene("⛪", "THE CHURCH", "The church door is warm. Inside: candles, soup, and PÄIVI RÄSÄNEN, polishing a mustache that is clearly fake.\n\nYOU: \"Päivi. The statue. The mustache. The glowing. You're... you're PLUDSKI.\"\n\nPÄIVI: \"...\"\n\nPÄIVI: \"...thirty years of faking my death to live as a Finnish politician, ruined by a tourist.\"",
+  [["😨 ...what?", rapture, "big", false]]);
+}
+function rapture() {
+  silenceMusic(); // reveal lands in silence — boss theme kicks in at FIGHT
+  setScene("🌟", "PLUDSKI", "PÄIVI RÄSÄNEN TEARS OFF THE MUSTACHE. She rises through the church roof, GLOWING with the light of a thousand suns.\n\nPLUDSKI: \"I'M RAPTURING IT.\"\n\n(The organ plays a single kazoo note.)",
+    [["⚔ FIGHT PLUDSKI", startFight, "big", false]], true);
+}
+
+/* ── 4. BOSS FIGHT (winnable, honest numbers) ──
+   You: ~120 HP, bonk ~16.5/turn, 2–3 bombs ~32, prays to spare.
+   Pludski: 140 HP, ~8.5/turn (enraged ~12). You win in ~7 turns. */
+const FOE_LINES = ["PLUDSKI uses RAPTURE BEAM!", "PLUDSKI throws a BIBLE at you!", "PLUDSKI taxes you! (emotionally)", "PLUDSKI calls you a sinner!", "PLUDSKI drone-strikes! (classic Pludski)"];
+const FOE_LINES_MAD = ["PLUDSKI uses DOUBLE RAPTURE BEAM!", "PLUDSKI calls down KARMA (it bounces)!", "PLUDSKI eats a horse for strength!"];
+function startFight() {
+  php = pmax; ehp = 140; guard = false; turns = 0;
+  playMusic("boss");
+  fightTurn("The mustache flutters to the ground. PLUDSKI (HP 140) blocks the sun.\n\nDave's hubcap gleams in your hand. Slop squeaks encouragingly from your pocket.\n\nChoose your move, " + player + ".");
+}
+function drawBars() {
+  $("bars").style.display = "flex";
+  $("phpt").textContent = Math.max(0, php) + "/" + pmax;
+  $("ehpt").textContent = Math.max(0, ehp) + "/140";
+  $("php").style.width = Math.max(0, php / pmax * 100) + "%";
+  $("ehp").style.width = Math.max(0, ehp / 140 * 100) + "%";
+}
+function fightTurn(msg) {
+  drawBars();
+  $("face").textContent = ehp <= 70 ? "🌟😡" : "🌟";
+  $("name").textContent = ehp <= 70 ? "PLUDSKI (ENRAGED)" : "PLUDSKI";
+  $("name").classList.add("glow");
+  $("text").textContent = msg;
+  refreshBar();
+  const b = $("btns"); b.innerHTML = "";
+  const moves = [
+    ["🗡️ BONK (" + (10 + atk) + "–" + (15 + atk) + " dmg)", () => strike("bonk"), "", false],
+    ["🧪 SLOP BOMB (26–38, x" + bombs + ")", () => strike("bomb"), "", bombs <= 0],
+    ["🙏 PRAY (heal 16–24, x" + potions + ")", () => strike("pray"), "", potions <= 0],
+    ["🛡️ BRACE (halve next hit)", () => strike("guard"), "", false],
+  ];
+  moves.forEach(([label, fn, cls, dis]) => {
+    const btn = document.createElement("button");
+    btn.textContent = label; if (dis) btn.disabled = true;
+    btn.onclick = fn; // no click blip here: each move plays its own sound
+    b.appendChild(btn);
+  });
+}
+function strike(move) {
+  turns++;
+  let msg = "";
+  if (move === "bonk") {
+    const d = 10 + atk + Math.floor(Math.random() * 6);
+    ehp -= d; sfx("bonk", 147, 0.5);
+    msg = "You BONK Pludski for " + d + "! He says \"OW. RUDE. I'M A SAINT.\"\n";
+  } else if (move === "bomb") {
+    const d = 26 + Math.floor(Math.random() * 13);
+    ehp -= d; bombs--; sfx("bonk", 120, 0.55);
+    msg = "You hurl SLOP at Pludski for " + d + "! Slop screams \"FOR MY BROTHER!\"\n";
+  } else if (move === "pray") {
+    const h = 16 + Math.floor(Math.random() * 9);
+    php = Math.min(pmax, php + h); potions--; sfx("lore", 165);
+    msg = "You pray to no one in particular. +" + h + " HP. Satan gives a thumbs up.\n";
+  } else {
+    guard = true; sfx("lore", 120);
+    msg = "You BRACE behind Dave's hubcap. Pludski squints. \"Coward's gambit,\" he mutters.\n";
+  }
+  if (ehp <= 0) { win(); return; }
+  const mad = ehp <= 70;
+  let fd = mad ? 9 + Math.floor(Math.random() * 7) : 6 + Math.floor(Math.random() * 6);
+  if (guard) { fd = Math.ceil(fd / 2); guard = false; }
+  php -= fd; sfx("hurt", 0, 0.5);
+  const lines = mad ? FOE_LINES_MAD : FOE_LINES;
+  msg += "\n" + lines[Math.floor(Math.random() * lines.length)] + " -" + fd + " HP."
+    + (mad ? " (Pludski is ENRAGED!)" : "");
+  if (php <= 0) {
+    php = 0; drawBars();
+    setScene("💀", "RAPTURED", "PLUDSKI raptured you. You ascend against your will.\n\nDAVE (in heaven): \"first time?\"\n\n(You keep your boons. The hubcap remembers.)",
+      [["↻ TRY AGAIN", startFight, "big", false]]);
+    return;
+  }
+  fightTurn(msg);
+}
+
+/* ── 5. ENDING ── */
+function win() {
+  ehp = 0; drawBars();
+  silenceMusic(); // Pludski falls: dead silence, investigation resumes at mob
+  setScene("⚰️", "PLUDSKI (dead, again)", "You bonk Pludski one final time. He falls from the sky like a dropped communion wafer.\n\n\"tell... dave... i said... sorry about the horse...\" — Pludski dies. For real this time. Probably.\n\nYour hubcap is dented. Slop is crying (happily).",
+    [["😮 ...did I just win?", mob, "big", false]]);
+}
+function mob() {
+  playMusic("talk"); // the village arrives: investigation music, as requested
+  setScene("🧑‍🌾", "TOWNSFOLK", "The TOWNSFOLK rush over. They see the body.\n\nTOWNSFOLK: \"OH MY GOD. YOU KILLED PÄIVI RÄSÄNEN!\"\n\nYOU: \"No wait! That was actually PLUDSKI! She WAS Pludski! He faked his death! He was evil! He ate a horse!\"\n\nTOWNSFOLK: \"...you killed PLUDSKI?! Our BELOVED flawless saint Pludski?!\"\n\nSLOP: \"glorp. (oh no.)\"\n\nOBAMA: \"Let me be clear: you're cooked. But I know a guy. Me. I'm a lawyer now.\"",
+    [["⚖️ ...trial?", trial, "big", false]]);
+}
+function trial() {
+  setScene("⚖️", "THE TRIAL", "JUDGE (Satan, doing community service): \"How do you plead to the murder of beloved hero Päivi Räsänen?\"\n\nOBAMA (your lawyer): \"Okay. Pick a defense. Any defense. I've seen worse. Barely.\"",
+  [
+    ["🗣️ \"She was Pludski!\" (the truth)", () => trialFail("You present the mustache. The jury gasps. Then the mustache is ruled inadmissible. It had no permit."), "", false],
+    ["🗣️ \"The horse told me to.\" (the Dave defense)", () => trialFail("Dave testifies for you. Dave is a skeleton. The jury finds this 'unsettling' and 'legally complicated'."), "", false],
+    ["🗣️ \"Soup.\" (the Mauppi defense)", () => trialFail("Mauppi brings soup for the whole court. It works for a minute. Then the judge remembers this is a murder trial."), "", false],
+  ]);
+}
+function trialFail(txt) {
+  setScene("🔨", "GUILTY", txt + "\n\nJUDGE: \"GUILTY. Obviously.\"\n\nOBAMA: \"...I did my best. Which, let me be clear, was nothing. Sorry.\"\n\nThe crowd cheers. Someone rebuilds the statue DURING the verdict. It's already winking.",
+    [["⛓️ off to jail", prison, "big", false]]);
+}
+function prison() {
+  playMusic("ending");
+  setScene("⛓️", "PLUDSKITOPIA JAIL", "You are IMPRISONED for the murder of beloved national hero Päivi Räsänen (secretly Pludski).\n\nDAVE visits: \"told you he owed me 20 bucks. anyway. tomorrow's the thing.\"\n\nYOU: \"what thing?\"\n\nDAVE: \"the execution thing. classic tuesday.\"\n\nSATAN (visiting hours): \"Don't worry, I'll save you a warm spot. Room temperature, even. I'm feeling generous.\"",
+    [["⚰️ accept fate", execution, "big", false]]);
+}
+function execution() {
+  setScene("🪦", "THE END", "You are EXECUTED by the town that loved the villain you killed.\n\nThe statue is rebuilt. Twice as big. It winks again.\n\nMORAL: never do the right thing in Pludskitopia.\n\n— THE END —\n" + player + ": " + lore + "/5 lore, " + turns + " fight turns, " + atk + " bonus bonk. You killed God (kinda).",
+    [["↻ PLAY AGAIN", intro, "big", false]]);
+}
+
+intro();
+</script>
+</body>
+</html>

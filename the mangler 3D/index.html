@@ -130,13 +130,15 @@ function whisper(close){try{const a=ac(),t=a.currentTime;
   const pan=(a.createStereoPanner?a.createStereoPanner():null);
   if(pan){pan.pan.value=Math.random()*1.6-0.8;env.connect(pan);pan.connect(master);}else env.connect(master);
   s.start(t);s.stop(t+total+0.1);}catch(e){}}
-function shriek(){try{const a=ac(),t=a.currentTime;
-  [620,655,698,466,311].forEach((f,i)=>{const o=a.createOscillator();o.type='sawtooth';
-    o.frequency.setValueAtTime(f*(1+Math.random()*0.05),t);o.frequency.exponentialRampToValueAtTime(f*0.25,t+0.7);
-    const gn=a.createGain();gn.gain.setValueAtTime(0.09,t);gn.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
-    const fl=a.createBiquadFilter();fl.type='bandpass';fl.frequency.value=f;fl.Q.value=3;
-    o.connect(fl);fl.connect(gn);gn.connect(master);o.start(t+i*0.015);o.stop(t+0.9);});
-  noiseBurst(0.35,0.06,5200,'highpass');}catch(e){}}
+function shriek(){try{const a=ac(),t=a.currentTime; // subtle high hiss, not a scream
+  [5200,5600,6100].forEach((f,i)=>{const o=a.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(f*(1+Math.random()*0.03),t);
+    o.frequency.exponentialRampToValueAtTime(f*1.15,t+0.25);
+    const gn=a.createGain();gn.gain.setValueAtTime(0.0001,t);
+    gn.gain.exponentialRampToValueAtTime(0.007,t+0.03);
+    gn.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+    o.connect(gn);gn.connect(master);o.start(t+i*0.01);o.stop(t+0.35);});
+  noiseBurst(0.2,0.005,7000,'highpass');}catch(e){}}
 function mangleScream(){try{const a=ac(),t=a.currentTime;const ws=a.createWaveShaper();
   const curve=new Float32Array(256);for(let i=0;i<256;i++){const x=i/128-1;curve[i]=Math.tanh(4*x);}ws.curve=curve;
   const out=a.createGain();out.gain.value=0.5;ws.connect(out);out.connect(master);
@@ -516,6 +518,20 @@ function moveStick(t){const r=stick.getBoundingClientRect();
   nub.style.transform=`translate(${dx}px,${dy}px)`;stickVec={x:dx/max,y:dy/max};}
 
 function angDiff(a,b){let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d;}
+function killPlayer(){ // shared death sequence — burning cornered beast still kills
+  if(dying)return;
+  dying=true;deathT=0;deathShown=false;refreshLockPill();
+  exitwrap.style.display='none';
+  document.exitPointerLock?.();
+  if(jumpscareOn){
+    sizeScare();scEl.style.display='block';
+    mangleScream();deathSting();droneFadeOut();
+  }else{
+    sizeScare();scEl.style.display='block';
+    sx.fillStyle='#000';sx.fillRect(0,0,scCv.width,scCv.height);
+    droneFadeOut();beep(110,1.2,'sine',.2);
+  }
+}
 
 function reset(lv){
   const s=genLevel(lv);
@@ -530,6 +546,7 @@ function reset(lv){
   mang.fleeGX=undefined;mang.litPrev=false;
   mang.path=null;mang.pi=0;mang.stall=0;mang.detT=0;mang.lx=mang.x;mang.lz=mang.z;
   mang.chase=false;mang.loseT=0;
+  mang.hissCd=0;mang.litGrace=0;mang.burnCommit=null;
   dying=false;deathT=0;deathShown=false;
   document.getElementById('scare').style.display='none';
 }
@@ -661,96 +678,131 @@ function loop(t){
     exitarrow.style.opacity=0.7+0.3*Math.sin(performance.now()/200);
   }else exitwrap.style.display='none';
 
-  /* ---- MANGLER AI ---- */
+  /* ---- MANGLER AI ----
+     Simple, legible loop:
+       LURK  — repositions FAST while unseen (you can't track it).
+       STALK — circles to a point BEHIND the player, FAST while
+               unseen; drops to a fair pace the moment it is visible.
+       CHASE — only if it has clear line-of-sight AND is close.
+               Visible speed is capped so you can react — break LOS
+               (or hold the beam) to make it lose you.
+       BURN  — flashlight beam is on it: it hisses softly, eyes flare
+               white, and it sprints AWAY (BFS-escapes if cornered).
+               ~0.8s to BANISH it far away (long cooldown).
+     Rule of thumb: unseen = fast (10-ish), seen = fair (~4).
+     Light always wins: lit overrides every other state. */
+
   const m=mang;
   const ptx=Math.floor(player.x/TS),pty=Math.floor(player.z/TS);
   const mtx=Math.floor(m.x/TS),mty=Math.floor(m.z/TS);
   const dx=m.x-player.x,dz=m.z-player.z;
   const distM=Math.hypot(dx,dz);
-  // yaw that would face the mangler: camera forward at yaw is (-sin yaw, -cos yaw),
-  // so the facing yaw for offset (dx,dz) is atan2(-dx,-dz). (Was atan2(dx,-dz):
-  // sign-flipped, so the beam only registered when facing exactly ±Z.)
   const angToM=Math.atan2(-dx,-dz);
   const yawRel=angDiff(angToM,player.yaw);
-  const inCone=Math.abs(yawRel)<0.42;
-  const FLASH_R=27; // beam reach, cut 25% (was 36)
+  const inCone=Math.abs(yawRel)<0.5;
+  const FLASH_R=27;
   const lit=inCone&&distM<FLASH_R&&los(player.x,player.z,m.x,m.z);
-  if(lit){m.fear+=dt*4.5;}else{m.fear=Math.max(0,m.fear-dt*1.2);}
-  if(m.fear>=0.55){ // scared off — slips away silently, far across the map (2D parity: no shriek here)
-    m.state='roam';m.roamT=3+Math.random()*12;m.fear=0;m.chase=false;
-    const f=randOpenFar(player.x,player.z,50);m.wx=w2x(f.x);m.wz=w2z(f.y);}
+  const visible=los(m.x,m.z,player.x,player.z); // anyone could see anyone
+  const SEEN_SPD=4.0+Math.min(1.5,level*0.25); // fair pace when visible
+  const UNSEEN_SPD=10.5+Math.min(2.5,level*0.3); // very fast when out of sight
+  // hiss cooldown + burn hysteresis: at a corner LOS flickers every few
+  // frames, which retriggered the hiss and yanked it in/out of BURN.
+  // Grace keeps it committed to BURN through brief flicker.
+  m.hissCd=Math.max(0,(m.hissCd||0)-dt);
+  if(lit){
+    m.litGrace=0.35;
+    if(!m.litPrev&&m.hissCd<=0){shriek();m.hissCd=2.5;}
+  }else m.litGrace=Math.max(0,(m.litGrace||0)-dt);
+  m.litPrev=lit;
+  const burning=lit||m.litGrace>0;
+  if(lit)m.fear=Math.min(1,m.fear+dt*1.25); // ~0.8s of light = banished
+  else if(!burning)m.fear=Math.max(0,m.fear-dt*0.5); // hold during grace, no yo-yo
+  if(m.fear>=1){ // BANISHED — silent vanish far away. Cooldown shrinks 10%/facility.
+    const cd=Math.max(2.5,Math.pow(0.9,level-1));
+    m.state='roam';m.roamT=(6+Math.random()*12)*cd;m.fear=0;m.chase=false;m.path=null;
+    m.burnCommit=null;
+    const f=randOpenFar(player.x,player.z,55);
+    m.x=w2x(f.x);m.z=w2z(f.y);m.wx=m.x;m.wz=m.z;
+  }
   // tile behind player (2.2 tiles back, same as 2D)
   const behindX=player.x+Math.sin(player.yaw)*8.8,behindZ=player.z+Math.cos(player.yaw)*8.8;
   const btx=Math.max(0,Math.min(GW-1,Math.floor(behindX/TS))),bty=Math.max(0,Math.min(GH-1,Math.floor(behindZ/TS)));
   let tgt=null,speed=m.speed;
-  if(lit){ // STATE: burning — flee the beam
-    speed=18.0; // a glimpse and it's gone — 3.5x your walk speed
-    m.chase=false;
-    if(!m.litPrev){m.litPrev=true;
+  if(burning){ // BURN — one committed escape route, no second-guessing
+    speed=10;m.chase=false;m.path=null;
+    if(distM<2.0)killPlayer(); // cornering a burning beast is still lethal
+    // pick ONE far, preferably line-of-sight-breaking destination on entry
+    if(!m.burnCommit){
       let best=null,bestScore=-1e9;
-      for(let i=0;i<16;i++){const n=randNeighborOpen();const nx=w2x(n.x),nz=w2z(n.y);
-        const dp=Math.hypot(nx-player.x,nz-player.z),dm=Math.hypot(nx-m.x,nz-m.z);
-        if(dm<1)continue;
-        const ax2=m.x-player.x,az2=m.z-player.z;
-        const dot=((nx-m.x)*ax2+(nz-m.z)*az2)/(dm*Math.hypot(ax2,az2)+1);
-        const score=dp+dot*30-dm*0.4;
-        if(score>bestScore){bestScore=score;best={x:n.x,y:n.y};}}
-      if(best){m.fleeGX=best.x;m.fleeGY=best.y;}}
-    if(m.fleeGX!==undefined){const s=bfs(mtx,mty,m.fleeGX,m.fleeGY);
-      if(s){m.fx=w2x(s.x);m.fz=w2z(s.y);tgt={x:m.fx,z:m.fz};}else m.fleeGX=undefined;}
-    if(!tgt){const D=[[1,0],[-1,0],[0,1],[0,-1]];let ox=m.x,oz=m.z,bd=-1;
-      for(const [ddx,ddy] of D){const nx=mtx+ddx,ny=mty+ddy;
-        if(nx<0||ny<0||nx>=GW||ny>=GH||grid[ny*GW+nx]===1)continue;
-        const wxx=w2x(nx),wzz=w2z(ny),d=Math.hypot(wxx-player.x,wzz-player.z);
-        if(d>bd){bd=d;ox=wxx;oz=wzz;}}
-      tgt={x:ox,z:oz};}
+      for(let i=0;i<32;i++){
+        const c=randNeighborOpen();if(!c)continue;
+        const wx=w2x(c.x),wz=w2z(c.y);
+        const dd=Math.hypot(wx-player.x,wz-player.z);
+        const breaksLOS=!los(wx,wz,player.x,player.z)?30:0; // sneaky > merely far
+        const score=dd+breaksLOS;
+        if(score>bestScore){bestScore=score;best=c;}
+      }
+      const p=best?bfsPath(mtx,mty,best.x,best.y):null;
+      m.burnCommit={path:p&&p.length?p:null,pi:0,replanT:0,
+        lx:m.x,lz:m.z,stall:0,gx:best?best.x:mtx,gy:best?best.y:mty};
+    }
+    const bc=m.burnCommit;
+    if(bc.path&&bc.pi<bc.path.length){ // follow the committed route to the end
+      const n=bc.path[Math.min(bc.pi,bc.path.length-1)];
+      const tx=w2x(n.x),tz=w2z(n.y);
+      if(Math.hypot(tx-m.x,tz-m.z)<1.3)bc.pi++;
+      if(bc.pi>=bc.path.length){m.burnEsc=null;} // arrived: hold cover, stop pacing
+      else{const a=Math.atan2(tx-m.x,tz-m.z);
+        moveCircle3D(m,Math.sin(a)*speed*dt,Math.cos(a)*speed*dt);m.yawA=a;}
+      // stall detection: only replan (once) if truly pinned, max every 1.5s
+      bc.replanT-=dt;
+      const moved=Math.hypot(m.x-bc.lx,m.z-bc.lz);
+      bc.lx=m.x;bc.lz=m.z;
+      if(moved<speed*dt*0.3)bc.stall=(bc.stall||0)+dt;else bc.stall=0;
+      if(bc.stall>0.6&&bc.replanT<=0){
+        bc.stall=0;bc.replanT=1.5;
+        const p=bfsPath(mtx,mty,bc.gx,bc.gy); // same destination, fresh route
+        if(p&&p.length){bc.path=p;bc.pi=0;}else bc.path=null;
+      }
+    }else{ // no route (unreachable/arrived): sit tight in cover, don't pace
+      m.yawA=Math.atan2(dx,dz);
+    }
+    m.burnEsc=null; // legacy field, unused
+    tgt=null; // already moved
   }
-  else if(m.state==='roam'){ // STATE: roam — drift until the urge to hunt hits
-    m.litPrev=false;m.fleeGX=undefined;speed=3.4;m.chase=false;
-    if(Math.hypot(m.wx-m.x,m.wz-m.z)<1.2){const n=randNeighborOpen();m.wx=w2x(n.x);m.wz=w2z(n.y);}
+  if(!burning)m.burnCommit=null; // next burn picks a fresh route
+  else if(m.state==='roam'){ // LURK — fast reposition while unseen
+    speed=visible?3.0:UNSEEN_SPD;m.chase=false;
+    if(Math.hypot(m.wx-m.x,m.wz-m.z)<1.5||!m.wx){
+      const f=randOpenFar(player.x,player.z,25);
+      m.wx=w2x(f.x);m.wz=w2z(f.y);
+    }
     tgt={x:m.wx,z:m.wz};
-    if((m.roamT-=dt)<=0){m.state='hunt';huntSting();}
-  }else{ // STATE: hunt — circle to behind the player, or run them down if seen
-    m.litPrev=false;m.fleeGX=undefined;
-    speed=3.6+Math.min(4.0,level*0.4);
-    const seesPlayer=los(m.x,m.z,player.x,player.z);
-    let gx=btx,gy=bty;if(grid[gy*GW+gx]===1){gx=ptx;gy=pty;}
-    m.pathT-=dt;
-    if(m.pathT<=0){m.pathT=.3;const p=bfsPath(mtx,mty,gx,gy);
-      if(p&&p.length){m.path=p;m.pi=0;}else m.path=null;}
-    // walk the path front-to-back: the index only advances, so the aim
-    // point can never flip-flop between nodes (that was the jitter)
-    let aimX=behindX,aimZ=behindZ;
-    if(m.path&&m.path.length){
-      while(m.pi<m.path.length-1){
-        const n=m.path[m.pi];
-        if(Math.hypot(w2x(n.x)-m.x,w2z(n.y)-m.z)<1.3)m.pi++;else break;
-      }
-      const node=m.path[Math.min(m.pi,m.path.length-1)];
-      m.wx=w2x(node.x);m.wz=w2z(node.y);aimX=m.wx;aimZ=m.wz;
-    }
-    tgt={x:aimX,z:aimZ};
-    // committed chase with hysteresis: engage on a clear sighting and hold
-    // through brief LOS flicker, so it stops pacing in doorways/corners
-    if(seesPlayer&&distM<16){m.chase=true;m.loseT=0;}
+    if((m.roamT-=dt)<=0){m.state='hunt';m.path=null;huntSting();}
+  }else{ // STALK / CHASE — fast unseen, fair when seen
+    const seesPlayer=visible;
+    // chase only when close + visible; hysteresis so it commits
+    if(seesPlayer&&distM<14)m.chase=true;
     if(m.chase){
-      if(seesPlayer)m.loseT=0;else m.loseT+=dt;
-      if(distM>18||m.loseT>0.6)m.chase=false;
+      if(!seesPlayer)m.loseT+=dt;else m.loseT=0;
+      if(distM>20||m.loseT>1.2){m.chase=false;m.path=null;}
     }
-    if(m.chase){tgt={x:player.x,z:player.z};if(distM<12)speed+=2.0;}
-    if(distM<2.0){ // caught — matches 2D grab range
-      dying=true;deathT=0;deathShown=false;refreshLockPill();
-      exitwrap.style.display='none';
-      document.exitPointerLock?.();
-      if(jumpscareOn){
-        sizeScare();scEl.style.display='block';
-        mangleScream();deathSting();droneFadeOut();
-      }else{
-        sizeScare();scEl.style.display='block';
-        sx.fillStyle='#000';sx.fillRect(0,0,scCv.width,scCv.height);
-        droneFadeOut();beep(110,1.2,'sine',.2);
-      }
+    if(m.chase){tgt={x:player.x,z:player.z};speed=SEEN_SPD;}
+    else{ // stalk the spot behind the player via BFS path
+      speed=seesPlayer?SEEN_SPD:UNSEEN_SPD;
+      let gx=btx,gy=bty;if(grid[gy*GW+gx]===1){gx=ptx;gy=pty;}
+      m.pathT-=dt;
+      if(m.pathT<=0){m.pathT=.5;m.path=bfsPath(mtx,mty,gx,gy)||null;m.pi=0;}
+      if(m.path&&m.path.length){
+        while(m.pi<m.path.length-1){
+          const n=m.path[m.pi];
+          if(Math.hypot(w2x(n.x)-m.x,w2z(n.y)-m.z)<1.3)m.pi++;else break;
+        }
+        const node=m.path[Math.min(m.pi,m.path.length-1)];
+        tgt={x:w2x(node.x),z:w2z(node.y)};
+      }else tgt={x:behindX,z:behindZ};
     }
+    if(distM<2.0)killPlayer(); // caught — matches 2D grab range
   }
   m.whisperT-=dt;
   heartbeat(distM,t/1000);droneDuck(distM);
@@ -784,9 +836,9 @@ function loop(t){
   mangLegs.forEach(L=>{L.rotation.x=L.userData.base+Math.sin(mt*11+L.userData.ph)*.38;});
   mangSpikes.forEach((s,i)=>{s.rotation.z=Math.sin(mt*3+i)*.15;});
   if(mangJaw)mangJaw.position.y=.78+Math.sin(mt*11)*.03;
-  const blink=lit?0xffffff:0xffb300;
+  const blink=burning||m.fear>0?0xffffff:0xffb300;
   mangEyes.forEach(e=>e.material.color.setHex(blink));
-  eyeMat.emissiveIntensity=lit?6:3+Math.sin(mt*6)*.8;
+  eyeMat.emissiveIntensity=burning?7:3+Math.sin(mt*6)*.8;
   // dread vignette (proximity pressure)
   dmgEl.style.opacity=Math.max(0,1-distM/22)*.9;
 
