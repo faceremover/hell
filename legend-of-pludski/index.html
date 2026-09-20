@@ -338,7 +338,9 @@ function refreshBar() {
    or jumps while letters appear. (No paint happens mid-measure because
    we clear it back in the same synchronous block.) */
 let typeTimer = null, typeFull = "", typeIdx = 0, typePending = null, typing = false;
-const TYPE_CHAR_MS = 26, TYPE_NEWLINE_MS = 280;
+const TYPE_CHAR_MS = 26, TYPE_SPACE_MS = 34, TYPE_NEWLINE_MS = 280;
+// Päivi & Pludski (the sample voices) deliver 25% slower overall.
+const SLOW_VOICE_MULT = 1.25;
 // One fixed voice per story character. Fully deterministic, no randomness.
 // sample: per-letter ogg set in sfx/speech/<sample>/ (päivi, pludski);
 // others use the fixed oscillator pip [f, w].
@@ -471,9 +473,11 @@ function typeText(finalText, onDone, voice) {
     t.textContent = typeFull.slice(0, typeIdx);
     const c = typeFull[typeIdx - 1];
     if (c !== " " && c !== "\n" && c !== "\r" && c !== "\t") typeBlip(c);
-    typeTimer = setTimeout(step, c === "\n" ? TYPE_NEWLINE_MS : TYPE_CHAR_MS);
+    const mult = typeVoice.sample ? SLOW_VOICE_MULT : 1;
+    const base = c === "\n" ? TYPE_NEWLINE_MS : c === " " ? TYPE_SPACE_MS : TYPE_CHAR_MS;
+    typeTimer = setTimeout(step, base * mult);
   };
-  typeTimer = setTimeout(step, TYPE_CHAR_MS);
+  typeTimer = setTimeout(step, TYPE_CHAR_MS * (typeVoice.sample ? SLOW_VOICE_MULT : 1));
 }
 function renderButtons(list) {
   const b = $("btns"); b.innerHTML = "";
