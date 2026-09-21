@@ -128,6 +128,7 @@ footer{text-align:center;margin-top:26px;color:#5a2a1a;font-size:.68rem;letter-s
     <div class="stat"><b>1.2M</b><span>posts</span></div>
     <div class="stat"><b>500M+</b><span>dangler downloads*</span></div>
   </div>
+  <div id="hellad-top" style="margin-bottom:16px"></div>
   <div class="layout">
     <div>
       <div class="panel" id="listPanel">
@@ -149,12 +150,14 @@ footer{text-align:center;margin-top:26px;color:#5a2a1a;font-size:.68rem;letter-s
       <div class="card"><h3>🏆 Top Sinners</h3><ul id="tops"></ul></div>
       <div class="card"><h3><span class="online-dot"></span>Tormented right now</h3><ul id="onlineList"></ul></div>
       <div class="ad"><b>⛧ SUBWAY DANGLER SURF ⛧</b><p>play the ad instead of the game! 100 free gems if you watch Dave eat a sandwich. BEST VALUE!!</p><button class="btn" onclick="alert('Thank you! The Dangler got you. Skill issue.')">CLAIM 100 GEMS</button><div style="font-size:.62rem;color:#8a6a3a;margin-top:.5rem">*choice made by Dave · made with Unity (not really)</div></div>
+      <div id="hellad-side"></div>
       <div class="card"><h3>🩸 Patch notes v6.67</h3><ul><li><b>Potslop (NEW CIRCLE):</b> 9 organs, 54 soups, Kathunk Harris judges all. Glide filing restored (ghost flies again).</li><li><b>Highway to TS:</b> first car still can't kill you. It can still emotionally damage you.</li><li><b>Poopy Butthole:</b> 3 new flavours: Rear Burner, Ring of Fire, Chef's Number Two.</li><li><b>Slop Royal:</b> Slop Master river-dump radius +10%. Goblins furious.</li><li><b>Mangler 3D:</b> IT now 4% faster and 100% more behind you.</li><li><b>Blood moon:</b> still malformed bowling ball. Won't fix.</li></ul></div>
     </div>
   </div>
   <footer>est. MMXXVI · <b style="color:#8a3a20">no refunds</b> · hell.faceremover.net · *downloads counted by Dave</footer>
 </div>
 <div id="modal"><div class="sheet"><h3>Start a new damnation</h3><input id="ntTitle" placeholder="thread title…"><select id="ntCat"></select><textarea id="ntBody" placeholder="your scream…"></textarea><div style="display:flex;gap:8px"><button class="btn" id="ntGo">post to the pit</button><button class="btn ghost" id="ntNo">nevermind</button></div></div></div>
+<script src="../hell-ads.js"></script>
 <script>
 var CATS=["All","Announcements","General","Gigel Prats","Highway to TS","Next Big Thing","Poopy Butthole","Potslop","Slop Royal","Dangler 4D","Manglerverse","Legend of Pludski","Bug Reports","Lore & Theories"];
 var THREADS=[
@@ -789,6 +792,9 @@ document.getElementById(`onlineList`).innerHTML=[`xX_sлоп_Xx, arguing about g
 var rots=[`screams from the pit · no refunds · souls processed daily`,`today is slop day. prepare`,`who wants slop juice`,`is the floor lava or slop (slop)`,`illegal in finland!`,`adedo · haaki`,`do NOT visit the restaurant (visit it)`,`rated 1 star (the one behind this text)`];var ri=0;setInterval(()=>{ri=(ri+1)%rots.length;document.getElementById(`rotator`).textContent=rots[ri]},4000);
 var on=13666;setInterval(()=>{on+=Math.floor(Math.random()*40-15);document.getElementById(`online`).textContent=on.toLocaleString()},2500);
 renderCats();renderList();
+/* HELL ADS: cross-promo slop banners (rotating) */
+if(window.HellAds){HellAds.mount(document.getElementById('hellad-top'));HellAds.mount(document.getElementById('hellad-side'),{style:'card'});
+setInterval(()=>{HellAds.mount(document.getElementById('hellad-top'));HellAds.mount(document.getElementById('hellad-side'),{style:'card'});},60000);}
 </script>
 </body>
 </html>

@@ -31,7 +31,7 @@ button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #5c0a00}
 <div id="hud"><span>SCORE <b id="score">0</b></span><span>WAVE <b id="wave">1</b></span><span>HULL <b id="hull">100</b></span><span>GIBS <b id="gibs">0</b></span><span>HISCORE <b id="hi">0</b></span></div>
 <div id="wrap">
 <canvas id="game" width="480" height="640"></canvas>
-<div id="overlay"><h2 id="ov-title">ANTI-GLORP</h2><p id="ov-text">Click LAUNCH to defend Mars.<br>Move: WASD / arrows / drag. Guns fire automatically.<br>Green glorps pop into extremely exaggerated gibs. Red ones shoot back.</p><button id="start">🚀 LAUNCH</button><div class="keys">M mute · P pause · blood dries up and fades</div></div>
+<div id="overlay"><h2 id="ov-title">ANTI-GLORP</h2><p id="ov-text">Click LAUNCH to defend Mars.<br>Move: WASD / arrows / drag. Guns fire automatically.<br>Green glorps pop into extremely exaggerated gibs. Red ones shoot back.</p><button id="start">🚀 LAUNCH</button><div class="keys">M mute · P pause</div></div>
 </div>
 <p id="gen-note">sprites: placeholder_gen.py single-sprites live in assets/sprites/ (ship/glorp/brute/dart). Mars terrain, blood &amp; gibs are procedural canvas (generator unsuitable for environment art). Pixel-art fallbacks built in.</p>
 <script>
@@ -39,7 +39,10 @@ button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #5c0a00}
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 const W=cv.width,H=cv.height;
 ctx.imageSmoothingEnabled=false;
-// ---------- blood stain layer (exaggerated, decays over ~12s) ----------
+// ---------- blood stain layer (exaggerated; splats are aged objects that
+// dry bright-red -> dark crust, then fade out over DRY seconds and are dropped.
+// NOTE: the old destination-out multiplicative fade is gone on purpose — 8-bit
+// alpha quantization stalls it at ~8% opacity, leaving permanent ghosts. ----------
 const stain=document.createElement('canvas');stain.width=W;stain.height=H;
 const sx=stain.getContext('2d');
 // ---------- generated single-sprites (placeholder_gen.py) with pixel fallback ----------
@@ -84,15 +87,16 @@ function spawn(){
 }
 // ---------- EXAGGERATED gibs + blood (all red, small chunks, many pieces) ----------
 const GIBCOLS=['#a80000','#c40000','#e02020','#7a0000','#ff2a1a','#5e0000','#8f1010'];
+const stains=[];const DRY=7; // seconds from wet splat to gone
 function explode(e,big){
   const n= big?90: 50+Math.random()*20|0;
   gibCount+=n;document.getElementById('gibs').textContent=gibCount;
-  // splat on stain layer (dries up via decay in frame loop)
-  sx.save();sx.translate(e.x,e.y);
-  for(let i=0;i<(big?14:8);i++){sx.fillStyle=GIBCOLS[i%GIBCOLS.length];sx.globalAlpha=.7;
-    const a=Math.random()*6.28,d=Math.random()*(big?56:36);
-    sx.beginPath();sx.ellipse(Math.cos(a)*d,Math.sin(a)*d,2+Math.random()*6,1+Math.random()*4,Math.random()*3,0,7);sx.fill();}
-  sx.globalAlpha=.55;sx.fillStyle='#6e0000';sx.beginPath();sx.arc(0,0,big?12:7,0,7);sx.fill();sx.restore();sx.globalAlpha=1;
+  // splat recorded as an aged object (blobs relative to impact); drawn fresh each frame
+  const blobs=[];
+  for(let i=0;i<(big?14:8);i++){const a=Math.random()*6.28,d=Math.random()*(big?56:36);
+    blobs.push({dx:Math.cos(a)*d,dy:Math.sin(a)*d,rx:2+Math.random()*6,ry:1+Math.random()*4,rot:Math.random()*3,col:GIBCOLS[i%GIBCOLS.length]});}
+  stains.push({x:e.x,y:e.y,cr:big?12:7,age:0,blobs});
+  if(stains.length>220)stains.splice(0,stains.length-220);
   for(let i=0;i<n;i++){const a=Math.random()*6.28,sp=60+Math.random()*(big?420:300);
     parts.push({x:e.x,y:e.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-60,life:.5+Math.random()*.7,age:0,
       sz:1+Math.random()*(big?3:2.5),col:GIBCOLS[(Math.random()*GIBCOLS.length)|0],gib:true,rot:Math.random()*6,vr:(Math.random()-.5)*12});}
@@ -149,9 +153,19 @@ function frame(ts){requestAnimationFrame(frame);if(!running||paused)return;
   parts=parts.filter(p=>p.age<p.life);
   for(const f of floaters){f.age+=dt;f.y-=30*dt;}floaters=floaters.filter(f=>f.age<1.2);
   for(const s of stars){s.y+=s.v*dt;if(s.y>H){s.y=0;s.x=Math.random()*W;}}
-  // blood stains dry up and vanish (~4s): erase stain layer a bit every frame
-  sx.save();sx.globalCompositeOperation='destination-out';sx.globalAlpha=1;
-  sx.fillStyle='rgba(0,0,0,'+Math.min(.09,dt*1.4)+')';sx.fillRect(0,0,W,H);sx.restore();
+  // blood stains dry (bright -> dark crust) and fade out over DRY seconds;
+  // dead splats are dropped, so nothing can linger — the layer is rebuilt each frame
+  sx.clearRect(0,0,W,H);
+  for(const s of stains){s.age+=dt;}
+  for(let i=stains.length-1;i>=0;i--)if(stains[i].age>=DRY)stains.splice(i,1);
+  for(const s of stains){const k=s.age/DRY;
+    const dry=Math.min(1,k*1.6); // color dries fast: bright red -> dark crust...
+    const a=.8*(k<.55?1:1-(k-.55)/.45); // ...alpha fades late, then the splat is dropped
+    sx.globalAlpha=a;sx.fillStyle=`rgb(${Math.round(196-122*dry)},${Math.round(13*dry)},0)`;
+    sx.beginPath();sx.arc(s.x,s.y,s.cr,0,7);sx.fill();
+    for(const bl of s.blobs){sx.globalAlpha=a*.85;sx.fillStyle=bl.col; // flecks keep hue, darken with the base
+      sx.beginPath();sx.ellipse(s.x+bl.dx,s.y+bl.dy,bl.rx,bl.ry,bl.rot,0,7);sx.fill();}}
+  sx.globalAlpha=1;
   draw();
 }
 function draw(){
@@ -188,7 +202,7 @@ function draw(){
   for(const f of floaters){ctx.globalAlpha=1-f.age/1.2;ctx.fillText(f.txt,f.x-30,f.y);}ctx.globalAlpha=1;
 }
 document.getElementById('start').onclick=()=>{ // reset
-  score=0;gibCount=0;hull=100;wave=1;bullets=[];ebullets=[];enemies=[];parts=[];floaters=[];
+  score=0;gibCount=0;hull=100;wave=1;bullets=[];ebullets=[];enemies=[];parts=[];floaters=[];stains.length=0;
   sx.clearRect(0,0,W,H);player.x=W/2;player.y=H-90;
   document.getElementById('score').textContent='0';document.getElementById('gibs').textContent='0';
   document.getElementById('hull').textContent='100';document.getElementById('wave').textContent='1';

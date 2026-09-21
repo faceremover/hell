@@ -73,6 +73,7 @@
   #adbody .install{background:#37e08b;color:#063;font-weight:900;border:none;border-radius:12px;
     padding:14px 44px;font-size:19px;margin-top:14px;cursor:pointer}
   #adreward{color:#ffd23f;font-weight:800;margin-top:10px;min-height:24px}
+  #menoad{width:min(420px,92%);margin:12px auto 0}
   /* toast */
   #toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(20px);z-index:70;
     background:rgba(10,14,30,.95);border:1px solid #3a4670;color:#fff;border-radius:12px;padding:10px 18px;
@@ -100,6 +101,7 @@
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
 </script>
+<script src="../hell-ads.js"></script>
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -139,6 +141,7 @@
     <button class="btn gold" id="btn-shop">🛒 SHOP <small style="font-weight:600">BEST VALUE!!</small></button>
   </div>
   <div class="fineprint">*choice made by our own editor (Dave) • no refunds • progress saved (to your browser)</div>
+  <div id="menoad"></div>
 </div>
 
 <div id="daily" class="screen"><div class="panel">
@@ -302,7 +305,7 @@ function mHorn(t){[660,830,990].forEach(f=>mTone(f*(1+Math.random()*.02),t,.35,'
 let mStep=0,mNext=0;
 function musicTick(){
   const a=ac();
-  if(!musicOn||muted){mNext=Math.max(mNext,a.currentTime+.1);return;}
+  if(!musicOn||muted||adPlaying){mNext=Math.max(mNext,a.currentTime+.1);return;}
   const T=TRACKS[musicTrack],stepDur=60/T.bpm/2;
   if(mNext<a.currentTime-.25)mNext=a.currentTime+.05;
   while(mNext<a.currentTime+.18){
@@ -533,8 +536,12 @@ function startLevel(lv){level=lv;hideAll();reset(lv);running=true;paused=false;
 function hideAll(){['menu','daily','shop','settings','lowenergy','pausemenu','winscreen','failscreen','rateus'].forEach(hide);}
 
 /* ===== monetization (fun) ===== */
-let adCb=null;
-function playAd(cb){adCb=cb;hideAll();show('fakead');
+let adCb=null,adPlaying=false; // adPlaying pauses the music while a fake ad runs
+function playAd(cb){adCb=cb;adPlaying=true;hideAll();show('fakead');
+  if(window.HellAds){ // real slop inventory in the fake ad slot
+    $('adbody').innerHTML=HellAds.interstitialHTML(HellAds.pick('the dangler 4d'))+'<div id="adreward"></div>';
+    document.querySelector('#adbody .install').onclick=()=>{
+      $('adreward').textContent='INSTALLING... (not really) +10💎!!';gems+=10;wallet();beep(1200,.2);};}
   $('adreward').textContent='';$('adclose').style.display='none';
   let n=5;$('adcount').textContent=n;
   clearInterval(playAd._t);
@@ -542,7 +549,7 @@ function playAd(cb){adCb=cb;hideAll();show('fakead');
       $('adclose').style.display='block';$('adclose').innerHTML='GIFT! 🎁';
       $('adreward').textContent='REWARD READY!! TAP GIFT!!';}
     else $('adcount').textContent=n;},1000);}
-$('adclose').onclick=()=>{click();hide('fakead');
+$('adclose').onclick=()=>{click();hide('fakead');adPlaying=false; // music back on, even on early close
   if($('adclose').style.display==='block'&&adCb){const cb=adCb;adCb=null;cb();}};
 document.querySelector('#adbody .install').onclick=()=>{
   $('adreward').textContent='INSTALLING... (not really) +10💎!!';gems+=10;wallet();beep(1200,.2);};
@@ -596,6 +603,10 @@ $('btn-ratelater').onclick=()=>{click();hide('rateus');toast('ok. we WILL ask ag
 
 /* energy regen (generous) (60s) */
 setInterval(()=>{if(energy<EMAX){energy++;if(!started||!running)$('t-energy').textContent=energy+'/'+EMAX;save();}},60000);
+
+/* cross-promo slop banner on the menu (rotates while you stare at it) */
+if(window.HellAds){HellAds.mount($('menoad'),{exclude:'the dangler 4d'});
+setInterval(()=>{if($('menu').style.display!=='none')HellAds.mount($('menoad'),{exclude:'the dangler 4d'});},45000);}
 
 /* ===== main loop ===== */
 const fwd=new THREE.Vector3();
