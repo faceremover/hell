@@ -1,0 +1,353 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "amIPerfection_photorealPerfection.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "3": {
+    "inputs": {
+      "seed": 346346,
+      "steps": 14,
+      "cfg": 3.4,
+      "sampler_name": "ddpm",
+      "scheduler": "ddim_uniform",
+      "denoise": 1,
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "10",
+        0
+      ],
+      "latent_image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "4": {
+    "inputs": {
+      "lora_name": "PX64NOCAP_epoch_10.safetensors",
+      "strength_model": 1,
+      "strength_clip": 0.8,
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA (Model and CLIP)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": [
+        "74",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "positive final"
+    }
+  },
+  "8": {
+    "inputs": {
+      "width": [
+        "85",
+        1
+      ],
+      "height": [
+        "85",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "10": {
+    "inputs": {
+      "text": "messy, detailed background, ugly, empty space, shadow, cropped, photorealistic, portrait",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "negative final"
+    }
+  },
+  "34": {
+    "inputs": {
+      "resize_type": "scale dimensions",
+      "resize_type.width": [
+        "83",
+        0
+      ],
+      "resize_type.height": [
+        "83",
+        0
+      ],
+      "resize_type.crop": "center",
+      "scale_method": "nearest-exact",
+      "input": [
+        "55",
+        0
+      ]
+    },
+    "class_type": "ResizeImageMaskNode",
+    "_meta": {
+      "title": "Resize Image/Mask"
+    }
+  },
+  "51": {
+    "inputs": {
+      "model": "RMBG-2.0",
+      "sensitivity": 1,
+      "process_res": [
+        "86",
+        1
+      ],
+      "mask_blur": 0,
+      "mask_offset": 0,
+      "invert_output": false,
+      "refine_foreground": false,
+      "background": "Alpha",
+      "background_color": "#222222",
+      "image": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "RMBG",
+    "_meta": {
+      "title": "Remove Background (RMBG)"
+    }
+  },
+  "55": {
+    "inputs": {
+      "image": [
+        "58",
+        0
+      ],
+      "alpha": [
+        "59",
+        0
+      ]
+    },
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "Join Image with Alpha"
+    }
+  },
+  "56": {
+    "inputs": {
+      "mask": [
+        "51",
+        1
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "Invert Mask"
+    }
+  },
+  "58": {
+    "inputs": {
+      "colors": 30,
+      "dither": "none",
+      "image": [
+        "72",
+        0
+      ]
+    },
+    "class_type": "ImageQuantize",
+    "_meta": {
+      "title": "Quantize Image"
+    }
+  },
+  "59": {
+    "inputs": {
+      "value": 0.5,
+      "mask": [
+        "56",
+        0
+      ]
+    },
+    "class_type": "ThresholdMask",
+    "_meta": {
+      "title": "Threshold Mask"
+    }
+  },
+  "63": {
+    "inputs": {
+      "resize_type": "scale by multiplier",
+      "resize_type.multiplier": 3,
+      "scale_method": "nearest-exact",
+      "input": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "ResizeImageMaskNode",
+    "_meta": {
+      "title": "Resize Image/Mask"
+    }
+  },
+  "69": {
+    "inputs": {
+      "width": [
+        "85",
+        1
+      ],
+      "height": [
+        "85",
+        1
+      ],
+      "images": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "CenterCropImages",
+    "_meta": {
+      "title": "Crop Image (Center)"
+    }
+  },
+  "72": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "69",
+        0
+      ],
+      "source": [
+        "51",
+        0
+      ],
+      "mask": [
+        "51",
+        1
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "Image Composite Masked"
+    }
+  },
+  "74": {
+    "inputs": {
+      "string_a": [
+        "75",
+        0
+      ],
+      "string_b": ", pixel art, flat color background, sprite, game asset, outline, full, high contrast",
+      "delimiter": ""
+    },
+    "class_type": "StringConcatenate",
+    "_meta": {
+      "title": "add prompt details"
+    }
+  },
+  "75": {
+    "inputs": {
+      "value": "a red cat"
+    },
+    "class_type": "PrimitiveString",
+    "_meta": {
+      "title": "PROMPT/SUBJECT HERE"
+    }
+  },
+  "80": {
+    "inputs": {
+      "filename_prefix": "",
+      "images": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "83": {
+    "inputs": {
+      "value": 64
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "RESOLUTION HERE"
+    }
+  },
+  "85": {
+    "inputs": {
+      "expression": "a * 8",
+      "values.a": [
+        "83",
+        0
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "86": {
+    "inputs": {
+      "expression": "a * 2",
+      "values.a": [
+        "85",
+        1
+      ]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  }
+}

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:,">
+<title>Potslop — hell kitchen sandbox</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0d0208; color:#f5d9c8; font-family:monospace; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; padding:16px; gap:12px;
+    background-image: radial-gradient(ellipse 80% 40% at 50% 110%, rgba(255,60,0,.25), transparent); }
+  h1 { font-size:28px; letter-spacing:2px; color:#ffb300; text-shadow:3px 3px 0 #5c0a00, 0 0 18px rgba(255,100,0,.6); }
+  .sub { color:#c98a6a; font-style:italic; font-size:13px; }
+  #wrap { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; align-items:flex-start; }
+  .panel { background:#1c0a12; border:4px solid #4a1a08; box-shadow:0 0 0 4px #0d0208, 0 0 0 8px #ff6a00; padding:12px; }
+  .panel h2 { font-size:13px; letter-spacing:2px; color:#ff8a3c; margin-bottom:8px; }
+  img.spr { image-rendering:pixelated; image-rendering:crisp-edges; display:block; }
+  #shelf { display:grid; grid-template-columns:repeat(3, 76px); gap:10px; }
+  .ing { width:76px; background:#2a0f1c; border:3px solid #5b2b8a; padding:4px; text-align:center;
+    cursor:grab; user-select:none; touch-action:none; }
+  .ing img { width:64px; height:64px; }
+  .ing span { display:block; font-size:10px; margin-top:2px; color:#e8b98a; }
+  .ing.dragging { opacity:.4; }
+  #potzone { text-align:center; }
+  #pot { width:256px; height:256px; image-rendering:pixelated;
+    background:radial-gradient(circle at 50% 70%, rgba(255,100,0,.25), transparent 70%); }
+  #pot.over { filter:drop-shadow(0 0 12px #7dff5e) brightness(1.2); }
+  #potcontent { min-height:20px; font-size:12px; color:#9dff57; }
+  #result { min-height:110px; text-align:center; }
+  #result img { width:128px; height:128px; margin:0 auto; }
+  #result .rname { color:#ffd93b; font-size:15px; margin-top:4px; }
+  #result .rlore { color:#c98a6a; font-size:11px; font-style:italic; }
+  #cookbook { display:grid; grid-template-columns:repeat(6, 68px); gap:8px; max-width:460px; }
+  .found { text-align:center; font-size:9px; color:#9dff57; }
+  .found img { width:64px; height:64px; }
+  .missing { text-align:center; font-size:9px; color:#5a3a2a; }
+  .missing .q { width:64px; height:64px; display:flex; align-items:center; justify-content:center;
+    font-size:28px; background:#14060e; border:3px dashed #4a2a1a; }
+  #msg { min-height:24px; font-size:14px; color:#ff7ad9; text-shadow:2px 2px 0 #000; text-align:center; max-width:560px; }
+  #count { font-size:13px; color:#ffd93b; }
+  button { font-family:monospace; font-size:14px; padding:8px 18px; background:#ff6a00; color:#1a0300;
+    border:3px solid #ffe27a; cursor:pointer; box-shadow:3px 3px 0 #5c0a00; margin:2px; }
+  button:active { transform:translate(2px,2px); box-shadow:1px 1px 0 #5c0a00; }
+  #ghost { position:fixed; pointer-events:none; z-index:99; display:none; image-rendering:pixelated; width:64px; height:64px; }
+  /* ── EPIC ANIMATIONS ── */
+  #potzone { position:relative; overflow:hidden; }
+  #pot { transition:transform .15s; }
+  #pot.splash { animation:splash .45s steps(4); }
+  @keyframes splash { 0%{transform:scale(1)} 30%{transform:scale(1.1,.85) rotate(-2deg)} 60%{transform:scale(.95,1.08) rotate(2deg)} 100%{transform:scale(1)} }
+  #pot.mixing { animation:mixshake .3s steps(2) infinite; filter:drop-shadow(0 0 18px #b44dff) brightness(1.3) saturate(1.5); }
+  @keyframes mixshake { 0%{transform:translate(-6px,2px) rotate(-3deg)} 50%{transform:translate(6px,-3px) rotate(3deg)} 100%{transform:translate(-4px,-2px) rotate(-2deg)} }
+  #pot.flash { animation:potflash .5s steps(3); }
+  @keyframes potflash { 0%{filter:brightness(3) saturate(0)} 100%{filter:brightness(1)} }
+  .fx { position:absolute; pointer-events:none; font-size:20px; z-index:5; }
+  .fx.rise { animation:rise 1.1s steps(6) forwards; }
+  @keyframes rise { from{transform:translateY(0) scale(1);opacity:1} to{transform:translateY(-140px) scale(1.6);opacity:0} }
+  .fx.orbit { animation:orbit 1.4s linear infinite; }
+  @keyframes orbit { from{transform:rotate(0) translateX(90px) rotate(0)} to{transform:rotate(360deg) translateX(90px) rotate(-360deg)} }
+  .fx.burst { animation:burst .7s steps(5) forwards; }
+  @keyframes burst { from{transform:translate(0,0) scale(.5);opacity:1} to{transform:translate(var(--dx),var(--dy)) scale(1.4);opacity:0} }
+  #result.pop img { animation:pop .55s steps(6); }
+  @keyframes pop { 0%{transform:scale(0) rotate(-180deg);filter:brightness(3)} 60%{transform:scale(1.3) rotate(8deg)} 100%{transform:scale(1) rotate(0)} }
+  #screenflash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:200; }
+  #screenflash.go { animation:sflash .4s steps(3); }
+  @keyframes sflash { 0%{opacity:.7} 100%{opacity:0} }
+  body.shake { animation:bshake .4s steps(4); }
+  @keyframes bshake { 0%,100%{transform:translate(0)} 25%{transform:translate(-6px,3px)} 50%{transform:translate(5px,-4px)} 75%{transform:translate(-3px,-2px)} }
+  #flyer { position:fixed; left:0; top:0; z-index:150; pointer-events:none; image-rendering:pixelated; width:64px; height:64px; display:none; }
+  /* ── cookbook next-up highlight + filing ── */
+  #cookbook > div { border:3px solid transparent; border-radius:4px; transition:border-color .2s, box-shadow .2s; }
+  #cookbook > div.next-up { border-color:#ffd93b; box-shadow:0 0 14px rgba(255,217,59,.8); animation:nextpulse .6s steps(3) infinite alternate; }
+  @keyframes nextpulse { from{box-shadow:0 0 6px rgba(255,217,59,.5)} to{box-shadow:0 0 18px rgba(255,217,59,1)} }
+  #cookbook > div.next-up.found { border-color:#7dff5e; box-shadow:0 0 14px rgba(125,255,94,.8); }
+  #glider { position:fixed; left:0; top:0; z-index:160; pointer-events:none; image-rendering:pixelated; }
+  /* ── Kathunk Harris, slop critic ── */
+  #critic { text-align:center; max-width:230px; }
+  #kathunk { width:96px; height:96px; margin:0 auto; }
+  #kathunk.j-disgusted { animation:jshake .7s steps(14); }
+  @keyframes jshake {
+    0%,100%{transform:translate(0,0) rotate(0) scale(1)}
+    10%{transform:translate(-18px,6px) rotate(-16deg) scale(1.06,.94)}
+    20%{transform:translate(16px,-8px) rotate(14deg) scale(.94,1.08)}
+    30%{transform:translate(-20px,-4px) rotate(-18deg) scale(1.08,.92)}
+    40%{transform:translate(18px,8px) rotate(16deg) scale(.92,1.1)}
+    50%{transform:translate(-22px,0) rotate(-20deg) scale(1.1,.9)}
+    60%{transform:translate(20px,-6px) rotate(18deg) scale(.9,1.12)}
+    70%{transform:translate(-16px,8px) rotate(-14deg) scale(1.06,.94)}
+    80%{transform:translate(14px,-4px) rotate(12deg) scale(.96,1.04)}
+    90%{transform:translate(-8px,2px) rotate(-6deg) scale(1)}
+  }
+  #kathunk.j-happy { animation:jbounce .7s steps(7); }
+  @keyframes jbounce { 0%,100%{transform:translateY(0)} 20%{transform:translateY(-22px) scale(1.05)} 40%{transform:translateY(0) scale(.94,1.06)} 60%{transform:translateY(-14px)} 80%{transform:translateY(0) scale(1)} }
+  #kathunk.j-shocked { animation:jspook .8s steps(10); }
+  @keyframes jspook {
+    0%{transform:translateY(0) rotate(0)}
+    20%{transform:translateY(-34px) rotate(-4deg)}
+    40%{transform:translateY(-30px) rotate(4deg)}
+    60%{transform:translateY(-34px) rotate(-4deg)}
+    80%{transform:translateY(-6px) scale(1.1,.9) rotate(0)}
+    100%{transform:translateY(0) scale(1)}
+  }
+  #kathunk.j-smug { animation:jjiggle .7s steps(6); }
+  @keyframes jjiggle { 0%,100%{transform:scale(1,1)} 25%{transform:scale(1.12,.88) rotate(2deg)} 50%{transform:scale(.92,1.1) rotate(-2deg)} 75%{transform:scale(1.08,.92)} }
+  .kname { color:#c9a6ff; font-size:14px; letter-spacing:2px; margin-top:4px; text-shadow:2px 2px 0 #2a1040; }
+  .ksub { color:#8a6a9a; font-size:10px; font-style:italic; margin-bottom:6px; }
+  #verdict { background:#2a1040; border:3px solid #5b2b8a; padding:8px; font-size:11px; line-height:1.5;
+    color:#f5e6ff; min-height:64px; font-style:italic; }
+  #verdict b { color:#ffd93b; font-style:normal; }
+</style>
+<div id="screenflash"></div>
+</head>
+<body>
+<h1>🍲 POT SLOP</h1>
+<div class="sub">a sandbox. drop 1–2 organs in the pot. the bowl shows exactly what you brewed.</div>
+<div id="count">DISCOVERED: 0 / 54</div>
+<div id="wrap">
+  <div class="panel"><h2>☠ INGREDIENTS</h2><div id="shelf"></div></div>
+  <div class="panel" id="potzone"><h2>🔥 THE POT · 128px</h2>
+    <img id="pot" class="spr" src="assets/sprites/pot.png" alt="128x128 cauldron" draggable="false" width="128" height="128">
+    <div id="potcontent">(empty — drop up to 2 things)</div>
+    <div><button id="stir">🌀 STIR &amp; BREW</button><button id="dump" style="background:#5b2b8a;color:#fff">DUMP</button></div>
+    <div id="result"></div>
+  </div>
+  <div class="panel"><h2>📖 COOKBOOK</h2><div id="cookbook"></div></div>
+  <div class="panel" id="critic"><h2>🎩 SLOP CRITIC</h2>
+    <img id="kathunk" class="spr" src="assets/sprites/kathunk_neutral.png" alt="Kathunk Harris" draggable="false">
+    <div class="kname">KATHUNK HARRIS</div>
+    <div id="verdict">"..."</div>
+  </div>
+</div>
+<div id="msg">the pot bubbles ominously...</div>
+<img id="ghost" alt="">
+<script>
+const INGS = {
+  heart:'Bleeding Heart', horn:'Demon Horn', bloodvial:'Blood Vial',
+  lung:'Black Lung', skull:'Horned Skull', entrails:'Entrails',
+  claw:'Demon Claw', shadow:'Living Shadow', stalk:'Eye Stalk',
+};
+// max 2 ingredients. the bowl sprite is composited live from the real
+// ingredient sprites over bowl.png — what you drop is what you see.
+const LORE = {
+  heart:'still beating. barely.', horn:'sharp enough to curse on.',
+  bloodvial:'do not drink the vial. drink the soup.', lung:'tastes like smoke and regret.',
+  skull:'the skull hums while it melts.', entrails:'slurps back.',
+  claw:'sharp going down.', shadow:'the dark takes seconds.', stalk:'it watches you eat it.',
+};
+const NAMES = {
+  heart:'HEARTSTRING STEW', horn:'PRIDE & PUNCH', bloodvial:'TYPE O-NEGATIVE',
+  lung:'SECONDHAND SMOKE', skull:'THINK TANK', entrails:'GUT FEELING',
+  claw:'MANICURE MALIGN', shadow:'DARK MATTER CHOWDER', stalk:'EYE SPY STEW',
+};
+// key = sorted "a+b" (single = just "a")
+const PAIR_NAMES = {
+  'bloodvial+bloodvial':'DOUBLE TRANSFUSION', 'bloodvial+claw':'BLOOD DONOR REJECT',
+  'bloodvial+entrails':'SAUSAGE CASING SOUP', 'bloodvial+heart':'CARDIAC OUTPUT',
+  'bloodvial+horn':'BULL MARKET BREW', 'bloodvial+lung':'TAR & FEATHERS',
+  'bloodvial+shadow':'ECLIPSE GRAVY', 'bloodvial+skull':'HEAD WOUND HOTPOT',
+  'bloodvial+stalk':'PINK EYE PUNCH', 'claw+claw':'DOUBLE JEOPARDY CLAWS',
+  'claw+entrails':'CATGUT & CLAWS', 'claw+heart':'LOVE HURTS BISQUE',
+  'claw+horn':'RHINO PLASTY', 'claw+lung':'CHAINSMOKER CHOWDER',
+  'claw+shadow':'SCRATCH THE DARKNESS', 'claw+skull':'HEADHUNTER STEW',
+  'claw+stalk':'SCRATCHED CORNEA', 'entrails+entrails':'EXTRA GUTS, HOLD NOTHING',
+  'entrails+heart':'OPEN HEART SURGERY', 'entrails+horn':'BULL IN A GUT SHOP',
+  'entrails+lung':'INNER CHOIR', 'entrails+shadow':'DARK INTESTINE',
+  'entrails+skull':'MINDGUT MELD', 'entrails+stalk':'SAUSAGE PEEPERS',
+  'heart+heart':'TWO LEFT HEARTS', 'heart+horn':'CUPID VS SATAN',
+  'heart+lung':'CARDIOPULMONARY SLOP', 'heart+shadow':'HEART OF DARKNESS',
+  'heart+skull':'LOVE & LOGIC', 'heart+stalk':'PUPPY LOVE PUNCH',
+  'horn+horn':'DILEMMA STEW', 'horn+lung':'BRASS LUNG BREW',
+  'horn+shadow':'HORN OF THE VOID', 'horn+skull':'HORNY OLD SOUL',
+  'horn+stalk':'BULLSEYE BROTH', 'lung+lung':'DOUBLE PNEUMONIA',
+  'lung+shadow':'LAST BREATH BOUILLON', 'lung+skull':'SMOKE & MIRRORS',
+  'lung+stalk':'SIDESTREAM SNOOP', 'shadow+shadow':'DOUBLE BLIND DARKNESS',
+  'shadow+skull':'SKULLWHISPER', 'shadow+stalk':'BIG BROTHER BROTH',
+  'skull+skull':'DOUBLETHINK TANK', 'skull+stalk':'USE YOUR HEAD',
+  'stalk+stalk':'FOUR EYES FONDUE',
+};
+// Kathunk Harris judges every slop. [expression, verdict]. expressions:
+// neutral happy disgusted shocked smug
+function key(p) { return [...p].sort().join('+'); }
+const REACT = {
+  'heart':['happy','"It beats, it bleeds, it PLEASES. Five skulls. I wept blood."'],
+  'horn':['smug','"Adequate horniness. I have seen hornier. I AM hornier."'],
+  'bloodvial':['neutral','"Blood. In a vial. In a bowl. Revolutionary? No. Wet? Yes."'],
+  'lung':['disgusted','"It tastes like my ex-wife\'s cigarettes. I smoked the EX-WIFE."'],
+  'skull':['smug','"Finally, a soup that thinks. Unlike my readers."'],
+  'entrails':['happy','"Slurp integrity: PERFECT. It slurped ME back. Sublime."'],
+  'claw':['neutral','"Crunchy. Sharp. My dentist will hear of this. Three skulls."'],
+  'shadow':['shocked','"IT LOOKED AT ME. I looked away first. I NEVER look away first!!"'],
+  'stalk':['shocked','"The eye followed my spoon around the bowl. RUDE. Delicious."'],
+  'bloodvial+bloodvial':['happy','"DOUBLE blood?? Kathunk says YES. Kathunk is never wrong. Ever."'],
+  'bloodvial+claw':['disgusted','"I found a TALON in my BLOOD. Who plated this? Jail. Jail for chef."'],
+  'bloodvial+entrails':['neutral','"Sausage water pretending to be soup. I respect the hustle. Two skulls."'],
+  'bloodvial+heart':['happy','"The heart pumps the blood AROUND the bowl. Self-stirring! Genius!"'],
+  'bloodvial+horn':['smug','"Bullish. My portfolio is also mostly blood. Four skulls."'],
+  'bloodvial+lung':['disgusted','"Tar. Feathers. Blood. Is this soup or a PUNISHMENT? ...Both. One skull."'],
+  'bloodvial+shadow':['shocked','"The blood went DARK and whispered my tax secrets. HOW did it know?!"'],
+  'bloodvial+skull':['neutral','"Head wound chic. Very on-trend in the Seventh Circle this season."'],
+  'bloodvial+stalk':['disgusted','"PINK EYE. In a BOWL. I am calling the health inspector. I AM the health inspector. Condemned."'],
+  'claw+claw':['smug','"Double claws, double standards. I hold soup to impossible ideals. This passed."'],
+  'claw+entrails':['happy','"Chewy AND stabby! A texture journey. My unibrow quivers with joy."'],
+  'claw+heart':['neutral','"Love hurts, and so does this. Accurate. Three skulls."'],
+  'claw+horn':['smug','"Nose job in a bowl. I had one. Can you tell? DO NOT ANSWER."'],
+  'claw+lung':['disgusted','"Twenty years of tar in every sip. I quit smoking AND soup. ...One more sip."'],
+  'claw+shadow':['shocked','"Something scratched me FROM INSIDE THE DARK. I tipped 20% out of fear."'],
+  'claw+skull':['happy','"Headhunter fuel! I feel ready to collect. Starting with the chef. Kidding. Mostly."'],
+  'claw+stalk':['disgusted','"My cornea has filed a formal complaint. ZERO skulls. Still finished the bowl."'],
+  'entrails+entrails':['happy','"GUTS GALORE! Nothing held back, just like my divorce testimony!"'],
+  'entrails+heart':['shocked','"THE HEART IS STILL BEATING. The surgeon general is ME and I approve?!"'],
+  'entrails+horn':['neutral','"A bull wandered into a gut shop. Comedy. Tragedy. Lunch."'],
+  'entrails+lung':['smug','"The inner choir sings in B-flat. I have perfect pitch. Obviously."'],
+  'entrails+shadow':['shocked','"My intestines resonated with the void. I need to sit down. I AM sitting."'],
+  'entrails+skull':['neutral','"Mind and gut finally agree: this is... fine. High praise from these two."'],
+  'entrails+stalk':['disgusted','"Sausage that WATCHES you eat it. I felt SEEN. Uncomfortably."'],
+  'heart+heart':['happy','"TWO hearts beating in syncopation! A love story! I cried! Blood! Everywhere!"'],
+  'heart+horn':['smug','"Cupid versus Satan, and Satan seasoned better. As expected. I know him."'],
+  'heart+lung':['neutral','"Cardio AND pulmonary. A full checkup in a bowl. My doctor hates this."'],
+  'heart+shadow':['shocked','"Conrad was right. The horror. THE HORROR. ...Seconds, please."'],
+  'heart+skull':['smug','"Love versus logic, and logic seasoned correctly. I am always logical. Always."'],
+  'heart+stalk':['happy','"Puppy love! It gazed at me with those big stalks! ADORABLE. Ate it anyway."'],
+  'horn+horn':['neutral','"A dilemma: two horns, one bowl. I resolved it by eating both. Critic privilege."'],
+  'horn+lung':['disgusted','"Brass and tar. Tastes like licking a trumpet in a house fire. Pass."'],
+  'horn+shadow':['shocked','"The void grew a HORN and gored my breadstick. The BREADSTICK did nothing wrong!"'],
+  'horn+skull':['smug','"Old soul, old horns. Like me. Distinguished. Agéd. Magnificent."'],
+  'horn+stalk':['happy','"BULLSEYE! Right in the flavor! I never miss. Except that one review. We don\'t speak of it."'],
+  'lung+lung':['disgusted','"DOUBLE pneumonia?! Are you TRYING to kill me? I\'m already dead. Still rude."'],
+  'lung+shadow':['neutral','"My last breath, served lukewarm. Poetic. Cold soup though. Two skulls."'],
+  'lung+skull':['smug','"Smoke and mirrors — the mirrors being my flawless cheekbones. Soup\'s fine too."'],
+  'lung+stalk':['disgusted','"Secondhand smoke that WATCHES you inhale it. Consent, people!"'],
+  'shadow+shadow':['shocked','"DOUBLE darkness. I saw the beginning of time. It was also purple. Like ME."'],
+  'shadow+skull':['happy','"It whispered my name in my OWN voice. Flattering! Accurate! Five skulls!"'],
+  'shadow+stalk':['neutral','"Big Brother is brothing you. Tasty surveillance. I feel so seen. Literally."'],
+  'skull+skull':['smug','"Two heads are better than one, and both agree with ME. Validation never tasted so bony."'],
+  'skull+stalk':['neutral','"Use your head, it said. So I did. Head says: needs salt. Three skulls."'],
+  'stalk+stalk':['happy','"FOUR eyes on me! Finally, the attention my mother never gave! Delicious AND therapeutic!"'],
+};
+function judge(ids) {
+  const k = key(ids);
+  const r = REACT[k] || ['neutral', '"...Kathunk has no words. This has never happened. Ever."'];
+  const img = document.getElementById('kathunk');
+  img.src = `assets/sprites/kathunk_${r[0]}.png`;
+  img.classList.remove('j-disgusted', 'j-happy', 'j-shocked', 'j-smug');
+  void img.offsetWidth;
+  if (r[0] !== 'neutral') img.classList.add('j-' + r[0]); // neutral: not moving
+  document.getElementById('verdict').innerHTML = `<b>KATHUNK:</b> ${r[1]}`;
+}
+function comboName(ids) {
+  if (ids.length === 1) return NAMES[ids[0]];
+  return PAIR_NAMES[key(ids)] || key(ids);
+}
+function comboLore(ids) {
+  if (ids.length === 1) return LORE[ids[0]];
+  const [a, b] = [...ids].sort();
+  if (a === b) return `twice the ${INGS[a].toLowerCase()}. twice the pain.`;
+  return `${LORE[a]} ${LORE[b]}`;
+}
+// every possible combo: 9 singles + 45 pairs = 54
+const ALL_COMBOS = (() => {
+  const ids = Object.keys(INGS), out = [];
+  ids.forEach(i => out.push(i));
+  for (let a = 0; a < ids.length; a++) for (let b = a; b < ids.length; b++) out.push(key([ids[a], ids[b]]));
+  return out;
+})();
+
+let pot = [];
+const found = new Set(JSON.parse(localStorage.getItem('potslop-found-v3') || '[]'));
+const shelf = document.getElementById('shelf');
+for (const [id, name] of Object.entries(INGS)) {
+  const el = document.createElement('div');
+  el.className = 'ing'; el.dataset.id = id;
+  el.innerHTML = `<img class="spr" src="assets/sprites/${id}.png" draggable="false" alt="${name}"><span>${name}</span>`;
+  shelf.appendChild(el);
+}
+// pre-generated soup sprites: soup_<id>.png for singles, soup_<a>_<b>.png (sorted) for pairs
+function soupFile(ids) {
+  const s = [...ids].sort();
+  return s.length === 1 ? `soup_${s[0]}.png` : `soup_${s[0]}_${s[1]}.png`;
+}
+const RUNES = ['⛧','✦','🜏','🜔','☠','🕯','🔥','💀'];
+function spawnFx(cls, txt, x, y, dx, dy) {
+  const zone = document.getElementById('potzone');
+  const r = zone.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'fx ' + cls;
+  el.textContent = txt;
+  el.style.left = (x - r.left) + 'px';
+  el.style.top = (y - r.top) + 'px';
+  if (dx !== undefined) { el.style.setProperty('--dx', dx + 'px'); el.style.setProperty('--dy', dy + 'px'); }
+  zone.appendChild(el);
+  setTimeout(() => el.remove(), 1600);
+}
+function potCenter() {
+  const r = document.getElementById('pot').getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+let brewing = false;
+let pendingSoup = null; // last brewed soup, glides into the cookbook on the next brew
+async function brew() {
+  if (brewing) return;
+  if (!pot.length) { msg('🍲 pot is empty. add slop first.'); return; }
+  brewing = true;
+  highlightNext();
+  // file last brew's soup into its cookbook slot first
+  await filePending();
+  const ids = [...pot];
+  const k = key(ids);
+  const n = comboName(ids), l = comboLore(ids);
+  const file = soupFile(ids);
+  const c = potCenter();
+  msg('🌀 the hellfire rises... the slop churns...');
+  // MAGICAL MIXING: shake + orbiting runes + rising bubbles
+  potEl.classList.add('mixing');
+  const orbiters = RUNES.map(t => {
+    const el = document.createElement('div');
+    el.className = 'fx orbit'; el.textContent = t;
+    el.style.left = '50%'; el.style.top = '55%';
+    document.getElementById('potzone').appendChild(el);
+    return el;
+  });
+  const bub = setInterval(() => spawnFx('rise', ['🫧','🔥','💜','🖤'][Math.floor(Math.random()*4)], c.x + (Math.random()-.5)*120, c.y + 40), 150);
+  setTimeout(() => {
+    clearInterval(bub);
+    orbiters.forEach(el => el.remove());
+    potEl.classList.remove('mixing');
+    potEl.classList.add('flash');
+    // SOUP POPS OUT FLASHILY: screen flash + shake + sparkle burst + pop-in
+    const sf = document.getElementById('screenflash');
+    sf.classList.remove('go'); void sf.offsetWidth; sf.classList.add('go');
+    document.body.classList.remove('shake'); void document.body.offsetWidth;
+    document.body.classList.add('shake');
+    for (let i = 0; i < 14; i++) {
+      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 110;
+      spawnFx('burst', ['✨','🔥','💀','⛧','🩸'][i % 5], c.x, c.y, Math.cos(a)*d, Math.sin(a)*d);
+    }
+    if (!found.has(k)) {
+      pendingSoup = { k, file };
+      msg(`✨ NEW BREW! <b>${n}</b> — ${l} <i>(cook again to file it 📖)</i>`);
+    } else msg(`🍲 <b>${n}</b> — ${l} (already in the cookbook)`);
+    const res = document.getElementById('result');
+    res.classList.remove('pop'); void res.offsetWidth;
+    res.innerHTML =
+      `<img class="spr" src="assets/sprites/${file}" alt="${n}">
+       <div class="rname">${n}</div><div class="rlore">${l}</div>
+       <div class="rlore">brewed from: ${ids.map(i => INGS[i]).join(' + ')}</div>`;
+    res.classList.add('pop');
+    judge(ids);
+    setTimeout(() => potEl.classList.remove('flash'), 600);
+    pot = []; render();
+    brewing = false;
+  }, 1500);
+}
+function msg(t) { document.getElementById('msg').innerHTML = t; }
+function render() {
+  document.getElementById('potcontent').textContent = pot.length ? pot.map(i => INGS[i]).join(' + ') : '(empty — drop up to 2 things)';
+  document.getElementById('count').textContent = `DISCOVERED: ${found.size} / ${ALL_COMBOS.length}`;
+  document.getElementById('cookbook').innerHTML = ALL_COMBOS.map(k => {
+    const ids = k.split('+');
+    const n = comboName(ids);
+    if (found.has(k)) {
+      return `<div class="found" data-k="${k}"><img class="spr" src="assets/sprites/${soupFile(ids)}" style="width:56px;height:56px;margin:0 auto;"><br>${n}</div>`;
+    }
+    return `<div class="missing" data-k="${k}"><div class="q">?</div>???</div>`;
+  }).join('');
+  highlightNext();
+}
+// glow the cookbook slot matching what's currently in the pot
+function highlightNext() {
+  document.querySelectorAll('#cookbook .next-up').forEach(el => el.classList.remove('next-up'));
+  if (!pot.length || brewing) return;
+  const cell = document.querySelector(`#cookbook [data-k="${CSS.escape(key(pot))}"]`);
+  if (cell) cell.classList.add('next-up');
+}
+// file the pending soup into the cookbook: glide a clone from the result
+// into its slot, then mark found. returns a promise.
+function filePending() {
+  return new Promise(resolve => {
+    if (!pendingSoup) return resolve();
+    const { k, file } = pendingSoup;
+    pendingSoup = null;
+    const srcImg = document.querySelector('#result img');
+    const cell = document.querySelector(`#cookbook [data-k="${CSS.escape(k)}"]`);
+    if (!srcImg || !cell) {
+      if (!found.has(k)) { found.add(k); saveFound(); }
+      render(); return resolve();
+    }
+    const r1 = srcImg.getBoundingClientRect();
+    const r2 = cell.getBoundingClientRect();
+    const g = document.createElement('img');
+    g.id = 'glider';
+    g.src = `assets/sprites/${file}`;
+    g.style.width = r1.width + 'px'; g.style.height = r1.height + 'px';
+    document.body.appendChild(g);
+    // fade the original out as its ghost flies off
+    srcImg.style.transition = 'opacity .3s';
+    srcImg.style.opacity = '0';
+    g.animate([
+      { transform: `translate(${r1.left}px,${r1.top}px) scale(1)`, opacity: 1 },
+      { transform: `translate(${(r1.left + r2.left + r2.width/2) / 2 - r1.width/2}px,${Math.min(r1.top, r2.top) - 90}px) scale(.8)`, opacity: 1, offset: .5 },
+      { transform: `translate(${r2.left + r2.width/2 - 28}px,${r2.top}px) scale(.44)`, opacity: .9 }
+    ], { duration: 700, easing: 'cubic-bezier(.3,.7,.4,1)' }).onfinish = () => {
+      g.remove();
+      if (!found.has(k)) {
+        found.add(k); saveFound();
+        msg(`📖 <b>${comboName(k.split('+'))}</b> filed in the cookbook.`);
+      }
+      render(); resolve();
+    };
+  });
+}
+function saveFound() { localStorage.setItem('potslop-found-v3', JSON.stringify([...found])); }
+// INGREDIENT DROP: the sprite arcs from your cursor into the pot, then splashes
+function flyIntoPot(id, fromX, fromY) {
+  const c = potCenter();
+  let flyer = document.getElementById('flyer');
+  if (!flyer) {
+    flyer = document.createElement('img');
+    flyer.id = 'flyer';
+    document.body.appendChild(flyer);
+  }
+  flyer.src = `assets/sprites/${id}.png`;
+  flyer.style.display = 'block';
+  const dx = c.x - fromX, dy = c.y - fromY;
+  flyer.animate([
+    { transform: `translate(${fromX - 32}px, ${fromY - 32}px) scale(1) rotate(0deg)`, opacity: 1 },
+    { transform: `translate(${fromX + dx * .5 - 32}px, ${fromY + dy * .5 - 120}px) scale(1.15) rotate(180deg)`, opacity: 1, offset: .55 },
+    { transform: `translate(${c.x - 32}px, ${c.y - 32}px) scale(.4) rotate(360deg)`, opacity: .9 }
+  ], { duration: 550, easing: 'cubic-bezier(.3,.7,.4,1)' }).onfinish = () => {
+    flyer.style.display = 'none';
+    potEl.classList.remove('splash'); void potEl.offsetWidth;
+    potEl.classList.add('splash');
+    spawnFx('burst', '💦', c.x, c.y - 40, (Math.random()-.5)*60, -50);
+    spawnFx('burst', '🔥', c.x, c.y - 40, (Math.random()-.5)*60, -70);
+  };
+}
+function dropIntoPot(id, fromX, fromY) {
+  if (brewing) return;
+  if (pot.length >= 2) { msg('THE POT IS FULL (2 max). stir or dump!'); return; }
+  pot.push(id);
+  document.getElementById('result').classList.remove('pop');
+  // NOTE: do NOT clear #result here — the pending soup's img is the glide source
+  if (fromX !== undefined) flyIntoPot(id, fromX, fromY);
+  else { potEl.classList.remove('splash'); void potEl.offsetWidth; potEl.classList.add('splash'); }
+  render();
+}
+let dragId = null;
+const ghost = document.getElementById('ghost');
+const potEl = document.getElementById('pot');
+document.querySelectorAll('.ing').forEach(el => {
+  el.addEventListener('pointerdown', e => {
+    dragId = el.dataset.id; el.classList.add('dragging');
+    ghost.src = `assets/sprites/${dragId}.png`; ghost.style.display = 'block';
+    moveGhost(e); el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => { if (dragId) moveGhost(e); });
+  el.addEventListener('pointerup', e => {
+    el.classList.remove('dragging'); ghost.style.display = 'none';
+    if (dragId && overPot(e.clientX, e.clientY)) dropIntoPot(dragId, e.clientX, e.clientY);
+    dragId = null; potEl.classList.remove('over');
+  });
+});
+function moveGhost(e) { ghost.style.left = (e.clientX-32)+'px'; ghost.style.top = (e.clientY-32)+'px'; }
+function overPot(x, y) { const r = potEl.getBoundingClientRect(); return x > r.left-20 && x < r.right+20 && y > r.top-20 && y < r.bottom+20; }
+document.addEventListener('pointermove', e => { if (dragId) potEl.classList.toggle('over', overPot(e.clientX, e.clientY)); });
+document.getElementById('stir').onclick = brew;
+document.getElementById('dump').onclick = () => { pot = []; msg('🗑 slop dumped into the lava.'); render(); };
+render();
+</script>
+</body>
+</html>
