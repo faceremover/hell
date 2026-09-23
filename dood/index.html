@@ -43,6 +43,8 @@ button{font-family:monospace;font-size:16px;padding:10px 26px;background:#c41e00
 #lvlmsg{position:absolute;left:0;right:0;top:14%;text-align:center;color:#7dff5e;font-size:22px;letter-spacing:2px;pointer-events:none;z-index:4;text-shadow:2px 2px 0 #000,0 0 18px rgba(80,255,80,.6);opacity:0;transition:opacity .4s}
 #exitarrow{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;pointer-events:none;text-align:center;color:#39ff14;font-size:26px;text-shadow:0 0 10px rgba(57,255,20,.8),2px 2px 0 #000;line-height:1}
 #exitarrow span{display:block;font-size:11px;color:#b0ffb0}
+#wrap canvas#minimap{position:absolute;top:8px;right:8px;width:148px;height:148px;z-index:4;background:rgba(5,0,0,.65);border:2px solid rgba(255,60,0,.6);border-radius:4px;pointer-events:none;opacity:.92}
+@media (max-width:640px){#wrap canvas#minimap{width:96px;height:96px;top:6px;right:6px}}
 #doodad{width:min(460px,94%)}
 #adretry{display:none;background:#0a6a2a;border-color:#7dff8a}
 #endless{display:none;background:#0a3a6a;border-color:#7df9ff}
@@ -57,9 +59,9 @@ button{font-family:monospace;font-size:16px;padding:10px 26px;background:#c41e00
 </head>
 <body>
 <h1>🔥 DOOD</h1>
-<div class="sub">click to lock mouse · WASD move · mouse look · click shoot · M mute · N music</div>
+<div class="sub">click to lock mouse · WASD move · mouse look · click shoot · M mute · N music · P minimap</div>
 <div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span></div>
-<div id="wrap"><div id="dmg"></div><div id="lvlmsg"></div><div id="exitarrow">▲<span></span></div>
+<div id="wrap"><div id="dmg"></div><div id="lvlmsg"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
 <div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button></div>
 <div id="overlay"><h2>DOOD</h2><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><button id="start">⛧ ENTER ⛧</button><button id="adretry">📺 WATCH AD TO RETRY (1 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div id="seedrow">SEED <input id="seedin" placeholder="random" title="empty = normal mode"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"></div><div id="doodad"></div></div>
 <div id="adover"></div>
@@ -102,14 +104,14 @@ const touchMove={x:0,y:0,active:false};
 })();
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x070203);
-scene.fog=new THREE.Fog(0x070203,4,60);
+scene.fog=new THREE.Fog(0x070203,10,90);
 const camera=new THREE.PerspectiveCamera(72,3/2,.1,100);
 addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,100));
 // ---------- lights ----------
-let hemi=new THREE.HemisphereLight(0xff9a70,0x220502,.55);scene.add(hemi);
-const lamp=new THREE.PointLight(0xff6a2a,45,30);lamp.position.set(0,4,0);scene.add(lamp);
+let hemi=new THREE.HemisphereLight(0xff9a70,0x220502,1.35);scene.add(hemi);
+const lamp=new THREE.PointLight(0xff6a2a,220,45);lamp.position.set(0,4,0);scene.add(lamp);
 // ---------- procedural textures (env art: NOT generator — single sprites only) ----------
-function canvasTex(sz,fn){const c=document.createElement('canvas');c.width=c.height=sz;fn(c.getContext('2d'),sz);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.userData.canvas=c;t.userData.size=sz;return t;}
+function canvasTex(sz,fn){const c=document.createElement('canvas');c.width=c.height=sz;fn(c.getContext('2d'),sz);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;t.userData.canvas=c;t.userData.size=sz;return t;}
 function repaintTex(t,fn){const c=t.userData.canvas,s=t.userData.size;fn(c.getContext('2d'),s);t.needsUpdate=true;}
 // seeded environment styles: repaint floor/wall + tint lights/fog per level
 let ceilMat=null;
@@ -200,22 +202,28 @@ const ENV_STYLES=[
     for(let x=0;x<s;x+=32){const v=(fr()*10|0);g.fillStyle='rgb('+(28+v)+','+(26+v)+','+(22+v)+')';g.fillRect(x+1,0,30,s);
      g.fillStyle='#050505';g.fillRect(x,0,1,s);
      g.fillStyle='#1a1512';g.fillRect(x+4,8,24,2);g.fillRect(x+4,s-10,24,2);}}}];
-function pickStyle(n,rng,prev){
- if(n===1)return 0;
- let i=(rng()*ENV_STYLES.length)|0;
- if(i===prev)i=(i+1)%ENV_STYLES.length;
- return i;}
-let lastFloor=-1,lastWall=-1;
+// pure per (seed, level): replays the no-repeat chain from level 1 every time,
+// so entering LV n directly gives the same style as playing 1..n to get there.
+// (The old version compared against session-global lastFloor/lastWall, so the
+// same seed+level styled differently depending on play history.)
+function styleForLevel(seed,n,salt){
+ if(n<=1)return 0; // level 1 is always techbase
+ let prev=0,cur=0;
+ for(let k=2;k<=n;k++){
+  cur=(mulberry32((seed*31+k*101+salt)|0)()*ENV_STYLES.length)|0;
+  if(cur===prev)cur=(cur+1)%ENV_STYLES.length;
+  prev=cur;}
+ return cur;}
 function applyEnvStyle(n,rng){
- const fi=pickStyle(n,rng,lastFloor),wi=pickStyle(n,rng,lastWall);
- lastFloor=fi;lastWall=wi;
+ rng();rng(); // style no longer draws from the layout stream; burn the 2 draws so seeded layouts/spawns don't shift
+ const fi=styleForLevel(LEVEL_SEED,n,7),wi=styleForLevel(LEVEL_SEED,n,1013);
  const fst=ENV_STYLES[fi],wst=ENV_STYLES[wi];
  const fr=mulberry32(LEVEL_SEED*31+n*101);
  repaintTex(floorTex,(g,s)=>fst.floor(g,s,fr));
  repaintTex(wallTex,(g,s)=>wst.wall(g,s,fr));
  scene.fog.color.setHex(fst.fog);scene.background.setHex(fst.fog);
  if(hemi){hemi.color.setHex(fst.hemi[0]);hemi.groundColor.setHex(fst.hemi[1]);}
- lamp.color.setHex(fst.lamp);if(ceilMat)ceilMat.color.setHex(fst.ceil);
+  lamp.color.setHex(fst.lamp);if(ceilMat){ceilMat.color.setHex(fst.ceil);ceilMat.emissive.setHex(fst.ceil);}
  return fst;}
 const floorTex=canvasTex(128,(g,s)=>{g.fillStyle='#3a2418';g.fillRect(0,0,s,s);for(let i=0;i<300;i++){g.fillStyle=`rgb(${60+Math.random()*40|0},${30+Math.random()*20|0},${15+Math.random()*12|0})`;g.fillRect(Math.random()*s,Math.random()*s,2,2);}g.strokeStyle='#241209';g.strokeRect(0,0,s,s);});
 floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;floorTex.repeat.set(8,8);
@@ -231,11 +239,12 @@ g.beginPath();g.arc(32,32,4.5,0,7);g.fill();});
 // ---------- maze arena (mangler-style backtracker + loops + rooms, seeded) ----------
 let GW=0,GH=0,grid=[];
 const TS=5;
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(140,140),new THREE.MeshLambertMaterial({map:floorTex}));
+const CEIL_H=6.5; // half a tile above the old 4m ceiling so the tallest demons fit
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(140,140),new THREE.MeshLambertMaterial({map:floorTex,emissive:0xffffff,emissiveMap:floorTex,emissiveIntensity:.6}));
 floor.rotation.x=-Math.PI/2;scene.add(floor);
-const ceil=floor.clone();ceil.rotation.x=Math.PI/2;ceil.position.y=4;ceil.material=new THREE.MeshLambertMaterial({color:0x1a0c08});scene.add(ceil);ceilMat=ceil.material;
+const ceil=floor.clone();ceil.rotation.x=Math.PI/2;ceil.position.y=CEIL_H;ceil.material=new THREE.MeshLambertMaterial({color:0x1a0c08,emissive:0x1a0c08,emissiveIntensity:.9});scene.add(ceil);ceilMat=ceil.material;
 floorTex.repeat.set(20,20);
-const wallMat=new THREE.MeshLambertMaterial({map:wallTex});
+const wallMat=new THREE.MeshLambertMaterial({map:wallTex,emissive:0xffffff,emissiveMap:wallTex,emissiveIntensity:.6});
 let wallMesh=null; // single InstancedMesh per level
 const wallMeshes=[]; // legacy alias: holds [wallMesh] if present
 // shared geos/mats: splats never fade so they can share; gibs fade individually (disposed on remove)
@@ -296,10 +305,24 @@ const D=[[1,0],[-1,0],[0,1],[0,-1]];
 while(head<q.length){const cx=q[head][0],cy=q[head][1];head++;
 for(let di=0;di<4;di++){const nx=cx+D[di][0],ny=cy+D[di][1];if(nx<0||ny<0||nx>=GW||ny>=GH)continue;
 if(grid[k(nx,ny)]===1||dist[k(nx,ny)]!==-1)continue;dist[k(nx,ny)]=dist[k(cx,cy)]+1;q.push([nx,ny]);}}
-return dist;}
+ return dist;}
+function stalkerSpawnTile(px,py){ // far from the EXIT first, far from player second — never camps the portal
+ const pd=bfsDist(px,py);
+ const ex=Math.max(0,Math.min(GW-1,Math.floor(exitPos.x/TS))),ey=Math.max(0,Math.min(GH-1,Math.floor(exitPos.z/TS)));
+ const ed=bfsDist(ex,ey);
+ let st={x:1,y:1},bestEd=-1,bestPd=-1;
+ for(let pass=0;pass<2&&bestEd<0;pass++){
+  const minPd=pass===0?5:0;
+  bestEd=-1;bestPd=-1;
+  for(let y=1;y<GH-1;y++)for(let x=0;x<GW-1;x++){
+   if(grid[y*GW+x]!==0)continue;
+   const dP=pd[y*GW+x],dE=ed[y*GW+x];
+   if(dP<0||dE<0||dP<minPd)continue;
+   if(dE>bestEd||(dE===bestEd&&dP>bestPd)){bestEd=dE;bestPd=dP;st={x,y};}}}
+ return st;}
 // ---------- sprites ----------
 const loader=new THREE.TextureLoader();
-function spr(path){const t=loader.load(path);t.magFilter=THREE.NearestFilter;return t;}
+function spr(path){const t=loader.load(path);t.magFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t;}
 const TEX={d1:spr('assets/sprites/demon1.png'),d1d:spr('assets/sprites/demon1_dead.png'),
 d2:spr('assets/sprites/demon2.png'),d2d:spr('assets/sprites/demon2_dead.png'),
 d3:spr('assets/sprites/demon3.png'),d3d:spr('assets/sprites/demon3_dead.png'),gib16:spr('assets/sprites/gib16.png'),gib32:spr('assets/sprites/gib32.png'),spider:spr('assets/sprites/spider.png'),
@@ -313,23 +336,23 @@ mo:spr('assets/sprites/morgla.png'),mod:spr('assets/sprites/morgla_dead.png'),
 bz:spr('assets/sprites/baalzevur.png'),bzd:spr('assets/sprites/baalzevur_dead.png')};
 const DEFS=[
 {a:'d1',d:'d1d',hp:2,sp:4.6,s:2.2,dmg:9,name:'imp',min:1},
-{a:'d3',d:'d3d',hp:3,sp:6.0,s:1.8,dmg:9,name:'floater',min:1},
+{a:'d3',d:'d3d',hp:3,sp:6.6,s:1.8,dmg:9,name:'floater',min:1,strafe:1,strafeSpd:.55,dash:{windup:.5,dur:.55,spd:20,cd:3.5,dmg:12,fragile:1}},
 {a:'d2',d:'d2d',hp:6,sp:3.0,s:3.0,dmg:18,big:1,name:'brute',min:2},
 {a:'wr',d:'wrd',hp:2,sp:7.5,s:1.6,dmg:6,name:'wraith',min:3},
-{a:'sp',d:'spd',hp:4,sp:5.2,s:2.0,dmg:10,name:'spitter',min:5},
-{a:'ma',d:'mad',hp:10,sp:2.4,s:3.6,dmg:22,big:1,name:'mauler',min:4},
-{a:'rf',d:'rfd',hp:8,sp:3.2,s:2.8,dmg:14,name:'rotfiend',min:6},
+{a:'sp',d:'spd',hp:4,sp:5.2,s:2.0,dmg:10,name:'spitter',min:5,ranged:1,range:18,shotCd:2.2,projSpd:15,projDmg:9},
+{a:'ma',d:'mad',hp:10,sp:2.4,s:3.6,dmg:22,big:1,name:'mauler',min:4,dash:{windup:.8,dur:.7,spd:17,cd:5,dmg:28}},
+{a:'rf',d:'rfd',hp:8,sp:4.6,s:2.8,dmg:14,name:'rotfiend',min:6,strafe:1},
 {a:'go',d:'god',hp:14,sp:3.4,s:4.2,dmg:20,big:1,name:'gouger',min:8}];
 // bossfights: fixed levels across 5-20. enrage = faster under half hp, summon = calls imps at 66%/33%
 const BOSSES=[
 {a:'gg',d:'ggd',hp:60,sp:3.2,s:5.5,dmg:25,big:1,name:'GORGUT',at:5,boss:1,enrage:1},
-{a:'mo',d:'mod',hp:90,sp:5.0,s:4.5,dmg:30,name:'MORGLA',at:12,boss:1,summon:1},
-{a:'bz',d:'bzd',hp:140,sp:3.8,s:6.5,dmg:35,big:1,name:'BAALZEVUR',at:20,boss:1,enrage:1,summon:1}];
+{a:'mo',d:'mod',hp:90,sp:5.0,s:4.5,dmg:30,name:'MORGLA',at:12,boss:1,summon:1,ranged:1,range:22,shotCd:2.6,projSpd:16,projDmg:12,projPurple:1},
+{a:'bz',d:'bzd',hp:140,sp:3.8,s:6,dmg:35,big:1,name:'BAALZEVUR',at:20,boss:1,enrage:1,summon:1}];
 // one spawn path for level gen + boss summons (also fixes health bars: maxhp was never set)
 function spawnEnemy(d,x,z){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX[d.a],transparent:true,depthWrite:false,color:d.tint||0xffffff}));
 s.renderOrder=1;
 s.scale.set(d.s,d.s,1);s.position.set(x,d.s/2,z);scene.add(s);
-const e={def:d,s,hp:d.hp,maxhp:d.hp,tint:d.tint||0xffffff,spd:d.sp,x,z,atk:0,flash:0,repath:0,wx:x,wz:z,phase:0,enraged:false};
+const e={def:d,s,hp:d.hp,maxhp:d.hp,tint:d.tint||0xffffff,spd:d.sp,x,z,atk:0,flash:0,repath:0,wx:x,wz:z,phase:0,enraged:false,alert:!!d.boss,wanderT:0,shotT:1+aiRand()*1.5,orbit:aiRand()<.5?1:-1,dash:null,dashCd:2+aiRand()*2,stun:0,routeT:0,stuck:0};
 enemies.push(e);document.getElementById('foes').textContent=enemies.length;return e;}
 function pickDef(n,rng){const pool=DEFS.filter(d=>n>=d.min);
 const w=pool.map(d=>d.hp<=3?3:1);let t=rng()*w.reduce((a,b)=>a+b,0);
@@ -425,6 +448,14 @@ else if(kind==='screech'){ // stalker hunting cry
 const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(1300,t);o.frequency.exponentialRampToValueAtTime(280,t+.45);
 const g=c.createGain();g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);
 o.connect(g);g.connect(dest);o.start(t);o.stop(t+.5);}
+else if(kind==='pshot'){ // enemy spit: wet zap, quieter than the shotgun
+const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(800,t);o.frequency.exponentialRampToValueAtTime(180,t+.18);
+const g=c.createGain();g.gain.setValueAtTime(.22,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+o.connect(g);g.connect(dest);o.start(t);o.stop(t+.2);}
+else if(kind==='dashwarn'){ // dash telegraph: rising shriek — move NOW
+const o=c.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(900,t+.25);
+const g=c.createGain();g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);
+o.connect(g);g.connect(dest);o.start(t);o.stop(t+.28);}
 else if(kind==='wave'){ // level clear: rising alarm
 for(let i=0;i<2;i++){const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(440,t+i*.16);o.frequency.exponentialRampToValueAtTime(660,t+i*.16+.12);
 const g=c.createGain();g.gain.setValueAtTime(.18,t+i*.16);g.gain.exponentialRampToValueAtTime(.001,t+i*.16+.14);
@@ -579,7 +610,7 @@ ws.curve=curve;gtrBus.connect(ws);ws.connect(musicBus);
 mStep=0;mNext=c.currentTime+.1;mTimer=setInterval(musicStep,40);}
 // ---------- state ----------
 const player={x:0,z:12,yaw:0,hp:100};
-let enemies=[],corpses=[],splats=[],parts=[],gibs=[],kills=0,gibCount=0,running=false;
+let enemies=[],corpses=[],splats=[],parts=[],gibs=[],projs=[],kills=0,gibCount=0,running=false;
 const hpEl=document.getElementById('hp'),kEl=document.getElementById('kills'),wEl=document.getElementById('wave'),gEl=document.getElementById('gibn');
 const dmgEl=document.getElementById('dmg');
 // blood particle pool (THREE.Points, red)
@@ -644,30 +675,96 @@ const sc=bigGib?.4+Math.random()*.3:.15+Math.random()*.12;s.scale.set(sc,sc,1);s
 // uniform random direction at 1-7 speed, plus the shotgun shove along the shot direction
 const sp=1+Math.random()*6,a=Math.random()*6.28,b=Math.acos(2*Math.random()-1);
 gibs.push({s,vx:Math.sin(b)*Math.cos(a)*sp+dx*kick,vy:Math.cos(b)*sp+Math.random()*2,vz:Math.sin(b)*Math.sin(a)*sp+dz*kick,rot:(Math.random()-.5)*10,age:0,life:2.5+Math.random()*2});}}
+// ---------- enemy projectiles: dodgeable spit from ranged foes ----------
+const projMat=new THREE.SpriteMaterial({color:0x7dff5e,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
+const projMatPurple=new THREE.SpriteMaterial({color:0xb050ff,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
+function fireEnemyShot(e){
+ const fy=e.def.s*.6,ty=1.2;
+ const dx=player.x-e.x,dz=player.z-e.z,dy=ty-fy;
+ const dh=Math.hypot(dx,dz)||.01,l=Math.hypot(dh,dy)||.01;
+ const sp=e.def.projSpd||15;
+ // slight inaccuracy so sidestepping at range dodges it
+ const jx=(aiRand()-.5)*.12,jz=(aiRand()-.5)*.12;
+  const s=new THREE.Sprite(e.def.projPurple?projMatPurple:projMat);
+  s.scale.set(e.def.projPurple?.6:.45,e.def.projPurple?.6:.45,1);s.position.set(e.x,fy,e.z);s.renderOrder=2;scene.add(s);
+ projs.push({s,x:e.x,y:fy,z:e.z,vx:dx/dh*sp+jx*sp,vy:dy/l*sp,vz:dz/dh*sp+jz*sp,dmg:e.def.projDmg||9,age:0,life:3});
+ sfx('pshot',e.x,e.z);}
+function tickProjectiles(dt){
+ for(let i=projs.length-1;i>=0;i--){const p=projs[i];p.age+=dt;
+  const nx=p.x+p.vx*dt,ny=p.y+p.vy*dt,nz=p.z+p.vz*dt;
+  let dead=p.age>p.life||ny<.05||ny>CEIL_H-.2;
+  if(!dead&&collide(nx,nz,.2)){splatSmall(nx,nz);dead=true;} // spat hits a wall
+  if(!dead){
+   const dx=player.x-nx,dz=player.z-nz,dy=1.2-ny;
+   if(dx*dx+dz*dz+dy*dy<1){ // dodgeable: ~1m hit sphere, sidestep it
+    player.hp-=p.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',player.x,player.z);
+    dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);
+    blood(player.x,1.4,player.z,10,2,dx/(Math.hypot(dx,dz)||1),dz/(Math.hypot(dx,dz)||1),2);
+    if(player.hp<=0)die(`SPAT DOWN on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);
+    dead=true;}}
+  if(dead){scene.remove(p.s);projs.splice(i,1);continue;}
+  p.x=nx;p.y=ny;p.z=nz;p.s.position.set(nx,ny,nz);}}
 // ---------- seeded levels: same seed -> same layout, every run ----------
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const LEVEL_SEED_DEFAULT=1337;let LEVEL_SEED=LEVEL_SEED_DEFAULT;
-let level=1,exitOpen=false,exitMesh=null,exitGlow=null,exitPos={x:0,z:0},stalker=null,adRetryUsed=false,adPlaying=false,stalkerVulnerable=false;
+// per-level gameplay RNG: all enemy AI decisions draw from here so the same seed
+// plays the same way every run. Cosmetic randomness (blood, gibs, splats,
+// camera shake, audio) intentionally stays on Math.random so it never perturbs AI.
+let aiRng=null;
+function aiRand(){return aiRng?aiRng():Math.random();}
+let level=1,exitOpen=false,exitMesh=null,exitGlow=null,exitPos={x:0,z:0},stalker=null,adRetryUsed=false,adPlaying=false,stalkerVulnerable=false,levelTotal=0;
 let msgT=null;
 function showMsg(t,hold){const el=document.getElementById('lvlmsg');el.textContent=t;el.style.opacity=1;
 if(msgT)clearTimeout(msgT);msgT=setTimeout(()=>el.style.opacity=0,(hold||2200));}
+// ---------- minimap: north-up overhead (walls + player arrow + foes + portal) ----------
+const mmC=document.getElementById('minimap'),mmG=mmC.getContext('2d');
+let mmOn=true,mmAcc=0;
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p'){mmOn=!mmOn;mmC.style.display=mmOn?'block':'none';}});
+function drawMinimap(){
+ if(!mmOn||!GW||!GH)return;
+ const W=mmC.width,H=mmC.height,cell=Math.min(W/GW,H/GH);
+ const ox=(W-cell*GW)/2,oy=(H-cell*GH)/2;
+ mmG.clearRect(0,0,W,H);
+ mmG.fillStyle='rgba(10,2,0,.9)';mmG.fillRect(0,0,W,H);
+ for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){
+  if(grid[y*GW+x]===1){mmG.fillStyle='#5e3a24';mmG.fillRect(ox+x*cell,oy+y*cell,cell,cell);}
+  else{mmG.fillStyle='rgba(255,120,60,.08)';mmG.fillRect(ox+x*cell,oy+y*cell,cell,cell);}}
+ const dot=(wx,wz,color,r)=>{
+  const mx=ox+(wx/TS)*cell,my=oy+(wz/TS)*cell;
+  mmG.fillStyle=color;mmG.beginPath();mmG.arc(mx,my,r||Math.max(1.5,cell*.22),0,7);mmG.fill();};
+ if(exitMesh)dot(exitPos.x,exitPos.z,exitOpen?'#39ff14':'#ff2222',Math.max(2.5,cell*.4));
+ for(const e of enemies){
+  if(e.dash&&e.dash.phase==='wind')dot(e.x,e.z,'#ffffff',Math.max(3,cell*.5)); // dash telegraph: white blip
+  else dot(e.x,e.z,e.def&&e.def.boss?'#ff00ff':(e.def&&e.def.ranged?'#39c1ff':'#ff6a2a'));}
+ if(stalker)dot(stalker.x,stalker.z,'#c0f',Math.max(3,cell*.45));
+ // player arrow: forward = (-sin yaw, -cos yaw), map world x->x, world z->y
+ const px=ox+(player.x/TS)*cell,py=oy+(player.z/TS)*cell;
+ const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw),a=Math.atan2(fz,fx),sz=Math.max(4,cell*.7);
+ mmG.save();mmG.translate(px,py);mmG.rotate(a);
+ mmG.fillStyle='#ffd93b';mmG.beginPath();mmG.moveTo(sz,0);mmG.lineTo(-sz*.6,sz*.6);mmG.lineTo(-sz*.6,-sz*.6);mmG.closePath();mmG.fill();
+ mmG.restore();
+ mmG.strokeStyle='rgba(255,220,150,.25)';mmG.strokeRect(ox,oy,cell*GW,cell*GH);
+}
 function clearActors(){
 for(const e of enemies){scene.remove(e.s);e.s.material.dispose();}
 for(const c of corpses){scene.remove(c.s);c.s.material.dispose();}
 for(const sp of splats)scene.remove(sp.m);
 for(const g of gibs){scene.remove(g.s);g.s.material.dispose();}
+for(const p of projs)scene.remove(p.s);
 if(wallMesh){scene.remove(wallMesh);wallMesh.dispose();wallMesh.geometry.dispose();wallMesh=null;}
 wallMeshes.length=0;
-enemies=[];corpses=[];splats=[];gibs=[];
+enemies=[];corpses=[];splats=[];gibs=[];projs=[];
 pLife.fill(0);for(let j=0;j<PMAX;j++)pPos[j*3+1]=-99;
 if(exitMesh){scene.remove(exitMesh);exitMesh=null;}
 if(exitGlow){scene.remove(exitGlow);exitGlow=null;}
 if(stalker){scene.remove(stalker.s);stalker=null;}stalkerVulnerable=false;stalkerDying=null;bossBooms=[];}
 function genLevel(n){
-clearActors();
-const rng=mulberry32(LEVEL_SEED+n*7919);
-// maze grows slightly with level: 9 -> 13 across (compact, roomy, not a labyrinth)
-GW=9+Math.min(4,n*2);GH=9+Math.min(4,n*2);
+ clearActors();
+ const rng=mulberry32(LEVEL_SEED+n*7919);
+ aiRng=mulberry32((LEVEL_SEED+n*7919+0x9E3779B9)|0); // separate AI stream: layout stays identical
+// maze: 9 -> 13 early, frozen until 20, then grows again (15 at 25, 19 at 35, cap 21)
+GW=9+Math.min(4,n);GH=9+Math.min(4,n);
+if(n>20){const ex=Math.min(8,(((n-20)/5)|0)*2);GW+=ex;GH+=ex;}
 if(GW%2===0)GW++;if(GH%2===0)GH++;
 grid=new Array(GW*GH).fill(1);
 const idx=(x,y)=>y*GW+x;
@@ -681,22 +778,41 @@ if(nx>0&&ny>0&&nx<GW-1&&ny<GH-1&&grid[idx(nx,ny)]===1)opts.push([nx,ny,dirs[di][
 if(!opts.length){stack.pop();continue;}
 const pick=opts[(rng()*opts.length)|0];
 grid[idx(cx+pick[2]/2,cy+pick[3]/2)]=0;grid[idx(pick[0],pick[1])]=0;stack.push([pick[0],pick[1]]);}
-// few loops (less hallway spaghetti) + big open rooms (arenas to fight in)
-const loops=((GW*GH/30)|0)+n;
-for(let i=0;i<loops;i++)grid[idx(1+((rng()*(GW-2))|0),1+((rng()*(GH-2))|0))]=0;
-for(let r=0;r<3;r++){const rw=3+((rng()*2)|0),rh=3+((rng()*2)|0),
-rx=1+((rng()*(GW-rw-2))|0),ry=1+((rng()*(GH-rh-2))|0);
-for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)grid[idx(x,y)]=0;}
- // build walls: single InstancedMesh = 1 draw call
- {let count=0;for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[idx(x,y)]===1)count++;
- const wgeo=new THREE.BoxGeometry(TS,4,TS);
- wallMesh=new THREE.InstancedMesh(wgeo,wallMat,count);
- const M=new THREE.Matrix4();let ii=0;
- for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[idx(x,y)]===1){
- M.makeTranslation((x+.5)*TS,2,(y+.5)*TS);wallMesh.setMatrixAt(ii++,M);}
- wallMesh.instanceMatrix.needsUpdate=true;scene.add(wallMesh);wallMeshes.push(wallMesh);}
-// start (1,1), exit = BFS-farthest open tile -> long walk guaranteed
-const dist=bfsDist(1,1);
+  // loops capped so high levels stay a maze + rooms (bossfights get extra loops + big pits)
+  const bossHere=BOSSES.find(b=>b.at===n);
+  const bigArena=bossHere||n===25; // warlord levels + IT's level all need room to breathe
+  const loops=((GW*GH/30)|0)+Math.min(4,n>>2)+(bigArena?((GW*GH/20)|0):0);
+  for(let i=0;i<loops;i++)grid[idx(1+((rng()*(GW-2))|0),1+((rng()*(GH-2))|0))]=0;
+  const nRooms=bigArena?3:2,roomBase=bigArena?5:3,roomVar=bigArena?3:1;
+  for(let r=0;r<nRooms;r++){const rw=roomBase+((rng()*roomVar)|0),rh=roomBase+((rng()*roomVar)|0),
+ rx=1+((rng()*(GW-rw-2))|0),ry=1+((rng()*(GH-rh-2))|0);
+ for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)grid[idx(x,y)]=0;}
+  // bossfight arena: clear a 7x7 pit around the warlord's door (preliminary farthest
+  // tile) so the fight has room to breathe. The carve is rng-free; dist is recomputed after.
+  let dist=bfsDist(1,1);
+  if(bigArena){
+   let door={x:1,y:1},bd=-1;
+   for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++)
+    if(grid[idx(x,y)]===0&&dist[idx(x,y)]>bd){bd=dist[idx(x,y)];door={x,y};}
+   for(let y=Math.max(1,door.y-3);y<=Math.min(GH-2,door.y+3);y++)
+    for(let x=Math.max(1,door.x-3);x<=Math.min(GW-2,door.x+3);x++)grid[idx(x,y)]=0;
+   dist=bfsDist(1,1);}
+  // build walls: single InstancedMesh = 1 draw call
+  {let count=0;for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[idx(x,y)]===1)count++;
+   const wgeo=new THREE.BoxGeometry(TS,CEIL_H,TS);
+  wallMesh=new THREE.InstancedMesh(wgeo,wallMat,count);
+  const M=new THREE.Matrix4();let ii=0;
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++)if(grid[idx(x,y)]===1){
+  M.makeTranslation((x+.5)*TS,CEIL_H/2,(y+.5)*TS);wallMesh.setMatrixAt(ii++,M);}
+  wallMesh.instanceMatrix.needsUpdate=true;scene.add(wallMesh);wallMeshes.push(wallMesh);}
+ // floor/ceiling: resize + recenter to cover the whole maze (late levels outgrew the 140-unit plane)
+ {const fsize=Math.max(GW,GH)*TS+20,cx=GW*TS/2,cz=GH*TS/2;
+  floor.geometry.dispose();floor.geometry=new THREE.PlaneGeometry(fsize,fsize);
+  floor.position.set(cx,0,cz);
+  ceil.geometry.dispose();ceil.geometry=new THREE.PlaneGeometry(fsize,fsize);
+  ceil.position.set(cx,CEIL_H,cz);
+  floorTex.repeat.set(fsize/7,fsize/7);}
+// start (1,1), exit = BFS-farthest open tile -> long walk guaranteed (dist already fresh)
 let exitT={x:1,y:1},best=-1;
 for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++)
 if(grid[idx(x,y)]===0&&dist[idx(x,y)]>best){best=dist[idx(x,y)];exitT={x,y};}
@@ -708,10 +824,9 @@ new THREE.MeshBasicMaterial({color:0xff2222,transparent:true,opacity:.75,side:TH
 exitMesh.position.set(exitPos.x,1.6,exitPos.z);exitMesh.rotation.y=rng()*6.28;scene.add(exitMesh);
  exitGlow=new THREE.PointLight(0xff2222,20,14);exitGlow.position.set(exitPos.x,2,exitPos.z);scene.add(exitGlow);
  const envSt=applyEnvStyle(n,rng);
- let count=(n===25)?0:Math.min(16,3+n-(n>8?((n-8)>>1):0)); // 25: IT alone; else taper to a plateau of 16
- // boss level: the warlord drops in at the farthest open tile
- const bossHere=BOSSES.find(b=>b.at===n);
- if(bossHere)count=Math.ceil(count/2); // bossfights: half the trash so the warlord reads
+  let count=(n===25)?0:Math.min(80,Math.round(6+n*1.23)); // scales up: ~7 at 1, ~18 at 10, ~31 at 20, ~55 at 40, ~80 at 60, cap 80
+  // boss level: the warlord drops in at the farthest open tile (bossHere defined with the rooms above)
+  if(bossHere)count=Math.ceil(count/2); // bossfights: half the trash so the warlord reads
 const cands=[];
 for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++)
 if(grid[idx(x,y)]===0&&dist[idx(x,y)]>5)cands.push({x,y,d:dist[idx(x,y)]});
@@ -725,17 +840,19 @@ const pickI=Math.min(cands.length-1,(si+(rng()*2|0))%cands.length); // even spre
 si+=stride;
 const t=cands.splice(pickI,1)[0];
 const px=(t.x+.5)*TS,pz=(t.y+.5)*TS;
-if(spawned.some(p=>Math.hypot(p.x-px,p.z-pz)<5)){i--;continue;} // min 5m spacing
+const minGap=count>50?3.5:5; // relax spacing on dense late levels so all 80 fit
+if(spawned.some(p=>Math.hypot(p.x-px,p.z-pz)<minGap)){i--;continue;} // min spacing
 spawned.push({x:px,z:pz});
 const d=pickDef(n,rng);
 const x=px+(rng()-.5)*2,z=pz+(rng()-.5)*2;
 spawnEnemy(d,x,z);} // health is flat now: same demons, deeper dungeon
- document.getElementById('foes').textContent=enemies.length;
- if(bossHere)spawnEnemy(bossHere,(bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS);
- // endless: rare wandering warlords past 25 (12% per level, never on 25)
- if(n>25&&n!==25&&rng()<.12){const rb=BOSSES[(rng()*BOSSES.length)|0];
-  spawnEnemy(rb,(bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS);
-  showMsg('⚠ '+rb.name+' STIRS IN THE DEEP — LEVEL '+n+' ⚠',3000);}
+  document.getElementById('foes').textContent=enemies.length;
+  if(bossHere)spawnEnemy(bossHere,(bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS);
+  // endless: rare wandering warlords past 25 (12% per level, never on 25)
+  if(n>25&&n!==25&&rng()<.12){const rb=BOSSES[(rng()*BOSSES.length)|0];
+   spawnEnemy(rb,(bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS);
+   showMsg('⚠ '+rb.name+' STIRS IN THE DEEP — LEVEL '+n+' ⚠',3000);}
+levelTotal=enemies.length; // herd baseline: late-level stragglers converge, last 3 hunt
 player.x=SX;player.z=SZ;player.yaw=rng()*6.28;
 if(n===25){ // IT itself: vulnerable from the start, no exit until it dies
 stalkerVulnerable=true;
@@ -760,39 +877,43 @@ let cool=0,muzzle=0;
 // hitscan: ONE predictable target — nearest demon to the crosshair inside a tight cone.
 // (old version damaged everything in a wide arc, so far demons stole near kills)
 function shoot(){cool=.6;muzzle=.06;recoil=.16;shake=Math.min(1,shake+.35);
+// gunshot alerts every demon within 20m — otherwise they only chase on line-of-sight
+for(const e of enemies){const ax=e.x-player.x,az=e.z-player.z;if(ax*ax+az*az<400)e.alert=true;}
 let best=null,bestScore=1e9;
 for(const e of enemies){if(e.hp<=0)continue;
 const dx=e.x-player.x,dz=e.z-player.z,dist=Math.hypot(dx,dz);if(dist>26)continue;
+if(!los(player.x,player.z,e.x,e.z))continue; // no shooting through walls
 let ang=Math.atan2(dx,-dz)+player.yaw;while(ang>Math.PI)ang-=2*Math.PI;while(ang<-Math.PI)ang+=2*Math.PI;
-const tol=.05+e.def.s/dist;
+const tol=.012+e.def.s*.35/dist;
 if(Math.abs(ang)<tol){const score=dist+Math.abs(ang)*30;if(score<bestScore){bestScore=score;best=e;}}}
 let bestStalker=false; // level 25: IT itself is a valid target
 if(stalker&&stalkerVulnerable){const dx=stalker.x-player.x,dz=stalker.z-player.z,dist=Math.hypot(dx,dz);
-if(dist<30){let ang=Math.atan2(dx,-dz)+player.yaw;while(ang>Math.PI)ang-=2*Math.PI;while(ang<-Math.PI)ang+=2*Math.PI;
-const tol=.05+6/dist;
+if(dist<30&&los(player.x,player.z,stalker.x,stalker.z)){let ang=Math.atan2(dx,-dz)+player.yaw;while(ang>Math.PI)ang-=2*Math.PI;while(ang<-Math.PI)ang+=2*Math.PI;
+const tol=.012+6*.35/dist;
 if(Math.abs(ang)<tol){const score=dist+Math.abs(ang)*30;if(score<bestScore){bestScore=score;best=null;bestStalker=true;}}}}
 if(best){const dist=Math.hypot(best.x-player.x,best.z-player.z);
-sfx(dist<5?'shotBig':'shot'); // point-blank gets the punchy boom
-if(dist<5)shake=Math.min(1,shake+.35); // double shake up close
-if(dist<5){const px=(best.x-player.x)/(dist||1),pz=(best.z-player.z)/(dist||1); // close range shoves the living too
+sfx(dist<4?'shotBig':'shot'); // point-blank gets the punchy boom
+if(dist<4)shake=Math.min(1,shake+.35); // double shake up close
+if(dist<4){const px=(best.x-player.x)/(dist||1),pz=(best.z-player.z)/(dist||1); // close range shoves the living too
 if(!collide(best.x+px*1.2,best.z,.5))best.x+=px*1.2;
 if(!collide(best.x,best.z+pz*1.2,.5))best.z+=pz*1.2;}
-best.hp-=dist<5?4.5:2.6;best.flash=.08;sfx('hit',best.x,best.z);
-blood(best.x,best.def.s*.6,best.z,16,3,(best.x-player.x)/(dist||1),(best.z-player.z)/(dist||1),Math.random()*(dist<5?10:6));
-if(best.hp<=0)kill(best,(best.x-player.x)/(dist||1),(best.z-player.z)/(dist||1),Math.random()*(dist<5?10:6),dist<5);}
+best.hp-=dist<4?4.5:2.6;best.flash=.08;sfx('hit',best.x,best.z);
+blood(best.x,best.def.s*.6,best.z,16,3,(best.x-player.x)/(dist||1),(best.z-player.z)/(dist||1),Math.random()*(dist<4?10:6));
+if(best.hp<=0)kill(best,(best.x-player.x)/(dist||1),(best.z-player.z)/(dist||1),Math.random()*(dist<4?10:6),dist<4);}
 else if(bestStalker){const dist=Math.hypot(stalker.x-player.x,stalker.z-player.z);
-sfx(dist<5?'shotBig':'shot');
-if(dist<5)shake=Math.min(1,shake+.35);
-stalker.hp-=dist<5?4.5:2.6;stalker.flash=.08;sfx('hit',stalker.x,stalker.z);
-blood(stalker.x,2.5,stalker.z,20,3.5,(stalker.x-player.x)/(dist||1),(stalker.z-player.z)/(dist||1),Math.random()*(dist<5?10:6));
+sfx(dist<4?'shotBig':'shot');
+if(dist<4)shake=Math.min(1,shake+.35);
+stalker.hp-=dist<4?4.5:2.6;stalker.flash=.08;sfx('hit',stalker.x,stalker.z);
+blood(stalker.x,2.5,stalker.z,20,3.5,(stalker.x-player.x)/(dist||1),(stalker.z-player.z)/(dist||1),Math.random()*(dist<4?10:6));
 if(stalker.hp<=0)killStalker();}
 else sfx('shot'); // whiffed: normal boom
 // muzzle lamp kick
-lamp.intensity=95;}
+lamp.intensity=400;}
 function kill(e,dx,dz,kick,close){kills++;kEl.textContent=kills;sfx('die',e.x,e.z);
 const big=!!e.def.big;
 // corpse: swap to dead sprite, lay flat on floor, slide back along the shot
 e.s.material.map=TEX[e.def.d];e.s.material.needsUpdate=true;
+e.s.material.color.setHex(0xffffff); // drop hit-flash / dash-telegraph tint: corpses use the raw dead sprite
 e.s.scale.set(e.def.s,e.def.s*.6,1);e.s.position.y=.35;e.dead=true;
 let cvx=dx||0,cvz=dz||0;
 if(!cvx&&!cvz){const a=Math.random()*6.28;cvx=Math.cos(a);cvz=Math.sin(a);} // directionless kill: random shove
@@ -807,11 +928,8 @@ document.getElementById('foes').textContent=enemies.length;
 if(!enemies.length){ // level clear — except 25: no exit until IT dies
 if(level!==25){exitOpen=true;exitMesh.material.color.setHex(0x39ff14);exitGlow.color.setHex(0x39ff14);
 sfx('wave',exitPos.x,exitPos.z);
-// stalker spawns at the BFS-farthest open tile from YOU
-const pd=bfsDist(Math.floor(player.x/TS),Math.floor(player.z/TS));
-let st={x:1,y:1},bd=-1;
-for(let y=1;y<GH-1;y++)for(let x=0;x<GW-1;x++)
-if(grid[y*GW+x]===0&&pd[y*GW+x]>bd){bd=pd[y*GW+x];st={x,y};}
+// stalker spawns far from the EXIT (and far from you) — never camps the portal
+const st=stalkerSpawnTile(Math.floor(player.x/TS),Math.floor(player.z/TS));
 const ss=new THREE.Sprite(new THREE.SpriteMaterial({map:TEX.spider,transparent:true,depthWrite:false}));ss.renderOrder=1;
 ss.scale.set(6,6,1);ss.position.set((st.x+.5)*TS,3,(st.y+.5)*TS);scene.add(ss);
 stalker={s:ss,x:(st.x+.5)*TS,z:(st.y+.5)*TS,flash:0,atk:0,repath:0,wx:player.x,wz:player.z,screech:2};
@@ -833,8 +951,8 @@ function tickBoom(d,dt,finalFn){
  if(Math.random()<.4)splat(d.x+(Math.random()-.5)*4,d.z+(Math.random()-.5)*4,Math.random()<.3);
  if(Math.random()<.3)sfx('shotBig',d.x,d.z);
  if(Math.random()<.3)sfx('die',d.x,d.z);
- shake=Math.min(1,shake+dt*2.2);
- lamp.intensity=95;
+   shake=Math.min(1,shake+dt*2.2);
+   lamp.intensity=400;
  if(d.t>=d.dur){
   blood(d.x,2,d.z,70,7,0,0,0);splat(d.x,d.z,true);
   gibBurst(d.x,2,d.z,true,0,0,0);
@@ -852,90 +970,9 @@ document.getElementById('adretry').style.display='none';
 document.getElementById('endless').style.display='inline-block';
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'});
 document.getElementById('overlay').classList.remove('hidden');}
-// ---------- loop ----------
-const clock=new THREE.Clock();
-let lastTouchGame=false;
-function syncTouchUI(){const on=running&&document.body.classList.contains('has-touch');
- if(on!==lastTouchGame){lastTouchGame=on;document.body.classList.toggle('touch-game',on);}}
-function frame(){requestAnimationFrame(frame);
-const dt=Math.min(.05,clock.getDelta());
-syncTouchUI();
-if(running){
-try{
-cool-=dt;muzzle=Math.max(0,muzzle-dt);if(shooting&&cool<=0)shoot();
-lamp.intensity+=(45-lamp.intensity)*Math.min(1,dt*10);
-lamp.position.set(player.x,4,player.z);
-// shotgun feel: recoil kick + muzzle flash + walk bob
-recoil=Math.max(0,recoil-dt*.8);
-gun.position.z=.3+recoil*.9;
-flash.material.opacity=muzzle>0?1:0;flash.rotation.z=Math.random()*6.28;
- // move with momentum: velocity chases input, drifts on release (keys + touch stick)
- const sp=7;let f=(keys['w']?1:0)-(keys['s']?1:0),s=(keys['d']?1:0)-(keys['a']?1:0);
- if(touchMove.active){f+=-touchMove.y;s+=touchMove.x;}
-const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
-const dvx=(-sin*f+cos*s)*sp,dvz=(-cos*f-sin*s)*sp,k=Math.min(1,dt*10);
-player.vx=(player.vx||0)+(dvx-(player.vx||0))*k;player.vz=(player.vz||0)+(dvz-(player.vz||0))*k;
-if(!collide(player.x+player.vx*dt,player.z,.6))player.x+=player.vx*dt;else player.vx=0;
-if(!collide(player.x,player.z+player.vz*dt,.6))player.z+=player.vz*dt;else player.vz=0;
-// enemies chase: straight at you with line-of-sight, else BFS waypoints through the maze
-for(const e of enemies){const dx=player.x-e.x,dz=player.z-e.z,d=Math.hypot(dx,dz)||.01;
-let mx=dx/d,mz=dz/d;
-if(d>2.2&&!los(e.x,e.z,player.x,player.z)){
-e.repath-=dt;
-if(e.repath<=0){e.repath=.4+Math.random()*.3;
-const st=bfsNext(Math.floor(e.x/TS),Math.floor(e.z/TS),Math.floor(player.x/TS),Math.floor(player.z/TS));
-if(st){e.wx=(st.x+.5)*TS;e.wz=(st.y+.5)*TS;}}
-const wx=e.wx-e.x,wz=e.wz-e.z,wd=Math.hypot(wx,wz)||.01;mx=wx/wd;mz=wz/wd;
-if(wd<.8)e.repath=0;} // reached waypoint: grab the next one immediately
- const esp=(e.spd||e.def.sp)*dt,px0=e.x,pz0=e.z;
- // wall-slide steering: full step, axes, ±45° sidesteps — never glue to a corner
- const moved=moveSteer(e,mx,mz,esp,.5);
- if(moved<esp*.25)e.repath=0; // barely moved: force fresh path
-e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
-if(e.flash>0){e.flash-=dt;e.s.material.color.setHex(0xff8080);}else e.s.material.color.setHex(e.tint);
-if(e.def.boss){ // warlord mechanics: enrage under half hp, summon children at 66%/33%
-if(e.def.enrage&&!e.enraged&&e.hp<e.maxhp*.5){e.enraged=true;e.spd=e.def.sp*1.6;showMsg(e.def.name+' ENRAGED',1500);}
-if(e.def.summon&&e.phase<2&&enemies.length<24){const th=e.phase===0?.66:.33;
-if(e.hp/e.maxhp<th){e.phase++;let placed=0;
-for(let k=0;k<8&&placed<2;k++){const a=Math.random()*6.28,sx=e.x+Math.cos(a)*4,sz=e.z+Math.sin(a)*4;
-if(!collide(sx,sz,.5)){spawnEnemy(DEFS[0],sx,sz);placed++;}}
-if(placed)showMsg(e.def.name+' CALLS ITS CHILDREN',1500);}}}
-e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
-dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);blood(player.x,1.4,player.z,10,2,(player.x-e.x)/(d||1),(player.z-e.z)/(d||1),2);
-if(player.hp<=0){die(`RIPPED APART on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
-separate(dt); // soft body push: packs drift apart, no stacking
-tickStalkerDeath(dt);
-// stalker: enormous, unkillable, faster than demons but outrunnable — keep moving
-if(stalker){const dx=player.x-stalker.x,dz=player.z-stalker.z,d=Math.hypot(dx,dz)||.01;
-let mx=dx/d,mz=dz/d;
-if(d>3&&!los(stalker.x,stalker.z,player.x,player.z)){
-stalker.repath-=dt;
-if(stalker.repath<=0){stalker.repath=.35;
-const st=bfsNext(Math.floor(stalker.x/TS),Math.floor(stalker.z/TS),Math.floor(player.x/TS),Math.floor(player.z/TS));
-if(st){stalker.wx=(st.x+.5)*TS;stalker.wz=(st.y+.5)*TS;}}
-const wx=stalker.wx-stalker.x,wz=stalker.wz-stalker.z,wd=Math.hypot(wx,wz)||.01;mx=wx/wd;mz=wz/wd;
-if(wd<1)stalker.repath=0;}
- const ssp=5*dt;
- if(moveSteer(stalker,mx,mz,ssp,.8)<ssp*.25)stalker.repath=0;
-stalker.s.position.set(stalker.x,3+Math.sin(performance.now()*.008)*.15,stalker.z);
-if(stalker.flash>0){stalker.flash-=dt;stalker.s.material.color.setHex(0xff8080);}else stalker.s.material.color.setHex(0xffffff);
-stalker.screech-=dt;if(stalker.screech<=0){stalker.screech=3+Math.random()*2.5;sfx('screech',stalker.x,stalker.z);}
-stalker.atk-=dt;
-if(d<1.6&&stalker.atk<=0){stalker.atk=1;player.hp-=25;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
-dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,150);blood(player.x,1.4,player.z,16,3,dx/d,dz/d,3);
-if(player.hp<=0){die(`EATEN BY IT on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
-// exit arrow: only once the level is clear — rotate toward portal + distance
-{const arrow=document.getElementById('exitarrow');
-if(!enemies.length&&running&&level!==25){arrow.style.display='block';
-const ex=exitPos.x-player.x,ez=exitPos.z-player.z;
-let rel=Math.atan2(ex,-ez)+player.yaw;
-arrow.style.transform='translateX(-50%) rotate('+(rel*180/Math.PI)+'deg)';
-arrow.querySelector('span').textContent=Math.round(Math.hypot(ex,ez))+'m';}
-else arrow.style.display='none';}
-if(exitMesh){const pu=exitOpen?1:.4;exitMesh.material.opacity=pu*(.6+.3*Math.sin(performance.now()*.006));
-if(exitOpen&&Math.hypot(player.x-exitPos.x,player.z-exitPos.z)<1.8){
-level++;wEl.textContent=level;player.hp=Math.min(100,player.hp+30);hpEl.textContent=Math.round(player.hp);
-sfx('wave',exitPos.x,exitPos.z);genLevel(level);}}
+// ---------- death pause: gun gone, player gibs fly, overlay waits 1.25s ----------
+let dying=null;
+function tickFx(dt){ // blood particles + gibs: runs in-game and during the death pause
 // blood particles
 for(let j=0;j<PMAX;j++){if(pLife[j]<=0)continue;pLife[j]-=dt;
 if(pLife[j]<=0){pPos[j*3+1]=-99;continue;}
@@ -973,7 +1010,192 @@ if(!g.splatted){g.splatted=true;splatSmall(g.s.position.x,g.s.position.z);sfx('s
 if(g.age>g.life-1)g.s.material.opacity=Math.max(0,(g.life-g.age));}
 {let w=0;for(let ri=0;ri<gibs.length;ri++){const g=gibs[ri];
 if(g.age<g.life){gibs[w++]=g;}else{scene.remove(g.s);g.s.material.dispose();}}
-gibs.length=w;}
+gibs.length=w;}}
+// ---------- loop ----------
+const clock=new THREE.Clock();
+let lastTouchGame=false;
+function syncTouchUI(){const on=running&&document.body.classList.contains('has-touch');
+ if(on!==lastTouchGame){lastTouchGame=on;document.body.classList.toggle('touch-game',on);}}
+function frame(){requestAnimationFrame(frame);
+const dt=Math.min(.05,clock.getDelta());
+syncTouchUI();
+if(running){
+try{
+cool-=dt;muzzle=Math.max(0,muzzle-dt);if(shooting&&cool<=0)shoot();
+lamp.intensity+=(220-lamp.intensity)*Math.min(1,dt*10);
+lamp.position.set(player.x,4,player.z);
+// shotgun feel: recoil kick + muzzle flash + walk bob
+recoil=Math.max(0,recoil-dt*.8);
+gun.position.z=.3+recoil*.9;
+flash.material.opacity=muzzle>0?1:0;flash.rotation.z=Math.random()*6.28;
+ // move with momentum: velocity chases input, drifts on release (keys + touch stick)
+ const sp=7;let f=(keys['w']?1:0)-(keys['s']?1:0),s=(keys['d']?1:0)-(keys['a']?1:0);
+ if(touchMove.active){f+=-touchMove.y;s+=touchMove.x;}
+const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
+const dvx=(-sin*f+cos*s)*sp,dvz=(-cos*f-sin*s)*sp,k=Math.min(1,dt*10);
+player.vx=(player.vx||0)+(dvx-(player.vx||0))*k;player.vz=(player.vz||0)+(dvz-(player.vz||0))*k;
+if(!collide(player.x+player.vx*dt,player.z,.6))player.x+=player.vx*dt;else player.vx=0;
+if(!collide(player.x,player.z+player.vz*dt,.6))player.z+=player.vz*dt;else player.vz=0;
+// enemies idle until alerted: line-of-sight to you, a gunshot within 20m, or you bumping into them.
+// herd pressure: under 50% remaining they drift toward you; 3 or fewer hunt you outright.
+const foeN=enemies.length,converge=levelTotal>0&&foeN/levelTotal<0.5;
+for(const e of enemies){const dx=player.x-e.x,dz=player.z-e.z,d=Math.hypot(dx,dz)||.01;
+if(e.flash>0)e.flash=Math.max(0,e.flash-dt); // single authority: flash always ticks, color resolved per-branch below
+if(e.def.boss)e.alert=true; // warlords always know where you are — no sneaking past them
+if(foeN<=3)e.alert=true; // last ones standing hunt you regardless
+if(!e.alert){
+ if(d<5)e.alert=true;
+ else if(los(e.x,e.z,player.x,player.z))e.alert=true;}
+if(!e.alert){ // idle wander: slow drift so the maze feels alive, no chasing
+ e.wanderT-=dt;
+  if(e.wanderT<=0){e.wanderT=1+aiRand()*2;
+  const st=converge?bfsNext(Math.floor(e.x/TS),Math.floor(e.z/TS),Math.floor(player.x/TS),Math.floor(player.z/TS)):null;
+  if(st){e.wx=(st.x+.5)*TS;e.wz=(st.y+.5)*TS;} // thin herd: wander toward the player
+   else{const a=aiRand()*6.28;e.wx=e.x+Math.cos(a)*4;e.wz=e.z+Math.sin(a)*4;}}
+ const wx=e.wx-e.x,wz=e.wz-e.z,wd=Math.hypot(wx,wz)||.01;
+  if(wd>.5)moveSteer(e,wx/wd,wz/wd,(e.spd||e.def.sp)*.3*dt,.5);
+  e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+  e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+  continue;}
+let mx=dx/d,mz=dz/d;
+if(e.def.dash){ // dash attackers: telegraphed straight-line zoom, zero steering mid-dash
+  const DD=e.def.dash;
+  e.dashCd-=dt;
+  if(e.stun>0){e.stun-=dt;
+   e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+   e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+   continue;}
+  if(!e.dash&&e.dashCd<=0&&d>3.5&&d<15&&los(e.x,e.z,player.x,player.z)){
+   // fragile floaters must have room: no dash when a wall is right ahead (instant suicide)
+   const need=Math.max(3.5,DD.spd*DD.dur*.35);
+   const l0=d||1,ndx=dx/l0,ndz=dz/l0;
+   let clear=true;
+   for(let dd=.6;dd<=need;dd+=.6){if(collide(e.x+ndx*dd,e.z+ndz*dd,.5)){clear=false;break;}}
+    if(!clear){e.dashCd=.5+aiRand()*.5;} // retry soon after repositioning, don't suicide
+   else{e.dash={phase:'wind',t:DD.windup,dx:0,dz:0};sfx('dashwarn',e.x,e.z);}}
+   if(e.dash&&e.dash.phase==='wind'){ // WARNING: planted, flashing — direction locks at launch, sidestep now
+   e.dash.t-=dt;
+   if(e.dash.t<=0){const l=d||1,ldx=dx/l,ldz=dz/l;
+    if(collide(e.x+ldx*1.2,e.z+ldz*1.2,.5)){e.dash=null;e.dashCd=.5+aiRand()*.5; // wall right ahead at launch: abort, don't suicide
+     e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+     e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+     continue;}
+    else{e.dash.dx=ldx;e.dash.dz=ldz;e.dash.phase='go';e.dash.t=DD.dur;}}
+  e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+  e.s.material.color.setHex(Math.floor(performance.now()/90)%2?0xffe27a:0xff2222);
+  continue;}
+ if(e.dash&&e.dash.phase==='go'){
+  e.dash.t-=dt;
+  const nx=e.x+e.dash.dx*DD.spd*dt,nz=e.z+e.dash.dz*DD.spd*dt;
+  if(collide(nx,nz,.5)){ // wall: big thud + stun, small fragile ones gib on impact
+   if(DD.fragile){kill(e,e.dash.dx,e.dash.dz,5,false);continue;}
+   e.dash=null;e.dashCd=DD.cd*(0.8+aiRand()*0.4);e.stun=.9;sfx('hit',e.x,e.z);
+   e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+   continue;}
+  e.x=nx;e.z=nz;
+  e.s.position.set(e.x,e.def.s/2,e.z);
+  e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+  const pdx=player.x-e.x,pdz=player.z-e.z;
+  if(pdx*pdx+pdz*pdz<1.69){ // dash connects (~1.3m)
+   player.hp-=DD.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+   dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);
+   blood(player.x,1.4,player.z,10,2,pdx/(d||1),pdz/(d||1),2);
+    e.dash=null;e.dashCd=DD.cd*(0.8+aiRand()*0.4);
+   if(player.hp<=0){die(`DASHED DOWN on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}
+   if(e.dash&&e.dash.t<=0){e.dash=null;e.dashCd=DD.cd*(0.8+aiRand()*0.4);}
+  continue;}}
+let spdMul=1; // per-def strafe pacing (floater circles at reduced speed)
+if(e.def.strafe&&d>2.2&&los(e.x,e.z,player.x,player.z)){
+ // strafers: fast feet, wide circles — mostly sideways so they barely close in
+  if(aiRand()<dt*.5)e.orbit*=-1;
+ const qx=mx*.55+(-mz*e.orbit),qz=mz*.55+(mx*e.orbit),ql=Math.hypot(qx,qz)||1;
+ mx=qx/ql;mz=qz/ql;spdMul=e.def.strafeSpd||1;}
+if(e.def.ranged&&!(e.routeT>0)&&d<e.def.range&&los(e.x,e.z,player.x,player.z)){
+ // ranged: hold mid-range and strafe instead of charging — sidestep the spit
+ const want=e.def.range*.55;
+ let rx=-mz*e.orbit,rz=mx*e.orbit;
+ if(d<want-2){rx=-mx;rz=-mz;} // too close: back off
+ else if(d>want+3){rx=mx;rz=mz;} // too far: close in
+  if(aiRand()<dt*.3)e.orbit*=-1; // switch strafe direction sometimes
+ const esp=(e.spd||e.def.sp)*dt;
+ const rmoved=moveSteer(e,rx,rz,esp,.5);
+ if(rmoved<esp*.5){e.stuck=(e.stuck||0)+1;if(e.stuck>=4){e.stuck=0;e.routeT=1.2;e.repath=0;}}
+ else e.stuck=0;
+ e.shotT-=dt;
+  if(e.shotT<=0){fireEnemyShot(e);e.shotT=e.def.shotCd*(0.8+aiRand()*0.4);}
+  e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+  e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+  e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+ dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);blood(player.x,1.4,player.z,10,2,(player.x-e.x)/(d||1),(player.z-e.z)/(d||1),2);
+ if(player.hp<=0){die(`RIPPED APART on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}
+ continue;}
+e.routeT=Math.max(0,(e.routeT||0)-dt); // corner-grind bypass timer (set below when LOS charge stalls)
+if(d>2.2&&(!los(e.x,e.z,player.x,player.z)||e.routeT>0)){
+e.repath-=dt;
+if(e.repath<=0){e.repath=.4+aiRand()*.3;
+const st=bfsNext(Math.floor(e.x/TS),Math.floor(e.z/TS),Math.floor(player.x/TS),Math.floor(player.z/TS));
+if(st){e.wx=(st.x+.5)*TS;e.wz=(st.y+.5)*TS;}}
+const wx=e.wx-e.x,wz=e.wz-e.z,wd=Math.hypot(wx,wz)||.01;mx=wx/wd;mz=wz/wd;
+if(wd<.8)e.repath=0;} // reached waypoint: grab the next one immediately
+ const esp=(e.spd||e.def.sp)*spdMul*dt,px0=e.x,pz0=e.z;
+ // wall-slide steering: full step, axes, ±45° sidesteps — never glue to a corner
+ const moved=moveSteer(e,mx,mz,esp,.5);
+ if(moved<esp*.25)e.repath=0; // barely moved: force fresh path
+ if(moved<esp*.5){e.stuck=(e.stuck||0)+1;
+  if(e.stuck>=4){e.stuck=0;e.routeT=1.2;e.repath=0;}} // LOS charge grinding a corner: route around via BFS
+ else e.stuck=0;
+e.s.position.set(e.x,e.def.s/2+Math.sin(performance.now()*.006+e.z)*.08,e.z);
+e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
+if(e.def.boss){ // warlord mechanics: enrage under half hp, summon children at 66%/33%
+if(e.def.enrage&&!e.enraged&&e.hp<e.maxhp*.5){e.enraged=true;e.spd=e.def.sp*1.6;showMsg(e.def.name+' ENRAGED',1500);}
+if(e.def.summon&&e.phase<2&&enemies.length<80){const th=e.phase===0?.66:.33;
+if(e.hp/e.maxhp<th){e.phase++;let placed=0;
+for(let k=0;k<8&&placed<2;k++){const a=aiRand()*6.28,sx=e.x+Math.cos(a)*4,sz=e.z+Math.sin(a)*4;
+if(!collide(sx,sz,.5)){spawnEnemy(DEFS[0],sx,sz).alert=true;levelTotal++;placed++;}}
+if(placed)showMsg(e.def.name+' CALLS ITS CHILDREN',1500);}}}
+e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);blood(player.x,1.4,player.z,10,2,(player.x-e.x)/(d||1),(player.z-e.z)/(d||1),2);
+if(player.hp<=0){die(`RIPPED APART on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
+separate(dt); // soft body push: packs drift apart, no stacking
+tickProjectiles(dt); // enemy spit flies, hits walls or you (dodgeable)
+tickStalkerDeath(dt);
+// stalker: enormous, unkillable, faster than demons but outrunnable — keep moving
+if(stalker){const dx=player.x-stalker.x,dz=player.z-stalker.z,d=Math.hypot(dx,dz)||.01;
+let mx=dx/d,mz=dz/d;
+stalker.routeT=Math.max(0,(stalker.routeT||0)-dt);
+if(d>3&&(!los(stalker.x,stalker.z,player.x,player.z)||stalker.routeT>0)){
+stalker.repath-=dt;
+if(stalker.repath<=0){stalker.repath=.35;
+const st=bfsNext(Math.floor(stalker.x/TS),Math.floor(stalker.z/TS),Math.floor(player.x/TS),Math.floor(player.z/TS));
+if(st){stalker.wx=(st.x+.5)*TS;stalker.wz=(st.y+.5)*TS;}}
+const wx=stalker.wx-stalker.x,wz=stalker.wz-stalker.z,wd=Math.hypot(wx,wz)||.01;mx=wx/wd;mz=wz/wd;
+if(wd<1)stalker.repath=0;}
+ const ssp=5*dt;
+ const smoved=moveSteer(stalker,mx,mz,ssp,.8);
+ if(smoved<ssp*.25)stalker.repath=0;
+ if(smoved<ssp*.5){stalker.stuck=(stalker.stuck||0)+1;
+  if(stalker.stuck>=4){stalker.stuck=0;stalker.routeT=1.2;stalker.repath=0;}}
+ else stalker.stuck=0;
+stalker.s.position.set(stalker.x,3+Math.sin(performance.now()*.008)*.15,stalker.z);
+if(stalker.flash>0){stalker.flash-=dt;stalker.s.material.color.setHex(0xff8080);}else stalker.s.material.color.setHex(0xffffff);
+stalker.screech-=dt;if(stalker.screech<=0){stalker.screech=3+aiRand()*2.5;sfx('screech',stalker.x,stalker.z);}
+stalker.atk-=dt;
+if(d<1.6&&stalker.atk<=0){stalker.atk=1;player.hp-=25;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
+dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,150);blood(player.x,1.4,player.z,16,3,dx/d,dz/d,3);
+if(player.hp<=0){die(`EATEN BY IT on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
+// exit arrow: only once the level is clear — rotate toward portal + distance
+{const arrow=document.getElementById('exitarrow');
+if(!enemies.length&&running&&level!==25){arrow.style.display='block';
+const ex=exitPos.x-player.x,ez=exitPos.z-player.z;
+let rel=Math.atan2(ex,-ez)+player.yaw;
+arrow.style.transform='translateX(-50%) rotate('+(rel*180/Math.PI)+'deg)';
+arrow.querySelector('span').textContent=Math.round(Math.hypot(ex,ez))+'m';}
+else arrow.style.display='none';}
+if(exitMesh){const pu=exitOpen?1:.4;exitMesh.material.opacity=pu*(.6+.3*Math.sin(performance.now()*.006));
+if(exitOpen&&Math.hypot(player.x-exitPos.x,player.z-exitPos.z)<1.8){
+level++;wEl.textContent=level;player.hp=Math.min(100,player.hp+30);hpEl.textContent=Math.round(player.hp);
+sfx('wave',exitPos.x,exitPos.z);genLevel(level);}}
+tickFx(dt); // blood + gibs fly (also runs during the death pause via the dying branch below)
 // corpses slide to a stop (knocked back on death, never through walls)
 for(const c of corpses){if(Math.hypot(c.vx,c.vz)<.05){c.vx=c.vz=0;continue;}
 if(!collide(c.s.position.x+c.vx*dt,c.s.position.z,.5))c.s.position.x+=c.vx*dt;else c.vx=0;
@@ -994,15 +1216,52 @@ camera.rotation.x+=(Math.random()-.5)*.06*s;camera.rotation.y+=(Math.random()-.5
 gun.position.x=Math.sin(bobPhase)*.023*bobA;
 gun.position.y=-.26+Math.sin(bobPhase*2)*.023*bobA-recoil*.15;
  if(muzzle>0)camera.position.y+=Math.random()*.05;
- }catch(err){running=false;document.getElementById('overlay').classList.remove('hidden');
-  document.getElementById('ovt').innerHTML='⚠ CRASH: '+(err&&err.message||err)+' — send a screenshot.';
-  if(window.__doodErr!==err)console.error(err);}
- }
- renderer.render(scene,camera);
+ mmAcc-=dt;if(mmAcc<=0){mmAcc=.1;try{drawMinimap();}catch(e){}}
+   }catch(err){running=false;document.getElementById('overlay').classList.remove('hidden');
+   document.getElementById('ovt').innerHTML='⚠ CRASH: '+(err&&err.message||err)+' — send a screenshot.';
+   if(window.__doodErr!==err)console.error(err);}
+  }
+ if(dying&&!running){ // death pause: world frozen, your gibs keep flying, then the overlay
+  dying.t+=dt;try{tickFx(dt);}catch(err){}
+  const k=Math.min(1,dying.t/2);
+  if(k<0.3){ // the fall: accelerating faceplant, cut short at 0.6s
+   const dk=Math.min(1,k/0.3),drop=dk*dk;
+   const dy=1.6+(0.3-1.6)*drop;
+   const e2=1-Math.pow(1-k,3);
+   const want=1.2*drop; // head swings out as the body tips — an arc, not an elevator
+   let ox=0,oz=0; // march out along the fall heading, stop before the wall
+   for(let s=1;s<=6;s++){const tx=Math.cos(dying.fallA)*want*s/6,tz=Math.sin(dying.fallA)*want*s/6;
+    if(collide(player.x+tx,player.z+tz,.4))break;ox=tx;oz=tz;}
+   camera.position.set(player.x+ox,dy,player.z+oz);
+   camera.rotation.set(dying.pitch*e2,player.yaw,dying.roll*e2,'YXZ'); // tipped over, cheek on the stone
+   shake=Math.max(0,shake-dt*1.2);
+   if(shake>0){const s=shake*shake;
+    camera.position.x+=(Math.random()-.5)*.3*s;camera.position.y+=(Math.random()-.5)*.3*s;
+    camera.rotation.z+=(Math.random()-.5)*.06*s;}}
+  else{ // impacted: pose frozen at the impact frame, only the shake rattle plays out
+   if(!dying.impacted){dying.impacted=true;shake=0.8;
+    dying.px=camera.position.x;dying.py=camera.position.y;dying.pz=camera.position.z;
+    dying.rx=camera.rotation.x;dying.ry=camera.rotation.y;dying.rz=camera.rotation.z;}
+   shake=Math.max(0,shake-dt*4);
+   camera.position.set(dying.px,dying.py,dying.pz);
+   camera.rotation.set(dying.rx,dying.ry,dying.rz);
+   if(shake>0){const s=shake*shake;
+    camera.position.x+=(Math.random()-.5)*.3*s;camera.position.y+=(Math.random()-.5)*.3*s;
+    camera.rotation.z+=(Math.random()-.5)*.06*s;}}
+  if(dying.t>=2){const m=dying.msg;dying=null;showDeath(m);}}
+  renderer.render(scene,camera);
 }
-// death: shared overlay, rotating slop banner, one watch-ad retry per run
-function die(msg){running=false;document.exitPointerLock();
-document.getElementById('ovt').innerHTML=msg;
+// death: gun vanishes, you burst into gibs, world freezes — overlay waits 2s
+function die(msg){if(dying)return;running=false;document.exitPointerLock();
+gun.visible=false;shooting=false;muzzle=0;flash.material.opacity=0;
+blood(player.x,1.4,player.z,70,6,0,0,0);
+splat(player.x,player.z,true);
+gibBurst(player.x,1.4,player.z,true,0,0,0,true); // 22 gibs, no direction: all shove
+sfx('die',player.x,player.z);
+shake=1; // full screenshake on death
+dying={t:0,msg,fallA:Math.random()*6.28,roll:(1.2+Math.random()*0.4)*(Math.random()<.5?-1:1),
+ pitch:0.3+Math.random()*0.3,impacted:false};}
+function showDeath(msg){document.getElementById('ovt').innerHTML=msg;
 document.querySelector('#overlay h2').textContent='DOOD — U DIED';
 document.getElementById('start').textContent='⛧ RE-ENTER ⛧';
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'});
@@ -1013,37 +1272,37 @@ if(adRetryUsed||!window.HellAds)return;
 HellAds.play(document.getElementById('adover'),{secs:5,exclude:'dood',onStart:()=>{adPlaying=true;},onDone:()=>revive()});};
 function revive(){ // the ad smote nearby demons and banished IT to the far side
 adRetryUsed=true;adPlaying=false;document.getElementById('adretry').style.display='none';
-player.hp=100;hpEl.textContent='100';
+player.hp=100;hpEl.textContent='100';gun.visible=true;dying=null;
 for(const e of enemies.slice())if(Math.hypot(e.x-player.x,e.z-player.z)<12)kill(e);
-if(stalker){const pd=bfsDist(Math.floor(player.x/TS),Math.floor(player.z/TS));
-let st={x:1,y:1},bd=-1;
-for(let y=1;y<GH-1;y++)for(let x=0;x<GW-1;x++)
-if(grid[y*GW+x]===0&&pd[y*GW+x]>bd){bd=pd[y*GW+x];st={x,y};}
+if(stalker){const st=stalkerSpawnTile(Math.floor(player.x/TS),Math.floor(player.z/TS));
 stalker.x=(st.x+.5)*TS;stalker.z=(st.y+.5)*TS;stalker.wx=player.x;stalker.wz=player.z;stalker.repath=0;stalker.atk=1;}
-showMsg('REVIVED BY AD — IT HAS BEEN BANISHED (for now)',2500);
-document.getElementById('overlay').classList.add('hidden');running=true;
-lockPointer();}
+ showMsg('REVIVED BY AD — IT HAS BEEN BANISHED (for now)',2500);
+ document.getElementById('overlay').classList.add('hidden');running=true;
+ camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0,'YXZ');shake=0; // back on your feet
+ lockPointer();}
 document.getElementById('seedrnd').onclick=()=>{document.getElementById('seedin').value=(Math.random()*1e9)|0;};
 document.getElementById('start').onclick=()=>{
 // seed setup: empty seed field = normal mode; otherwise the given seed at the given level
 const sv=parseInt(document.getElementById('seedin').value,10);
 LEVEL_SEED=isNaN(sv)?LEVEL_SEED_DEFAULT:sv;
 level=Math.max(1,parseInt(document.getElementById('lvlIn').value,10)||1);
-// reset
-player.hp=100;kills=0;gibCount=0;adRetryUsed=false;
+ // reset
+ player.hp=100;kills=0;gibCount=0;adRetryUsed=false;dying=null;gun.visible=true;
 document.getElementById('adretry').style.display='none';
 document.getElementById('endless').style.display='none';
 hpEl.textContent='100';kEl.textContent='0';wEl.textContent=level;gEl.textContent='0';
-genLevel(level);
-document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
-lockPointer();fit();};
+ genLevel(level);
+ document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
+ camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0,'YXZ');shake=0; // back on your feet
+ lockPointer();fit();};
 document.getElementById('endless').onclick=()=>{ // optional endless: hell keeps going past 25
 document.getElementById('endless').style.display='none';
 level=26;player.hp=100;adRetryUsed=false;
 hpEl.textContent='100';wEl.textContent='26';
-genLevel(26);
-document.getElementById('overlay').classList.add('hidden');running=true;
-lockPointer();fit();};
+ genLevel(26);
+ document.getElementById('overlay').classList.add('hidden');running=true;
+ camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0,'YXZ');shake=0; // back on your feet
+ lockPointer();fit();};
 fit();frame();
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'}); // slop banner on the title overlay
 </script>
