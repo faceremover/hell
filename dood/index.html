@@ -162,11 +162,11 @@ body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));f
 </head>
 <body>
 <h1>🔥 DOOD</h1>
-<div class="sub">WASD move · mouse look · click shoot · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · P minimap · F fullscreen</span></div>
+  <div class="sub">WASD / arrows move · mouse look · click / CTRL / SPACE shoot · E use · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · TAB/P minimap · F fullscreen</span></div>
 <div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
 <div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button><button id="nadeBtn" title="grenade">💣</button><button id="wepBtn" title="switch weapon">⇄</button><button id="muteBtn" title="mute">🔊</button><button id="musicBtn" title="music">🎵</button><button id="mapBtn" title="minimap">🗺</button></div>
 <button id="fsBtn" title="fullscreen (F)">⛶</button>
-<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button><button id="setbtn">⚙ SETTINGS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>WASD</b> move · <b>MOUSE</b> look · <b>CLICK</b> shoot · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
+<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button><button id="setbtn">⚙ SETTINGS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>W/S/↑/↓</b> move · <b>A/D/&lt;/&gt;</b> strafe · <b>←/→</b> turn (<b>ALT</b> = strafe) · <b>MOUSE</b> look · <b>CLICK/CTRL/SPACE</b> shoot · <b>E</b> use · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>TAB/P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
 <div id="adover"></div>
 <div id="bestPanel"><div id="bestCloseRow"><button id="bestClose">✕ CLOSE</button></div><div id="bestBody"></div></div>
 <div id="achPanel"><div id="achCloseRow"><button id="achClose">✕ CLOSE</button></div><div id="achBody"></div></div>
@@ -949,9 +949,9 @@ try{document.getElementById('fsBtn').addEventListener('click',e=>{e.preventDefau
 try{document.getElementById('fsBtn').addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();toggleFullscreen();},{passive:false});}catch(e){}
 document.addEventListener('fullscreenchange',()=>{updFsIcon();fit();});
 document.addEventListener('webkitfullscreenchange',()=>{updFsIcon();fit();});
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='m')toggleMute();
-if(k==='n')toggleMusic();
-if(k==='f')toggleFullscreen();});
+addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'))return;const k=e.key.toLowerCase();if(k==='m')toggleMute();
+ if(k==='n')toggleMusic();
+ if(k==='f')toggleFullscreen();});
 // ---------- DOOM-ish synth loop: chugging E-minor riff + bass + drums ----------
 let musicBus=null,mStep=0,mNext=0,mTimer=null,lastSec='',musicOn=true;const MUSIC_VOL=.16; // quiet bed under the SFX (was .5)
 // ---------- generative metal engine: per-(seed,level) key/scale/tempo/motif ----------
@@ -1308,7 +1308,7 @@ const mmStatic=document.createElement('canvas');mmStatic.width=mmC.width;mmStati
 const mmS=mmStatic.getContext('2d');
 let mmOn=true,mmAcc=0,mmStaticDirty=true;
 function toggleMap(){if(level===25&&!mmOn)return;mmOn=!mmOn;mmC.style.display=mmOn?'block':'none';if(level===25)mmC.style.display='none';}
-addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p')toggleMap();});
+addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'))return;if(e.key.toLowerCase()==='p')toggleMap();});
 function drawMinimapStatic(){
  const W=mmC.width,H=mmC.height,cell=Math.min(W/GW,H/GH);
  const ox=(W-cell*GW)/2,oy=(H-cell*GH)/2;
@@ -1573,29 +1573,48 @@ sfx('roar',stalker.x,stalker.z);}
   if(running&&unlockMsg&&unlockMsg.indexOf('ACQUIRED')>=0)maybeSwapTip(); // mid-run unlock, first time only
   saveRun(false);} // level-entry snapshot: closing the tab offers CONTINUE from here
 // ---------- level flow (seeded) ----------
-// ---------- input ----------
-const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+// ---------- input (full DOOM keyboard: arrows + WASD + CTRL/ALT/SPACE) ----------
+const keys={};
+function isTypingTarget(e){const t=e&&e.target;if(!t||!t.tagName)return false;const tn=t.tagName;
+ if(tn==='INPUT'||tn==='TEXTAREA'||tn==='SELECT')return true;return !!t.isContentEditable;}
+// DOOM layout: W/S/Up/Down move · A/D/,/. strafe · Left/Right turn (ALT+arrows strafe) ·
+// CTRL/SPACE fire · E/ENTER use · G grenade · 1-4/wheel weapons · TAB/P map
+const GAME_PREVENT=new Set([' ','arrowup','arrowdown','arrowleft','arrowright','tab']);
+addEventListener('keydown',e=>{if(isTypingTarget(e))return;const k=e.key.toLowerCase();keys[k]=true;
+ if(k==='alt')e.preventDefault(); // keep ALT+arrows for strafing, never the browser menu
+ if(!running||isTypingTarget(e))return;
+ if(GAME_PREVENT.has(k))e.preventDefault();
+ if((k==='control'||k===' ')&&!e.repeat){keyFire=true;shooting=true;if(curWep==='ar')queueBurst();}});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;
+ if(k==='control'||k===' '){if(!keys['control']&&!keys[' ']){keyFire=false;if(!mouseFire)endBurstCut();}}});
 function lockPointer(){if(touchPlay())return;try{renderer.domElement.requestPointerLock();}catch(e){}}
 renderer.domElement.addEventListener('click',()=>{if(running)lockPointer();});
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&running)player.yaw-=e.movementX*.0026;});
-let shooting=false;let burstLeft=0,burstBuf=false,burstFired=0; // burst rifle: 5-round bursts, one per click + one buffered
+let shooting=false,mouseFire=false,keyFire=false;
+let burstLeft=0,burstBuf=false,burstFired=0; // burst rifle: 5-round bursts, one per click + one buffered
 let railCharge=0; // railgun: hold a full second to charge, release early cancels
 function killCharge(){railCharge=0;chargeBeam.material.opacity=0;stopChargeSnd(false);}
 function queueBurst(){if(!running||dying)return;if(burstLeft>0)burstBuf=true;else{burstLeft=wepDef('ar').burst||5;burstFired=0;}}
 function endBurstCut(){ // released mid-burst: flat 0.2s cooldown if any rounds went out
- shooting=false;
+ shooting=mouseFire||keyFire;
  if(burstLeft>0&&burstFired>0)wepCool.ar=Math.max(wepCool.ar||0,.2);
  burstLeft=0;burstBuf=false;burstFired=0;}
-addEventListener('mousedown',e=>{if(e.button===0&&running&&document.pointerLockElement===renderer.domElement){shooting=true;if(curWep==='ar')queueBurst();}});
-addEventListener('mouseup',()=>{endBurstCut();}); // release cuts the burst dead, partial cooldown applies
+addEventListener('mousedown',e=>{if(e.button===0&&running&&document.pointerLockElement===renderer.domElement){mouseFire=true;shooting=true;if(curWep==='ar')queueBurst();}});
+addEventListener('mouseup',e=>{if(e.button===0){mouseFire=false;if(!keyFire)endBurstCut();else shooting=true;}}); // release cuts the burst dead, partial cooldown applies
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;mouseFire=keyFire=false;shooting=false;}); // ALT+TAB away: never return with a stuck run/fire key
+function tryUse(){ // E: work the green portal without pixel-perfect tiptoeing
+ if(!running||dying||!exitMesh||!exitOpen)return;
+ if(Math.hypot(player.x-exitPos.x,player.z-exitPos.z)<4.5){player.x=exitPos.x;player.z=exitPos.z;}}
 function selectWep(id){if(id===curWep||!ownedWeapons(level).includes(id))return;
 if(!tipSwapSeen){tipSwapSeen=true;storeSet('dood_tip_swap','1');hideTip();}
 curWep=id;buildGun(id,level);updWpnHud(level);wepCool[id]=Math.max(wepCool[id]||0,.25);burstLeft=0;burstBuf=false;burstFired=0;killCharge();} // switching costs a beat on the gun you grab, voids any burst/charge
 addEventListener('wheel',e=>{if(!running)return;const o=ownedWeapons(level);if(o.length<2)return;
 let i=(o.indexOf(curWep)+(e.deltaY>0?1:-1)+o.length)%o.length;selectWep(o[i]);},{passive:true});
-addEventListener('keydown',e=>{if(!running)return;const k=e.key;
-if(k>='1'&&k<='4'){const w=WEAPONS[+k-1];if(w)selectWep(w.id);}
-else if(k.toLowerCase()==='g')throwNade();});
+addEventListener('keydown',e=>{if(!running||isTypingTarget(e))return;const k=e.key;
+ if(k>='1'&&k<='4'){const w=WEAPONS[+k-1];if(w)selectWep(w.id);}
+ else if(k==='Enter'||k.toLowerCase()==='e'){e.preventDefault();tryUse();}
+ else if(k.toLowerCase()==='g')throwNade();
+ else if(k==='Tab'){e.preventDefault();toggleMap();}});
 let muzzle=0;const wepCool={sg:0,ar:0,sn:0,rg:0}; // per-gun cooldowns: firing one gun never delays another, but each gun remembers its own
 // hitscan: ONE predictable target — nearest demon to the crosshair inside a tight cone.
 // (old version damaged everything in a wide arc, so far demons stole near kills)
@@ -1772,7 +1791,7 @@ function killStalker(){const sx=stalker.x,sz=stalker.z; // IT dies: chained gory
   const bc=window.Bestiary.count();if(bc.got>=bc.total)achUnlock('bestiary');}}catch(_){}
  achUnlock('it');
  if(!stalkerOtherWep)achUnlock('it_sg'); // shotgun purist: no other gun touched IT
- stalkerVulnerable=false;shooting=false;
+ stalkerVulnerable=false;shooting=mouseFire=keyFire=false;
  stalkerDying={t:0,dur:2.2,x:sx,z:sz,s:ssRef(stalker)};
  scene.remove(stalker.s);stalker=null;
  sfx('roar',sx,sz);showMsg('IT IS DYING — RUN',2000);}
@@ -1913,9 +1932,16 @@ lamp.position.set(player.x,4,player.z);
 recoil=Math.max(0,recoil-dt*.8);
 gun.position.z=.3+recoil*.9;
 flash.material.opacity=muzzle>0?1:0;flash.rotation.z=Math.random()*6.28;
- // move with momentum: velocity chases input, drifts on release (keys + touch stick)
- const sp=7;let f=(keys['w']?1:0)-(keys['s']?1:0),s=(keys['d']?1:0)-(keys['a']?1:0);
- if(touchMove.active){f+=-touchMove.y;s+=touchMove.x;}
+  // move with momentum: velocity chases input, drifts on release (keys + touch stick)
+  // DOOM feet: Left/Right turn, ALT+arrows (or ,/.) strafe
+  const sp=7;
+  const altHeld=!!keys['alt'];
+  if(!altHeld){ // keyboard turn (DOOM Left/Right)
+   if(keys['arrowleft'])player.yaw+=2.8*dt;
+   if(keys['arrowright'])player.yaw-=2.8*dt;}
+  let f=((keys['w']||keys['arrowup'])?1:0)-((keys['s']||keys['arrowdown'])?1:0),
+      s=((keys['d']||keys['.']||(altHeld&&keys['arrowright']))?1:0)-((keys['a']||keys[',']||(altHeld&&keys['arrowleft']))?1:0);
+  if(touchMove.active){f+=-touchMove.y;s+=touchMove.x;}
 const sin=Math.sin(player.yaw),cos=Math.cos(player.yaw);
 const dvx=(-sin*f+cos*s)*sp,dvz=(-cos*f-sin*s)*sp,k=Math.min(1,dt*10);
 player.vx=(player.vx||0)+(dvx-(player.vx||0))*k;player.vz=(player.vz||0)+(dvz-(player.vz||0))*k;
@@ -2204,7 +2230,7 @@ gun.position.y=-.26+Math.sin(bobPhase*2)*.023*bobA-recoil*.15;
 // death: gun vanishes, you burst into gibs, world freezes — overlay waits 2s
 function die(msg){if(dying)return;running=false;document.exitPointerLock();diedThisLevel=true;saveRun(true); // dead: save marks it so reopening can't resurrect you
 if(lastHurtBy==='d1')achUnlock('impdeath'); // the weakest thing down here. tell no one.
-gun.visible=false;shooting=false;burstLeft=0;burstBuf=false;burstFired=0;killCharge();muzzle=0;flash.material.opacity=0;
+gun.visible=false;shooting=mouseFire=keyFire=false;burstLeft=0;burstBuf=false;burstFired=0;killCharge();muzzle=0;flash.material.opacity=0;
 blood(player.x,1.4,player.z,70,6,0,0,0);
 splat(player.x,player.z,true);
 gibBurst(player.x,1.4,player.z,true,0,0,0,true); // 22 gibs, no direction: all shove
