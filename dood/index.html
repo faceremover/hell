@@ -2,69 +2,162 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0202">
 <link rel="icon" href="data:,">
-<title>DOOD — tiny doom clone</title>
+<title>DOOD — doom clone</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0202;color:#ffb0a0;font-family:monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px;gap:8px}
-h1{font-size:28px;letter-spacing:4px;color:#ff2a00;text-shadow:3px 3px 0 #3d0000,0 0 20px rgba(255,40,0,.7)}
-.sub{color:#b06a5a;font-style:italic;font-size:12px}
-#hud{display:flex;gap:6px 16px;flex-wrap:wrap;justify-content:center;font-size:14px;color:#ffd93b;max-width:min(96vw,900px);text-align:center}
+html,body{height:100%}
+body{background:#0a0202;color:#ffb0a0;font-family:monospace;height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:4px 4px calc(4px + env(safe-area-inset-bottom));gap:2px;touch-action:manipulation;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+h1{font-size:18px;letter-spacing:3px;color:#ff2a00;text-shadow:3px 3px 0 #3d0000,0 0 20px rgba(255,40,0,.7);line-height:1.2;flex:none}
+.sub{color:#b06a5a;font-style:italic;font-size:10px;flex:none;text-align:center;max-width:98vw;line-height:1.5}
+body.has-touch .sub{font-size:10px}
+body.has-touch .sub .desk-only{display:none}
+#wrap{--mm:148px;position:relative;width:min(99vw,1500px,calc((100dvh - 70px) * 1.7778));aspect-ratio:16/9;border:4px solid #4a0d00;box-shadow:0 0 0 4px #0d0208,0 0 0 8px #ff3b00,0 0 50px rgba(255,40,0,.4);touch-action:none;overflow:hidden;flex:none;max-height:calc(100dvh - 70px);min-height:0;isolation:isolate;background:#070203}
+/* integrated HUD: overlaid top strip inside the game frame, clears the minimap */
+#hud{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;gap:4px 14px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:13px;color:#ffd93b;text-align:center;padding:8px calc(var(--mm) + 14px) 10px 12px;background:linear-gradient(to bottom,rgba(5,0,0,.82),rgba(5,0,0,0));pointer-events:none;text-shadow:1px 1px 0 #000}
 #hud b{color:#fff}
-#wrap{position:relative;width:min(96vw,900px);aspect-ratio:3/2;border:4px solid #4a0d00;box-shadow:0 0 0 4px #0d0208,0 0 0 8px #ff3b00,0 0 50px rgba(255,40,0,.4);touch-action:none;overflow:hidden}
-@media (orientation:portrait) and (max-width:700px){#wrap{width:100vw;aspect-ratio:3/4;border-width:2px}}
-@media (max-width:640px){
- body{padding:8px 4px;gap:6px}
- h1{font-size:22px;letter-spacing:2px}
- .sub{font-size:11px;text-align:center;padding:0 8px}
- #hud{font-size:12px;gap:4px 12px}
- #overlay{padding:12px;overflow-y:auto;justify-content:flex-start;padding-top:8%}
- #overlay h2{font-size:22px}
- #overlay p{font-size:12px;max-width:94%}
- button{font-size:14px;padding:8px 18px}
- #lvlmsg{font-size:15px;top:10%}
- #seedrow{flex-wrap:wrap}
-}
-/* touch controls: twin-stick — left move, right look, fire button */
+#hud span{white-space:nowrap}
+/* touch controls: left stick moves, drag right side to look, buttons on the right.
+   All pads sit well clear of the frame border + safe-area so the border never covers them. */
 #touch{position:absolute;inset:0;z-index:7;display:none;pointer-events:none}
 body.touch-game #touch{display:block}
-#stick{position:absolute;left:12px;bottom:12px;width:110px;height:110px;border:2px solid rgba(255,180,80,.5);border-radius:50%;background:rgba(20,5,0,.35);pointer-events:auto;touch-action:none}
-#nub{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(255,106,42,.55);border:2px solid rgba(255,220,150,.7)}
-#fireBtn{position:absolute;right:14px;bottom:24px;width:84px;height:84px;border-radius:50%;background:rgba(196,30,0,.6);border:3px solid #ffb300;color:#fff;font-size:28px;pointer-events:auto;touch-action:none}
-#jumpLook{position:absolute;right:0;top:0;width:55%;height:70%;pointer-events:auto;touch-action:none}
+#touch button{text-shadow:1px 1px 0 #000;box-shadow:0 2px 12px rgba(0,0,0,.6)}
+#stick{position:absolute;left:20px;bottom:22px;width:124px;height:124px;border:2px solid rgba(255,180,80,.55);border-radius:50%;background:rgba(20,5,0,.35);pointer-events:auto;touch-action:none;z-index:2}
+#nub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,106,42,.55);border:2px solid rgba(255,220,150,.7)}
+#fireBtn{position:absolute;right:20px;bottom:108px;width:92px;height:92px;border-radius:50%;background:rgba(196,30,0,.6);border:3px solid #ffb300;color:#fff;font-size:30px;padding:0;pointer-events:auto;touch-action:none;z-index:2}
+#nadeBtn{position:absolute;right:128px;bottom:38px;width:58px;height:58px;border-radius:50%;background:rgba(10,40,120,.6);border:2px solid #6db9ff;color:#fff;font-size:22px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:2}
+#wepBtn{position:absolute;right:30px;bottom:30px;width:58px;height:58px;border-radius:50%;background:rgba(10,40,90,.6);border:2px solid #7df9ff;color:#fff;font-size:20px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:2}
+#muteBtn,#musicBtn,#mapBtn{position:absolute;left:12px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,20,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font-size:18px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:2}
+#muteBtn{top:64px}#musicBtn{top:116px}#mapBtn{top:168px}
+#jumpLook{position:absolute;right:0;top:0;width:60%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
 #wrap canvas{display:block;width:100%;height:100%}
-#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(12,1,0,.85);text-align:center;padding:20px;z-index:5}
+#overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:radial-gradient(120% 90% at 50% 10%,rgba(120,20,0,.55) 0%,rgba(12,1,0,.94) 55%,rgba(5,0,0,.97) 100%);text-align:center;padding:20px;z-index:8;overflow-y:auto}
 #overlay.hidden{display:none}
-#overlay h2{font-size:30px;color:#ff2a00}
-#overlay p{font-size:13px;color:#e8a080;max-width:440px;line-height:1.6}
-button{font-family:monospace;font-size:16px;padding:10px 26px;background:#c41e00;color:#fff;border:3px solid #ffb300;cursor:pointer}
+/* animated ember glow + scanlines behind the menu (pure CSS, no assets) */
+#overlay::before{content:"";position:absolute;inset:0;pointer-events:none;background:
+ radial-gradient(2px 2px at 12% 78%,rgba(255,120,40,.8),transparent 60%),
+ radial-gradient(2px 2px at 28% 62%,rgba(255,80,20,.7),transparent 60%),
+ radial-gradient(3px 3px at 68% 74%,rgba(255,150,60,.75),transparent 60%),
+ radial-gradient(2px 2px at 84% 58%,rgba(255,90,30,.7),transparent 60%),
+ radial-gradient(2px 2px at 52% 88%,rgba(255,110,40,.6),transparent 60%);animation:embers 5s ease-in-out infinite alternate}
+#overlay::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.025) 0 1px,transparent 1px 4px);mix-blend-mode:overlay}
+@keyframes embers{from{opacity:.45;transform:translateY(0)}to{opacity:1;transform:translateY(-8px)}}
+.ov-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;width:min(560px,94%);animation:ovrise .45s ease-out}
+@keyframes ovrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.kicker{font-size:11px;letter-spacing:4px;color:#ff9a5e;text-shadow:0 0 12px rgba(255,80,20,.8)}
+#overlay h2{font-size:clamp(40px,9vw,84px);line-height:1;letter-spacing:6px;font-weight:900;color:#ff2a00;max-width:100%;text-wrap:balance;text-shadow:4px 4px 0 #3d0000,0 0 18px rgba(255,40,0,.9),0 0 60px rgba(255,80,0,.55);animation:titleflicker 3.2s infinite}
+@keyframes titleflicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.72}94%{opacity:1}96%{opacity:.85}97%{opacity:1}}
+.tagline{font-size:12px;letter-spacing:5px;color:#ffd93b;text-shadow:1px 1px 0 #000,0 0 14px rgba(255,217,59,.4)}
+#overlay p{font-size:13px;color:#e8a080;max-width:480px;line-height:1.6}
+.feat{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+.feat span{font-size:10px;letter-spacing:1px;color:#ffe9a8;border:1px solid rgba(255,179,0,.55);background:rgba(30,10,2,.7);border-radius:20px;padding:4px 12px;white-space:nowrap}
+#start{font-size:22px !important;padding:14px 54px !important;letter-spacing:3px;animation:enterpulse 1.8s ease-in-out infinite}
+@keyframes enterpulse{0%,100%{box-shadow:0 0 0 rgba(255,179,0,0)}50%{box-shadow:0 0 26px rgba(255,120,0,.85)}}
+.menu-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.menu-row button{font-size:13px;padding:9px 16px;min-height:0}
+.keys{font-size:11px;color:#b06a5a;line-height:2;max-width:520px}
+.keys b{color:#ffe9a8;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-bottom-width:2px;border-radius:4px;padding:1px 6px;font-weight:normal;white-space:nowrap}
+button{font-family:monospace;font-size:16px;padding:10px 26px;background:#c41e00;color:#fff;border:3px solid #ffb300;cursor:pointer;min-height:44px}
+button:hover{filter:brightness(1.15)}
+button:active{transform:translateY(1px)}
 #dmg{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px 40px rgba(255,0,0,.55);opacity:0;transition:opacity .1s;z-index:4}
-#lvlmsg{position:absolute;left:0;right:0;top:14%;text-align:center;color:#7dff5e;font-size:22px;letter-spacing:2px;pointer-events:none;z-index:4;text-shadow:2px 2px 0 #000,0 0 18px rgba(80,255,80,.6);opacity:0;transition:opacity .4s}
-#exitarrow{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:4;pointer-events:none;text-align:center;color:#39ff14;font-size:26px;text-shadow:0 0 10px rgba(57,255,20,.8),2px 2px 0 #000;line-height:1}
+#lvlmsg{position:absolute;left:0;right:0;top:14%;text-align:center;color:#7dff5e;font-size:22px;letter-spacing:2px;pointer-events:none;z-index:4;text-shadow:2px 2px 0 #000,0 0 18px rgba(80,255,80,.6);opacity:0;transition:opacity .4s;padding:0 8px}
+#tip{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;max-width:92%;text-align:center;font-size:13px;color:#ffe9a8;background:rgba(10,2,0,.8);border:1px solid rgba(255,179,0,.7);border-radius:6px;padding:7px 14px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap}
+#tip.show{opacity:1}
+body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));font-size:11px;max-width:60%;white-space:normal}
+#exitarrow{position:absolute;left:50%;top:40px;transform:translateX(-50%);z-index:4;pointer-events:none;text-align:center;color:#39ff14;font-size:26px;text-shadow:0 0 10px rgba(57,255,20,.8),2px 2px 0 #000;line-height:1}
 #exitarrow span{display:block;font-size:11px;color:#b0ffb0}
-#wrap canvas#minimap{position:absolute;top:8px;right:8px;width:148px;height:148px;z-index:4;background:rgba(5,0,0,.65);border:2px solid rgba(255,60,0,.6);border-radius:4px;pointer-events:none;opacity:.92}
-@media (max-width:640px){#wrap canvas#minimap{width:96px;height:96px;top:6px;right:6px}}
+#wrap canvas#minimap{position:absolute;top:8px;right:8px;width:var(--mm);height:var(--mm);z-index:4;background:rgba(5,0,0,.65);border:2px solid rgba(255,60,0,.6);border-radius:4px;pointer-events:none;opacity:.92}
 #doodad{width:min(460px,94%)}
 #adretry{display:none;background:#0a6a2a;border-color:#7dff8a}
+#continue{display:none;background:#0a3a2a;border-color:#7dff8a}
 #endless{display:none;background:#0a3a6a;border-color:#7df9ff}
-#adover{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,0,0,.92);z-index:6}
+#daily{background:#3a0a6a;border-color:#c07bff}
+#bestbtn{background:#2a2118;border-color:#c9a86a}
+#achbtn{background:#2a2118;border-color:#ffd93b}
+#bestPanel,#achPanel{position:absolute;inset:0;display:none;z-index:10;background:rgba(8,4,2,.96);overflow-y:auto;padding:16px 14px 30px;text-align:left}
+#bestPanel.open,#achPanel.open{display:block}
+#bestCloseRow,#achCloseRow{text-align:right;margin-bottom:8px}
+#bestClose,#achClose{font-size:13px;padding:6px 14px;min-height:0}
+#achtoast{position:absolute;left:50%;top:52px;transform:translateX(-50%);z-index:6;max-width:92%;text-align:center;font-size:14px;color:#ffd93b;background:rgba(10,6,0,.88);border:2px solid #ffd93b;border-radius:6px;padding:8px 16px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;text-shadow:1px 1px 0 #000}
+#achtoast.show{opacity:1}
+.bestHead{margin-bottom:10px}
+.bestTitle{font-size:24px;color:#c9a86a;letter-spacing:2px}
+.bestSub{font-size:12px;color:#e8a080;margin-top:2px}
+.bestSec{font-size:13px;color:#ffd93b;letter-spacing:1px;margin:10px 0 6px}
+.bestDim{color:#b06a5a}
+.bestVarBox{border:1px solid #4a2c1c;background:rgba(20,8,4,.6);padding:8px 10px;margin-bottom:10px}
+.bestVars{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:#e8a080}
+.bestVar{max-width:300px}
+.bestDot{display:inline-block;width:10px;height:10px;margin-right:5px;border:1px solid #000}
+.bestGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.bestCard{border:2px solid #4a0d00;background:rgba(18,6,3,.85);padding:10px;font-size:11px;color:#e8a080;line-height:1.5}
+.bestCard.isBoss{border-color:#c9a86a;box-shadow:0 0 14px rgba(201,168,106,.25)}
+.bestCard.locked{opacity:.75}
+.bestSpr{display:flex;gap:10px;align-items:flex-end;min-height:64px}
+.bestSpr img{height:64px;image-rendering:pixelated}
+.bestCard.locked .bestSpr img{filter:brightness(0)}
+.bestName{font-size:15px;color:#fff;margin-top:6px}
+.bestEp{font-style:italic;color:#b06a5a;font-size:11px}
+.bestStats{color:#ffd93b;margin-top:4px}
+.bestDesc{margin-top:4px}
+.bestBoss{color:#ff7a5e;margin-top:4px}
+.bestPips{margin-top:6px;font-size:14px;letter-spacing:2px}
+.bestPip{color:#5a3a30}
+.bestPip.on{color:#fff}
+.bestKills{color:#b06a5a;margin-top:4px}
+.bestLock{color:#b06a5a;font-style:italic;margin-top:6px}
+#adover{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(5,0,0,.92);z-index:9}
 #seedrow{display:flex;gap:6px;align-items:center;justify-content:center;font-size:12px;color:#e8a080}
 #seedrow input{width:96px;background:#1a0500;color:#ffd93b;border:1px solid #ffb300;font-family:monospace;font-size:13px;padding:6px}
 #seedrow input#lvlIn{width:52px}
-#seedrnd{padding:6px 10px;font-size:13px}
+#seedrnd{padding:6px 10px;font-size:13px;min-height:0}
+#customstart{padding:6px 10px;font-size:13px;min-height:0;background:#2a2118;border-color:#b06a5a}
+#customdiv{color:#b06a5a;font-size:11px;letter-spacing:1px;margin-top:6px}
+/* ---- mobile: game fills the viewport, chrome shrinks, controls grow ---- */
+@media (pointer:coarse), (max-width:640px){
+  :root{color-scheme:dark}
+  body{padding:6px 0 calc(6px + env(safe-area-inset-bottom));gap:4px}
+  h1{font-size:19px;letter-spacing:2px}
+  .sub{font-size:10px;padding:0 8px;text-align:center}
+  #wrap{--mm:96px;width:100vw;max-width:100vw;flex:1 1 auto;min-height:0;max-height:none;aspect-ratio:auto;border-width:0 0 3px 0;box-shadow:0 0 0 2px #0d0208,0 0 24px rgba(255,40,0,.35)}
+  #hud{font-size:11px;gap:2px 10px;padding:6px calc(var(--mm) + 10px) 14px 8px}
+  #wrap canvas#minimap{top:6px;right:6px}
+  #exitarrow{top:48px}
+  /* pads lifted clear of the bottom frame border + home-gesture zone */
+  #stick{width:132px;height:132px;left:20px;bottom:calc(26px + env(safe-area-inset-bottom))}
+  #fireBtn{width:96px;height:96px;right:20px;bottom:calc(116px + env(safe-area-inset-bottom))}
+  #nadeBtn{right:132px;bottom:calc(42px + env(safe-area-inset-bottom))}
+  #wepBtn{right:30px;bottom:calc(34px + env(safe-area-inset-bottom))}
+  #overlay{padding:24px 12px;overflow-y:auto;justify-content:flex-start}
+  #overlay .ov-inner{margin:auto 0}
+  #lvlmsg{font-size:16px;top:12%}
+  #seedrow{flex-wrap:wrap}
+}
+@media (orientation:landscape) and (max-height:500px){
+  h1{display:none}
+  .sub{display:none}
+  body{gap:0;padding:0 0 env(safe-area-inset-bottom)}
+  #wrap{width:100vw;max-width:100vw;flex:1 1 auto;min-height:0;max-height:none;aspect-ratio:auto;border:0}
+}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
 <script src="../hell-ads.js"></script>
+<script src="bestiary.js"></script>
+<script src="achievements.js"></script>
 </head>
 <body>
 <h1>🔥 DOOD</h1>
-<div class="sub">click to lock mouse · WASD move · mouse look · click shoot · G grenade · wheel / 1-4 weapons · M mute · N music · P minimap</div>
-<div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div>
-<div id="wrap"><div id="dmg"></div><div id="lvlmsg"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
-<div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button></div>
-<div id="overlay"><h2>DOOD</h2><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><button id="start">⛧ ENTER ⛧</button><button id="adretry">📺 WATCH AD TO RETRY (1 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div id="seedrow">SEED <input id="seedin" placeholder="random" title="empty = normal mode"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"></div><div id="doodad"></div></div>
+<div class="sub">WASD move · mouse look · click shoot · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · P minimap</span></div>
+<div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
+<div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button><button id="nadeBtn" title="grenade">💣</button><button id="wepBtn" title="switch weapon">⇄</button><button id="muteBtn" title="mute">🔊</button><button id="musicBtn" title="music">🎵</button><button id="mapBtn" title="minimap">🗺</button></div>
+<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>WASD</b> move · <b>MOUSE</b> look · <b>CLICK</b> shoot · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
 <div id="adover"></div>
+<div id="bestPanel"><div id="bestCloseRow"><button id="bestClose">✕ CLOSE</button></div><div id="bestBody"></div></div>
+<div id="achPanel"><div id="achCloseRow"><button id="achClose">✕ CLOSE</button></div><div id="achBody"></div></div>
+<div id="achtoast"></div>
 </div>
 <script type="module">
 import * as THREE from 'three';
@@ -75,38 +168,63 @@ window.addEventListener('unhandledrejection',e=>{const o=document.getElementById
  if(o&&!window.__doodErr){window.__doodErr=true;o.innerHTML='⚠ ERROR: '+(e.reason&&e.reason.message||e.reason)+' — send a screenshot.';}});
 // ---------- renderer/scene ----------
 const wrap=document.getElementById('wrap');
-const renderer=new THREE.WebGLRenderer({antialias:false});
-renderer.setPixelRatio(1);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 wrap.prepend(renderer.domElement);
-function fit(){if(!wrap.clientWidth)return;const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
-// touch twin-stick: left stick moves (analog), drag right side to look, ◉ to shoot
+function fit(){try{if(!wrap.clientWidth||!wrap.clientHeight)return;const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}catch(e){}}
+wrap.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('contextmenu',e=>{if(e.target&&wrap.contains(e.target))e.preventDefault();});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>{if(wrap.contains(e.target))e.preventDefault();},{passive:false});
+// touch twin-stick: left stick moves (analog), drag right side to look, ◉ shoot, 💣 grenade, ⇄ weapon
 const touchMove={x:0,y:0,active:false};
+function markTouchDevice(){if(!document.body.classList.contains('has-touch'))document.body.classList.add('has-touch');}
+function markRealTouch(){ // touchscreen laptops have touch but play with mouse: don't reclass the device for them
+ if(matchMedia('(pointer:fine)').matches&&!matchMedia('(pointer:coarse)').matches)return;
+ markTouchDevice();}
+function touchPlay(){ // true only when touch is the actual play input (phones/tablets, not touchscreen laptops)
+ if(matchMedia('(pointer:coarse)').matches)return true;
+ return !matchMedia('(pointer:fine)').matches&&document.body.classList.contains('has-touch');}
+addEventListener('touchstart',markRealTouch,{passive:true,capture:true});
 (function(){
  const stick=document.getElementById('stick'),nub=document.getElementById('nub'),
-  fireBtn=document.getElementById('fireBtn'),look=document.getElementById('jumpLook');
- if(!(matchMedia('(pointer:coarse)').matches&&('ontouchstart' in window||navigator.maxTouchPoints>0)))return;
- let sid=null,sx=0,sy=0,lid=null,lx=0;
+  fireBtn=document.getElementById('fireBtn'),look=document.getElementById('jumpLook'),
+  nadeBtn=document.getElementById('nadeBtn'),wepBtn=document.getElementById('wepBtn'),
+  muteBtn=document.getElementById('muteBtn'),musicBtn=document.getElementById('musicBtn'),mapBtn=document.getElementById('mapBtn');
+ const isCoarse=matchMedia('(pointer:coarse)').matches||(!matchMedia('(pointer:fine)').matches&&('ontouchstart' in window&&navigator.maxTouchPoints>0));
+ if(isCoarse)markTouchDevice();
+ if(!('ontouchstart' in window)&&!(navigator.maxTouchPoints>0))return;
+ let sid=null,sx=0,sy=0,lid=null,lx=0,ly=0;
  function setNub(dx,dy){nub.style.transform='translate('+dx+'px,'+dy+'px)';}
- stick.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];sid=t.identifier;sx=t.clientX;sy=t.clientY;touchMove.active=true;},{passive:false});
+ stick.addEventListener('touchstart',e=>{e.preventDefault();markTouchDevice();const t=e.changedTouches[0];sid=t.identifier;sx=t.clientX;sy=t.clientY;touchMove.active=true;},{passive:false});
  addEventListener('touchmove',e=>{
   for(const t of e.changedTouches){
-   if(t.identifier===sid){let dx=t.clientX-sx,dy=t.clientY-sy;const m=Math.hypot(dx,dy),max=44;
+   if(t.identifier===sid){let dx=t.clientX-sx,dy=t.clientY-sy;const m=Math.hypot(dx,dy),max=48;
     if(m>max){dx*=max/m;dy*=max/m;}setNub(dx,dy);touchMove.x=dx/max;touchMove.y=dy/max;}
-   else if(t.identifier===lid){player.yaw-=(t.clientX-lx)*.006;lx=t.clientX;}}
+   else if(t.identifier===lid){player.yaw-=(t.clientX-lx)*.0075;lx=t.clientX;ly=t.clientY;}}
   if(running)e.preventDefault();},{passive:false});
- addEventListener('touchend',e=>{for(const t of e.changedTouches){
+ function endTouch(e){for(const t of e.changedTouches){
   if(t.identifier===sid){sid=null;touchMove.x=touchMove.y=0;touchMove.active=false;setNub(0,0);}
-  if(t.identifier===lid)lid=null;}});
- look.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];lid=t.identifier;lx=t.clientX;},{passive:false});
+  if(t.identifier===lid)lid=null;}}
+ addEventListener('touchend',endTouch);
+ addEventListener('touchcancel',endTouch);
+ look.addEventListener('touchstart',e=>{e.preventDefault();markTouchDevice();const t=e.changedTouches[0];lid=t.identifier;lx=t.clientX;ly=t.clientY;},{passive:false});
   fireBtn.addEventListener('touchstart',e=>{e.preventDefault();shooting=true;if(curWep==='ar')queueBurst();},{passive:false});
-  fireBtn.addEventListener('touchend',e=>{e.preventDefault();shooting=false;burstLeft=0;burstBuf=false;},{passive:false});
- document.body.classList.add('has-touch');
+  fireBtn.addEventListener('touchend',e=>{e.preventDefault();endBurstCut();},{passive:false});
+  fireBtn.addEventListener('touchcancel',()=>{endBurstCut();});
+  nadeBtn.addEventListener('touchstart',e=>{e.preventDefault();throwNade();},{passive:false});
+  wepBtn.addEventListener('touchstart',e=>{e.preventDefault();
+   const o=ownedWeapons(level);if(o.length>1)selectWep(o[(o.indexOf(curWep)+1)%o.length]);},{passive:false});
+  muteBtn.addEventListener('touchstart',e=>{e.preventDefault();toggleMute();},{passive:false});
+  musicBtn.addEventListener('touchstart',e=>{e.preventDefault();toggleMusic();},{passive:false});
+  mapBtn.addEventListener('touchstart',e=>{e.preventDefault();toggleMap();},{passive:false});
 })();
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x070203);
 scene.fog=new THREE.Fog(0x070203,10,90);
-const camera=new THREE.PerspectiveCamera(72,3/2,.1,100);camera.rotation.order='YXZ';
-addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,100));
+const camera=new THREE.PerspectiveCamera(72,16/9,.1,100);camera.rotation.order='YXZ';
+addEventListener('resize',fit);addEventListener('orientationchange',()=>{setTimeout(fit,100);setTimeout(fit,400);});
+if(window.visualViewport)visualViewport.addEventListener('resize',fit);
 // ---------- lights ----------
 let hemi=new THREE.HemisphereLight(0xff9a70,0x220502,1.35);scene.add(hemi);
 const lamp=new THREE.PointLight(0xff6a2a,220,45);lamp.position.set(0,4,0);scene.add(lamp);
@@ -236,6 +354,14 @@ g.beginPath();g.arc(32,32,14,0,7);g.fill();});
 const wallSplatTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);g.globalAlpha=.85;g.fillStyle='#5e0000';
 for(let i=0;i<9;i++){const a=Math.random()*6.28,d=4+Math.random()*20;g.beginPath();g.arc(32+Math.cos(a)*d,32+Math.sin(a)*d,1+Math.random()*2.2,0,7);g.fill();}
 g.beginPath();g.arc(32,32,4.5,0,7);g.fill();});
+const scorchTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);
+g.globalAlpha=.95;g.fillStyle='#0b0908';
+for(let i=0;i<26;i++){const a=Math.random()*6.28,d=4+Math.random()*20;g.beginPath();g.arc(32+Math.cos(a)*d,32+Math.sin(a)*d,2+Math.random()*5,0,7);g.fill();}
+g.beginPath();g.arc(32,32,11,0,7);g.fill();
+g.globalAlpha=.55;g.fillStyle='#1c1611';
+g.beginPath();g.arc(32,32,16,0,7);g.fill();
+g.globalAlpha=.7;g.fillStyle='#000';
+for(let i=0;i<36;i++)g.fillRect(8+Math.random()*48,8+Math.random()*48,2,2);});
 // ---------- maze arena (mangler-style backtracker + loops + rooms, seeded) ----------
 let GW=0,GH=0,grid=[];
 const TS=5;
@@ -253,9 +379,17 @@ const splatGeo=new THREE.PlaneGeometry(1,1);
 const splatMat=new THREE.MeshBasicMaterial({map:splatTex,transparent:true,opacity:.95,depthWrite:false});
 const splatSmallMat=new THREE.MeshBasicMaterial({map:splatTex,transparent:true,opacity:.8,depthWrite:false});
 const wallSplatMat=new THREE.MeshBasicMaterial({map:wallSplatTex,transparent:true,opacity:.8,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
-const SPLAT_MAX=80;
-function pushSplat(m){scene.add(m);splats.push({m,age:0});
- if(splats.length>SPLAT_MAX){const old=splats.shift();scene.remove(old.m);}}
+const scorchMat=new THREE.MeshBasicMaterial({map:scorchTex,transparent:true,opacity:.95,depthWrite:false});
+// two-tier decal caps: big blood pools (under corpses) + blast scorch marks are the
+// trail you leave behind, so they get a huge cap — effectively the whole level's
+// history. Gib chips + wall stains churn in a small cap and can never evict a pool.
+const SPLAT_BIG_MAX=300,SPLAT_SMALL_MAX=80;
+function pushSplat(m,big){scene.add(m);splats.push({m,big:!!big});
+let nb=0,ns=0;for(const s of splats)s.big?nb++:ns++;
+if(big&&nb>SPLAT_BIG_MAX)evictSplat(true);
+else if(!big&&ns>SPLAT_SMALL_MAX)evictSplat(false);}
+function evictSplat(big){for(let i=0;i<splats.length;i++)if(!!splats[i].big===big){
+scene.remove(splats[i].m);splats.splice(i,1);break;}}
 // BFS scratch buffers (reused: no per-query alloc)
 let bfsPrev=new Int32Array(0),bfsDistA=new Int32Array(0),bfsQ=[];
 function bfsEnsure(n){if(bfsPrev.length<n){bfsPrev=new Int32Array(n);bfsDistA=new Int32Array(n);}}
@@ -362,7 +496,7 @@ bz:spr('assets/sprites/baalzevur.png'),bzd:spr('assets/sprites/baalzevur_dead.pn
 const DEFS=[
 {a:'d1',d:'d1d',hp:2,sp:4.6,s:2.2,dmg:9,name:'imp',min:1},
 {a:'d3',d:'d3d',hp:3,sp:6.6,s:1.8,dmg:9,name:'floater',min:1,strafe:1,strafeSpd:.55,dash:{windup:.7,dur:.6,spd:22,cd:2.8,dmg:18,fragile:1}},
-{a:'d2',d:'d2d',hp:6,sp:3.0,s:3.0,dmg:18,big:1,name:'brute',min:2},
+{a:'d2',d:'d2d',hp:8,sp:3.0,s:3.0,dmg:18,big:1,name:'brute',min:2},
 {a:'wr',d:'wrd',hp:2,sp:6.2,s:1.6,dmg:6,name:'wraith',min:3,stunWeak:1},
 {a:'sp',d:'spd',hp:4,sp:5.2,s:2.0,dmg:10,name:'spitter',min:5,ranged:1,range:18,shotCd:2.2,projSpd:15,projDmg:9},
 {a:'ma',d:'mad',hp:10,sp:2.4,s:3.6,dmg:22,big:1,name:'mauler',min:4,dash:{windup:.8,dur:.7,spd:17,cd:5,dmg:28}},
@@ -370,7 +504,7 @@ const DEFS=[
 {a:'go',d:'god',hp:14,sp:3.4,s:4.2,dmg:20,big:1,name:'gouger',min:8}];
 // bossfights: fixed levels across 5-20. enrage = faster under half hp, summon = calls imps at 66%/33%
 const BOSSES=[
-{a:'gg',d:'ggd',hp:60,sp:3.2,s:5.5,dmg:25,big:1,name:'GORGUT',at:5,boss:1,enrage:1},
+{a:'gg',d:'ggd',hp:60,sp:3.2,s:5.5,dmg:25,big:1,name:'GORGUT',at:5,boss:1,enrage:1,dash:{windup:1.5,dur:.8,spd:16,cd:6,dmg:70}},
 {a:'mo',d:'mod',hp:90,sp:5.0,s:4.5,dmg:30,name:'MORGLA',at:12,boss:1,summon:1,ranged:1,range:22,shotCd:2.6,projSpd:16,projDmg:12,projPurple:1},
 {a:'bz',d:'bzd',hp:140,sp:3.8,s:6,dmg:35,big:1,name:'BAALZEVUR',at:20,boss:1,enrage:1,summon:1}];
 // hardcore variants: tougher, differently-tinted versions of the same demons for deep levels.
@@ -393,26 +527,31 @@ function smoothScale(n){ // steady per-level pressure past 29, applies to every 
  if(n<=29)return{sp:1,cd:1,projSpd:1};
  const k=n-29;
  return{sp:Math.min(1.15,1+k*.002),cd:Math.max(.75,1-k*.003),projSpd:Math.min(1.2,1+k*.001)};}
-function scaledDef(base,n,rng){ // pick a variant tier (weighted, seeded) + smooth scaling -> fresh def clone
+function scaledDef(base,n,rng,forceTag){ // pick a variant tier (weighted, seeded) + smooth scaling -> fresh def clone
+ // forceTag pins a tier (level-666 warlord trio) instead of rolling one
  const sm=smoothScale(n);
  let d={...base,dash:base.dash?{...base.dash}:undefined};
  d.sp=+Math.min(SP_CAP,d.sp*sm.sp).toFixed(3);
  if(d.dash){d.dash={...d.dash,spd:+(d.dash.spd*sm.sp).toFixed(2),cd:+(d.dash.cd*sm.cd).toFixed(3)};}
  if(d.ranged){d.shotCd=+(d.shotCd*sm.cd).toFixed(3);d.projSpd=+((d.projSpd||15)*sm.projSpd).toFixed(2);}
- d.stunMul=1;
+ d.stunMul=1;d.variant=null; // bestiary: null unless a variant tier below claims it
  const unlocked=VARIANTS.reduce((a,v,i)=>n>=v.at?i:a,-1);
  if(unlocked<0){d.name=base.name;return d;}
+ let t,tier=-1;
+ if(forceTag){tier=VARIANTS.findIndex(v=>v.tag===forceTag); // pinned tier, no roll
+  if(tier<0||tier>unlocked)tier=-1;}
+ else{
  // weights: normal stays 3, each unlocked tier gains weight with depth -> mix shifts upward gradually
  const wN=3;const ws=[];
  for(let i=0;i<=unlocked;i++)ws.push(1+(n-VARIANTS[i].at)*.08);
- let t=rng()*((wN)+ws.reduce((a,b)=>a+b,0)),tier=-1;
+ t=rng()*((wN)+ws.reduce((a,b)=>a+b,0));
  t-=wN;
  if(t<0)tier=-1;
  else{for(let i=0;i<=unlocked;i++){t-=ws[i];if(t<=0){tier=i;break;}}
-  if(tier<0)tier=unlocked;}
+  if(tier<0)tier=unlocked;}}
  if(tier<0){d.name=base.name;return d;}
  const V=VARIANTS[tier];
- d={...d,tint:V.tint,name:base.name+' '+V.tag};
+ d={...d,tint:V.tint,name:base.name+' '+V.tag,variant:V.tag};
  // fixed per-tier toughness: step jumps per variant, never a per-level creep.
  // warlords keep their base damage (they already hit like trucks), but take the HP.
  d.hp=Math.ceil(d.hp*V.hpMul);
@@ -461,10 +600,10 @@ for(let i=0;i<pool.length;i++){t-=w[i];if(t<=0)return pool[i];}return pool[0];}
 // rounds, shotgun ~13 shells far / ~8 point-blank.
 const UP_MUL=1.3;
 const WEAPONS=[
-{id:'sg',name:'SHOTGUN',dmg:2.6,closeDmg:4.5,cd:.6,range:26,pierce:0,unlock:1,ups:[14,59,104],kick:.16,shake:.35,muz:.06,flashS:1},
-{id:'ar',name:'BURST RIFLE',dmg:.48,closeDmg:.48,cd:.06,range:24,pierce:0,unlock:5,ups:[18,63,108],kick:.03,shake:.07,muz:.03,flashS:.55,burst:5,burstCd:.16},
-{id:'sn',name:'SNIPER',dmg:9,closeDmg:9,cd:1.6,range:40,pierce:1,unlock:10,ups:[20,65,110],kick:.3,shake:.6,muz:.08,flashS:1.3},
-{id:'rg',name:'RAILGUN',dmg:22,closeDmg:22,cd:3.0,range:40,pierce:99,unlock:25,ups:[32,77],kick:.5,shake:1,muz:.12,flashS:1.8,charge:1}];
+{id:'sg',name:'SHOTGUN',dmg:2.6,closeDmg:4.5,cd:.6,range:26,pierce:0,unlock:1,ups:[14,59,104],kick:.16,shake:.35,muz:.06,flashS:1,tint:0xff7a2a},
+{id:'ar',name:'BURST RIFLE',dmg:.48,closeDmg:.48,cd:.06,range:24,pierce:0,unlock:5,ups:[18,63,108],kick:.03,shake:.07,muz:.03,flashS:.55,burst:5,burstCd:.2,tint:0x7dff5e},
+{id:'sn',name:'SNIPER',dmg:9,closeDmg:9,cd:1.6,range:40,pierce:1,unlock:10,ups:[20,65,110],kick:.3,shake:.6,muz:.08,flashS:1.3,tint:0xb07bff},
+{id:'rg',name:'RAILGUN',dmg:22,closeDmg:22,cd:3.0,range:40,pierce:99,unlock:25,ups:[32,77],kick:.5,shake:1,muz:.12,flashS:1.8,charge:1,tint:0x4adfff}];
 let curWep='sg',lastOwned=[],lastWepMul={};
 function wepDef(id){return WEAPONS.find(w=>w.id===id);}
 function wepMul(id,n){const w=wepDef(id);let m=1;for(const u of w.ups)if(n>=u)m*=UP_MUL;return m;}
@@ -477,26 +616,45 @@ function applyLoadout(n){ // derive owned guns + damage mults purely from level;
  if(!owned.includes(curWep))curWep=owned[owned.length-1];
  let msg='';
  const fresh=!lastOwned.length;
- for(const id of owned)if(!lastOwned.includes(id)){curWep=id;msg+=wepDef(id).name+' ACQUIRED — SCROLL / 1-4 TO SWITCH. ';}
+ for(const id of owned)if(!lastOwned.includes(id)){curWep=id;msg+=wepDef(id).name+' ACQUIRED — SCROLL / 1-4 TO SWITCH. ';
+  if(pureRun)try{if(window.Achievements){const ar=window.Achievements.checkArsenal(id);if(ar.isNew)achToastTier('arsenal',wepDef(ar.id).name+' ACQUIRED');}}catch(_){}}
  for(const id of owned)if(lastOwned.includes(id)&&(lastWepMul[id]||1)!==muls[id])msg+=wepDef(id).name+' UPGRADED. ';
  if(fresh&&owned.length)msg='ARSENAL: '+owned.map(id=>wepDef(id).name+' '+wepStars(id,n)).join(' · ');
  lastOwned=owned;lastWepMul=muls;
- buildGun(curWep);updWpnHud(n);
+ buildGun(curWep,n);updWpnHud(n);
  return msg.trim();}
 // ---------- procedural guns (boxes/cylinders — no generated weirdness), rebuilt per weapon ----------
 scene.add(camera);
 const gun=new THREE.Group();
-const metalM=new THREE.MeshLambertMaterial({color:0x2a2d33});
+const metalM=new THREE.MeshPhongMaterial({color:0x2a2d33,specular:0x9aa2ad,shininess:70});
 const woodM=new THREE.MeshLambertMaterial({color:0x6e3a14});
-const railM=new THREE.MeshLambertMaterial({color:0x0a3a44,emissive:0x1899b0,emissiveIntensity:.9});
-const scopeM=new THREE.MeshLambertMaterial({color:0x111114});
+const railM=new THREE.MeshPhongMaterial({color:0x0a3a44,emissive:0x1899b0,emissiveIntensity:.9,specular:0x7dc4d4,shininess:80});
+const scopeM=new THREE.MeshPhongMaterial({color:0x111114,specular:0x6a7078,shininess:55});
+const metalBase=new THREE.Color(0x2a2d33),woodBase=new THREE.Color(0x6e3a14),
+ railBase=new THREE.Color(0x0a3a44),scopeBase=new THREE.Color(0x111114);
+// every gun gets its own tint (WEAPONS[].tint), deepened by level: faint wash at LV1,
+// slightly stronger by LV110, but always subtle so the metal still reads as metal.
+// Tints are muted toward neutral steel before mixing, so hues stay desaturated
+// (raw saturated lerp = plastic-toy look). Shared viewmodel mats re-tint on build/level-up.
+function gunTintAmt(n){n=+n||1;return 0.05+0.13*Math.min(1,n/110);}
+const steelGray=new THREE.Color(0x8a8f96);
+function muteTint(hex,keep){return new THREE.Color(hex).lerp(steelGray,1-keep);}
+function applyGunTint(id,n){
+ const W=wepDef(id);if(!W||W.tint===undefined)return;
+ const amt=gunTintAmt(n);
+ const steel=muteTint(W.tint,.22),woodTint=muteTint(W.tint,.35);
+ metalM.color.copy(metalBase).lerp(steel,amt);
+ woodM.color.copy(woodBase).lerp(woodTint,amt*.8);
+ scopeM.color.copy(scopeBase).lerp(steel,amt);
+ railM.color.copy(railBase).lerp(steel,amt*.8);}
 function barrel(r,len,z,x){const b=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10),metalM);
 b.rotation.x=Math.PI/2;b.position.set(x||0,-.02,z);gun.add(b);return b;}
 function gunBox(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);gun.add(m);return m;}
 const flash=new THREE.Mesh(new THREE.PlaneGeometry(.34,.34),
 new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));
 flash.rotation.y=Math.PI;
-function buildGun(id){ // swap the viewmodel to match the held weapon
+function buildGun(id,n){ // swap the viewmodel to match the held weapon
+ applyGunTint(id,n);
  gun.remove(flash);
  while(gun.children.length){const c=gun.children[0];gun.remove(c);if(c.geometry)c.geometry.dispose();}
  if(id==='sg'){for(const bx of [-.022,.022])barrel(.035,.7,-.5,bx);
@@ -580,7 +738,7 @@ if(fire){s.g.gain.exponentialRampToValueAtTime(.5,t+.06);s.g.gain.exponentialRam
 s.g2.gain.exponentialRampToValueAtTime(.001,t+.12);s.o.stop(t+.25);s.n.stop(t+.15);}
 else{s.g.gain.exponentialRampToValueAtTime(.001,t+.08);s.g2.gain.exponentialRampToValueAtTime(.001,t+.08);
 s.o.stop(t+.1);s.n.stop(t+.1);}}catch(e){}}
-let recoil=0,bobPhase=0,bobAmt=0,shake=0;
+let recoil=0,bobPhase=0,bobAmt=0,shake=0,rumble=0; // rumble: blast envelope, outlives shake to match the ~1.9s boom tail
 // ---------- procedural SFX (Web Audio, no files) ----------
 let AC=null,muted=false;
 function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
@@ -593,7 +751,7 @@ let dest=c.destination,pn=null;
 if(x!==undefined&&c.createStereoPanner){
 const p=Math.max(-1,Math.min(1,Math.sin(Math.atan2(x-player.x,-(z-player.z))+player.yaw)));
 pn=c.createStereoPanner();pn.pan.value=p;pn.connect(c.destination);dest=pn;
-setTimeout(()=>{try{pn.disconnect();}catch(e){}},500);}
+setTimeout(()=>{try{pn.disconnect();}catch(e){}},kind==='boom'?2200:500);}
 if(kind==='shot'){ // shotgun: noise boom + sub punch (no crack pop)
 const n=c.createBufferSource();n.buffer=sharedBuf(c);
 const f=c.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(4500,t);f.frequency.exponentialRampToValueAtTime(250,t+.28);
@@ -666,14 +824,17 @@ else if(kind==='dashwarn'){ // dash telegraph: rising shriek — move NOW
 const o=c.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(900,t+.25);
 const g=c.createGain();g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);
 o.connect(g);g.connect(dest);o.start(t);o.stop(t+.28);}
-else if(kind==='rifle'){ // burst rifle: short dry crack, quieter than the shotgun
+else if(kind==='rifle'){ // burst rifle: deep bark + crack, still leaner than the shotgun
 const n=c.createBufferSource();n.buffer=sharedBuf(c);
-const f=c.createBiquadFilter();f.type='highpass';f.frequency.value=1800;
+const f=c.createBiquadFilter();f.type='highpass';f.frequency.value=900;
 const g=c.createGain();g.gain.setValueAtTime(.4,t);g.gain.exponentialRampToValueAtTime(.001,t+.09);
 n.connect(f);f.connect(g);g.connect(dest);n.start(t);n.stop(t+.1);
-const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(200,t+.06);
-const g2=c.createGain();g2.gain.setValueAtTime(.2,t);g2.gain.exponentialRampToValueAtTime(.001,t+.07);
-o.connect(g2);g2.connect(dest);o.start(t);o.stop(t+.07);}
+const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(420,t);o.frequency.exponentialRampToValueAtTime(110,t+.07);
+const g2=c.createGain();g2.gain.setValueAtTime(.28,t);g2.gain.exponentialRampToValueAtTime(.001,t+.08);
+o.connect(g2);g2.connect(dest);o.start(t);o.stop(t+.08);
+const th=c.createOscillator();th.type='sine';th.frequency.setValueAtTime(170,t);th.frequency.exponentialRampToValueAtTime(48,t+.1);
+const g3=c.createGain();g3.gain.setValueAtTime(.55,t);g3.gain.exponentialRampToValueAtTime(.001,t+.11);
+th.connect(g3);g3.connect(dest);th.start(t);th.stop(t+.12);}
 else if(kind==='sniper'){ // long whip-crack + tail
 const n=c.createBufferSource();n.buffer=sharedBuf(c);
 const f=c.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(8000,t);f.frequency.exponentialRampToValueAtTime(300,t+.4);
@@ -700,17 +861,46 @@ n2.connect(f2);f2.connect(g2);g2.connect(dest);n2.start(et);n2.stop(et+.42);}
 else if(kind==='wave'){ // level clear: rising alarm
 for(let i=0;i<2;i++){const o=c.createOscillator();o.type='square';o.frequency.setValueAtTime(440,t+i*.16);o.frequency.exponentialRampToValueAtTime(660,t+i*.16+.12);
 const g=c.createGain();g.gain.setValueAtTime(.18,t+i*.16);g.gain.exponentialRampToValueAtTime(.001,t+i*.16+.14);
-o.connect(g);g.connect(dest);o.start(t+i*.16);o.stop(t+i*.16+.15);}}}
-addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='m'){muted=!muted;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;}
-if(k==='n'){musicOn=!musicOn;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;showMsg(musicOn?('MUSIC ON · '+((MUS&&MUS.label)||'')):'MUSIC OFF',1200);}});
+o.connect(g);g.connect(dest);o.start(t+i*.16);o.stop(t+i*.16+.15);}}
+else if(kind==='boom'){ // GRENADE DETONATION: supersonic crack + chest-caving sub + long rolling thunder (~1.9s)
+const ck=c.createBufferSource();ck.buffer=sharedBuf(c);
+const hf=c.createBiquadFilter();hf.type='highpass';hf.frequency.value=1400;
+const cg=c.createGain();cg.gain.setValueAtTime(1.1,t);cg.gain.exponentialRampToValueAtTime(.001,t+.12);
+ck.connect(hf);hf.connect(cg);cg.connect(dest);ck.start(t);ck.stop(t+.14);
+const sub=c.createOscillator();sub.type='sine';sub.frequency.setValueAtTime(95,t);sub.frequency.exponentialRampToValueAtTime(20,t+1.2);
+const sg=c.createGain();sg.gain.setValueAtTime(2.0,t);sg.gain.exponentialRampToValueAtTime(.001,t+1.4);
+sub.connect(sg);sg.connect(dest);sub.start(t);sub.stop(t+1.42);
+const th=c.createOscillator();th.type='triangle';th.frequency.setValueAtTime(170,t);th.frequency.exponentialRampToValueAtTime(30,t+.5);
+const tg=c.createGain();tg.gain.setValueAtTime(1.0,t);tg.gain.exponentialRampToValueAtTime(.001,t+.6);
+th.connect(tg);tg.connect(dest);th.start(t);th.stop(t+.62);
+const n=c.createBufferSource();n.buffer=sharedBuf(c);
+const f=c.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(6500,t);f.frequency.exponentialRampToValueAtTime(60,t+1.6);
+const g=c.createGain();g.gain.setValueAtTime(1.6,t);g.gain.exponentialRampToValueAtTime(.001,t+1.8);
+n.connect(f);f.connect(g);g.connect(dest);n.start(t);n.stop(t+1.82);
+const et=t+.25,n2=c.createBufferSource();n2.buffer=sharedBuf(c); // shockwave echo rolling back
+const f2=c.createBiquadFilter();f2.type='lowpass';f2.frequency.setValueAtTime(800,et);f2.frequency.exponentialRampToValueAtTime(50,et+1.0);
+const g2=c.createGain();g2.gain.setValueAtTime(.7,et);g2.gain.exponentialRampToValueAtTime(.001,et+1.1);
+n2.connect(f2);f2.connect(g2);g2.connect(dest);n2.start(et);n2.stop(et+1.12);
+const et2=t+.6,n3=c.createBufferSource();n3.buffer=sharedBuf(c); // second thunder roll
+const f3=c.createBiquadFilter();f3.type='lowpass';f3.frequency.setValueAtTime(450,et2);f3.frequency.exponentialRampToValueAtTime(50,et2+.8);
+const g3=c.createGain();g3.gain.setValueAtTime(.4,et2);g3.gain.exponentialRampToValueAtTime(.001,et2+.9);
+n3.connect(f3);f3.connect(g3);g3.connect(dest);n3.start(et2);n3.stop(et2+.92);}}
+function updMuteIcon(){try{document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';}catch(e){}}
+function toggleMute(){muted=!muted;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;updMuteIcon();}
+function toggleMusic(){musicOn=!musicOn;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;showMsg(musicOn?('MUSIC ON · '+((MUS&&MUS.label)||'')):'MUSIC OFF',1200);}
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='m')toggleMute();
+if(k==='n')toggleMusic();});
 // ---------- DOOM-ish synth loop: chugging E-minor riff + bass + drums ----------
 let musicBus=null,mStep=0,mNext=0,mTimer=null,lastSec='',musicOn=true;const MUSIC_VOL=.16; // quiet bed under the SFX (was .5)
-// ---------- generative metal engine: per-level key/scale/tempo/motif (seeded) ----------
+// ---------- generative metal engine: per-(seed,level) key/scale/tempo/motif ----------
+// the mix is offset from the default seed, so classic normal-mode tracks are
+// bit-identical to before while any other seed (e.g. the daily date) gets a new OST.
 let MUS=null,pendingMUS=null;
 const ROOTS=[['E',82.41],['D',73.42],['C',65.41],['A',110],['F#',92.5],['G',98]];
 const SCALES=[['natural minor',[0,2,3,5,7,8,10]],['phrygian',[0,1,3,5,7,8,10]],['harmonic minor',[0,2,3,5,7,8,11]],['dorian',[0,2,3,5,7,9,10]]];
-function genMusic(level){
-const rng=mulberry32(9000+level*331);
+function genMusic(level,seed){
+const s=(seed===undefined?LEVEL_SEED_DEFAULT:seed)|0;
+const rng=mulberry32((9000+level*331+(s-LEVEL_SEED_DEFAULT)*7919)|0);
 const root=ROOTS[(rng()*ROOTS.length)|0];
 const sc=SCALES[(rng()*SCALES.length)|0];
 const bpm=100+((rng()*70)|0),spb=60/bpm/4;
@@ -879,15 +1069,70 @@ pVel[j*3+2]=Math.sin(b)*Math.sin(a)*sp+(dz||0)*(kick||0);
 pLife[j]=pMax[j]=.8+Math.random()*2.4; // blood hangs around, min .8s
 const reds=[[94,0,0],[61,0,0],[110,0,0],[122,16,16],[74,8,8]];const c=reds[(Math.random()*reds.length)|0];
 pCol[j*3]=c[0]/255;pCol[j*3+1]=c[1]/255;pCol[j*3+2]=c[2]/255;}}
+// ---------- grenade explosion FX: fireball + shockwave + fire/smoke sparks (no blood) ----------
+const booms=[];
+const boomFireGeo=new THREE.SphereGeometry(1,14,10);
+const boomRingGeo=new THREE.RingGeometry(.85,1,32);
+function fireP(x,y,z,n,pow,dx,dz,kick){pColDirty=true;for(let i=0;i<n;i++){const j=pHead;pHead=(pHead+1)%PMAX;
+if(pLife[j]<=0&&pAlive<PMAX)pAlive++;
+pPos[j*3]=x;pPos[j*3+1]=y;pPos[j*3+2]=z;
+const sp=Math.random()*pow,a=Math.random()*6.28,b=Math.acos(2*Math.random()-1);
+pVel[j*3]=Math.sin(b)*Math.cos(a)*sp+(dx||0)*(kick||0);
+pVel[j*3+1]=Math.abs(Math.cos(b))*sp+1.5+Math.random()*2;
+pVel[j*3+2]=Math.sin(b)*Math.sin(a)*sp+(dz||0)*(kick||0);
+pLife[j]=pMax[j]=.35+Math.random()*.55; // flash-hot: fast life, no lingering
+const r=Math.random();
+let c;
+if(r<.18)c=[255,244,214]; // white-hot core
+else if(r<.45)c=[255,204,80]; // yellow flame
+else if(r<.75)c=[255,122,20]; // orange fire
+else if(r<.9)c=[214,48,8]; // deep red edge
+else c=[110,110,118]; // smoke puff
+pCol[j*3]=c[0]/255;pCol[j*3+1]=c[1]/255;pCol[j*3+2]=c[2]/255;}}
+// persistent blast light: added ONCE at startup (intensity 0 when idle) so explosions
+// never change the scene light count mid-combat — adding/removing a PointLight
+// forces every lit material to recompile shaders, which was the first-boom lag spike.
+const boomLight=new THREE.PointLight(0xff8a20,0,26,1.6);scene.add(boomLight);
+const BOOM_PEAK=500;
+function boomFx(x,y,z){
+fireP(x,y,z,70,9,0,0,0);
+fireP(x,y+.3,z,25,4,0,0,0);
+const fm=new THREE.Mesh(boomFireGeo,new THREE.MeshBasicMaterial({color:0xffb040,transparent:true,opacity:1,depthWrite:false,blending:THREE.AdditiveBlending}));
+fm.position.set(x,y,z);fm.scale.set(.6,.6,.6);fm.renderOrder=3;scene.add(fm);
+const core=new THREE.Mesh(boomFireGeo,new THREE.MeshBasicMaterial({color:0xfff6d8,transparent:true,opacity:1,depthWrite:false,blending:THREE.AdditiveBlending}));
+core.position.set(x,y,z);core.scale.set(.35,.35,.35);core.renderOrder=3;scene.add(core);
+const ring=new THREE.Mesh(boomRingGeo,new THREE.MeshBasicMaterial({color:0xffd070,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}));
+ring.rotation.x=-Math.PI/2;ring.position.set(x,.12,z);ring.scale.set(1,1,1);ring.renderOrder=3;scene.add(ring);
+boomLight.position.set(x,y+1,z);
+booms.push({fm,core,ring,x,y,z,age:0,life:.55});
+if(booms.length>8){const o=booms.shift();scene.remove(o.fm);scene.remove(o.core);scene.remove(o.ring);
+o.fm.material.dispose();o.core.material.dispose();o.ring.material.dispose();}}
+function tickBooms(dt){
+let peak=0;
+for(let i=booms.length-1;i>=0;i--){const b=booms[i];b.age+=dt;
+const t=Math.min(1,b.age/b.life);
+b.fm.scale.setScalar(.6+t*5.5);b.fm.material.opacity=1*(1-t);
+b.core.scale.setScalar(.35+t*2.6);b.core.material.opacity=1*(1-t);
+const rs=1+t*9.2;b.ring.scale.set(rs,rs,1);b.ring.material.opacity=.95*(1-t);
+peak=Math.max(peak,BOOM_PEAK*(1-t));
+if(b.age>=b.life){scene.remove(b.fm);scene.remove(b.core);scene.remove(b.ring);
+b.fm.material.dispose();b.core.material.dispose();b.ring.material.dispose();booms.splice(i,1);}}
+if(booms.length){const b=booms[booms.length-1];boomLight.position.set(b.x,b.y+1,b.z);}
+boomLight.intensity=peak;}
 function splat(x,z,big){const m=new THREE.Mesh(splatGeo,splatMat);
 const s=big?3.4:2;m.scale.set(s,s,1);
 m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.03+Math.random()*.01,z);
-m.renderOrder=0;pushSplat(m);}
-function splatSmall(x,z){ // gib chips leave a small splat — capped via pushSplat
+m.renderOrder=0;pushSplat(m,big);}
+function splatSmall(x,z){ // gib chips leave a small splat — small cap, never evicts pools
  const m=new THREE.Mesh(splatGeo,splatSmallMat);
 m.scale.set(.9,.9,1);
  m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.04,z);
- m.renderOrder=0;pushSplat(m);}
+ m.renderOrder=0;pushSplat(m,false);}
+function scorch(x,z){ // grenade blast mark: charred ground, not a blood pool
+ const m=new THREE.Mesh(splatGeo,scorchMat);
+ const s=5.75+Math.random()*.9;m.scale.set(s,s,1);
+ m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.025,z);
+ m.renderOrder=0;pushSplat(m,true);}
 function splatWall(x,y,z,nx,nz){ // snap to the nearest solid-tile face: exact plane + outward normal
  y=Math.max(.3,Math.min(3.4,y));
  const gx=Math.floor(x/TS),gy=Math.floor(z/TS),EPS=.03;
@@ -912,8 +1157,9 @@ function splatWall(x,y,z,nx,nz){ // snap to the nearest solid-tile face: exact p
  m.scale.set(s,s,1);
  m.rotation.order='YXZ';m.rotation.y=f.ry;m.rotateZ(Math.random()*6.28);
  m.position.set(f.px,y,f.pz);
- m.renderOrder=0;pushSplat(m);}
+ m.renderOrder=0;pushSplat(m,false);}
 function gibBurst(x,y,z,big,dx,dz,kick,close,dbl){const vm=dbl?2:1,n=(big?11:6)*(close?2:1)*(dbl?2:1);gibCount+=n;gEl.textContent=gibCount;
+try{if(pureRun&&window.Achievements){const gr=window.Achievements.checkGibs(n);if(gr.isNew)achToastTier('gibs',gr.total+' LIFETIME GIBS');}}catch(_){}
 for(let i=0;i<n;i++){const bigGib=Math.random()<.5;const s=new THREE.Sprite(allocGibMat(bigGib));
 const sc=bigGib?.4+Math.random()*.3:.15+Math.random()*.12;s.scale.set(sc,sc,1);s.position.set(x,y,z);s.renderOrder=2;scene.add(s);
 // uniform random direction at 1-7 speed (x2 when doubled), plus the shove along the shot direction
@@ -941,7 +1187,7 @@ function tickProjectiles(dt){
   if(!dead){
    const dx=player.x-nx,dz=player.z-nz,dy=1.2-ny;
    if(dx*dx+dz*dz+dy*dy<1){ // dodgeable: ~1m hit sphere, sidestep it
-    player.hp-=p.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',player.x,player.z);
+    player.hp-=p.dmg;lastHurtBy='spit';hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',player.x,player.z);
     dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);
     blood(player.x,1.4,player.z,10,2,dx/(Math.hypot(dx,dz)||1),dz/(Math.hypot(dx,dz)||1),2);
     if(player.hp<=0)die(`SPAT DOWN on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);
@@ -956,16 +1202,47 @@ const LEVEL_SEED_DEFAULT=1337;let LEVEL_SEED=LEVEL_SEED_DEFAULT;
 // camera shake, audio) intentionally stays on Math.random so it never perturbs AI.
 let aiRng=null;
 function aiRand(){return aiRng?aiRng():Math.random();}
-let level=1,exitOpen=false,exitMesh=null,exitGlow=null,exitPos={x:0,z:0},stalker=null,adRetryUsed=false,adPlaying=false,stalkerVulnerable=false,levelTotal=0;
+let level=1,exitOpen=false,exitMesh=null,exitGlow=null,exitPos={x:0,z:0},stalker=null,adRetriesLeft=2,adPlaying=false,stalkerVulnerable=false,levelTotal=0;
+let levelStartHp=100; // flawless tracking: hp at level entry (heals happen before genLevel)
+let diedThisLevel=false; // set on death/revive: blocks flawless/pacifist/sg_pb for this level
+let pureRun=true; // normal ENTER / DAILY / ENDLESS runs earn bestiary + achievements; custom seed/LV runs don't
+let levelShots=0,levelKills=0,levelSgClose=0,lastHurtBy=null,stalkerOtherWep=false; // per-level achievement tracking, reset in genLevel
+// ---------- daily challenge: seed = current date (YYYYMMDD), 3 stages at
+// difficulties 10 / 23 / 30, stage 3 always packs a (deterministic) random warlord.
+const DAILY_DIFFS=[10,23,30];
+let dailyMode=false,dailyStage=0,dailySeed=0,dailyLabel='';
+function dailySeedForToday(d){const t=d||new Date();
+return t.getFullYear()*10000+(t.getMonth()+1)*100+t.getDate();}
+function dailyBossFor(seed){return BOSSES[((seed% BOSSES.length)+BOSSES.length)%BOSSES.length];}
+function dailyForceBoss(){return (dailyMode&&dailyStage===2)?dailyBossFor(dailySeed):null;}
+function updLevelHud(){try{
+document.getElementById('wave').textContent=dailyMode?('D'+(dailyStage+1)+'/3'):level;}catch(e){}}
 let msgT=null;
 function showMsg(t,hold){const el=document.getElementById('lvlmsg');el.textContent=t;el.style.opacity=1;
 if(msgT)clearTimeout(msgT);msgT=setTimeout(()=>el.style.opacity=0,(hold||2200));}
+// first-time control hints: bottom toast before the first grenade throw / weapon switch (once ever)
+function storeGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function storeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+let tipNadeSeen=!!storeGet('dood_tip_nade'),tipSwapSeen=!!storeGet('dood_tip_swap');
+let tipTimer=null;const tipQ=[];let tipShowing=false;
+function tipTouch(){return document.body.classList.contains('has-touch');}
+function pumpTip(){if(tipShowing)return;const nx=tipQ.shift();if(!nx)return;const el=document.getElementById('tip');
+if(!el)return;tipShowing=true;el.textContent=nx[0];el.classList.add('show');
+tipTimer=setTimeout(()=>{el.classList.remove('show');tipShowing=false;tipTimer=setTimeout(pumpTip,400);},nx[1]);}
+function showTip(t,hold){tipQ.push([t,hold||7000]);pumpTip();}
+function hideTip(){const el=document.getElementById('tip');if(el)el.classList.remove('show');
+if(tipTimer){clearTimeout(tipTimer);tipTimer=null;}tipQ.length=0;tipShowing=false;}
+function maybeNadeTip(){if(tipNadeSeen||!running)return;
+showTip(tipTouch()?'💣 TAP TO LOB A GRENADE':'G — LOB A GRENADE');}
+function maybeSwapTip(){if(tipSwapSeen||!running||ownedWeapons(level).length<2)return;
+showTip(tipTouch()?'⇄ TAP TO SWITCH WEAPONS':'WHEEL / 1-4 — SWITCH WEAPONS');}
 // ---------- minimap: north-up overhead (walls + player arrow + foes + portal) ----------
 const mmC=document.getElementById('minimap'),mmG=mmC.getContext('2d');
 const mmStatic=document.createElement('canvas');mmStatic.width=mmC.width;mmStatic.height=mmC.height;
 const mmS=mmStatic.getContext('2d');
 let mmOn=true,mmAcc=0,mmStaticDirty=true;
-addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p'){if(level===25&&!mmOn)return;mmOn=!mmOn;mmC.style.display=mmOn?'block':'none';if(level===25)mmC.style.display='none';}});
+function toggleMap(){if(level===25&&!mmOn)return;mmOn=!mmOn;mmC.style.display=mmOn?'block':'none';if(level===25)mmC.style.display='none';}
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='p')toggleMap();});
 function drawMinimapStatic(){
  const W=mmC.width,H=mmC.height,cell=Math.min(W/GW,H/GH);
  const ox=(W-cell*GW)/2,oy=(H-cell*GH)/2;
@@ -991,7 +1268,7 @@ function drawMinimap(){
   for(const e of enemies){
    if(e.dash&&e.dash.phase==='wind')dot(e.x,e.z,'#ffffff',Math.max(3,cell*.5)); // dash telegraph: white blip
    else dot(e.x,e.z,e.def&&e.def.boss?'#ff00ff':(e.def&&e.def.ranged?'#39c1ff':'#ff6a2a'));}
-  for(const p of nadePickups)dot(p.x,p.z,'#39ff14',Math.max(2,cell*.35)); // grenade caches
+  for(const p of nadePickups)dot(p.x,p.z,'#3fa9ff',Math.max(2,cell*.35)); // grenade caches
   if(stalker)dot(stalker.x,stalker.z,(stalker.dash&&stalker.dash.phase==='wind')?'#ffffff':'#c0f',Math.max(3,cell*.45));
  // player arrow: forward = (-sin yaw, -cos yaw), map world x->x, world z->y
  const px=ox+(player.x/TS)*cell,py=oy+(player.z/TS)*cell;
@@ -1015,9 +1292,18 @@ pLife.fill(0);rsLife.fill(0);pAlive=0;rsAlive=0;pColDirty=false;for(let j=0;j<PM
 if(exitMesh){scene.remove(exitMesh);exitMesh=null;}
 if(exitGlow){scene.remove(exitGlow);exitGlow=null;}
 if(stalker){scene.remove(stalker.s);stalker=null;}stalkerVulnerable=false;stalkerDying=null;bossBooms=[];}
-function genLevel(n){
+function genLevel(n,forceBoss){
  clearActors();
+ resetTitle(); // stale death/victory titles never linger into the next run
+ // deep-level layouts: past 40 the maze alternates classic / open arena / warrens /
+ // loop field so the long endgame isn't one maze forever. Pure (seed,level) pick;
+ // the carve pass below uses its own stream, so everything below 40 never shifts.
+ const layV=n<40?0:((mulberry32((LEVEL_SEED*13+n*521+0x85EBCA6B)|0)()*4)|0);
  mmStaticDirty=true; // maze changed: minimap static layer must repaint
+ levelStartHp=player.hp;
+ diedThisLevel=false;
+ levelShots=0;levelKills=0;levelSgClose=0;stalkerOtherWep=false; // fresh per-level trophy ledgers
+ if(pureRun)try{if(window.Achievements){const dr=window.Achievements.checkDepth(n);if(dr.isNew)achToastTier('depth','LEVEL '+n);}}catch(_){}
  const rng=mulberry32(LEVEL_SEED+n*7919);
  aiRng=mulberry32((LEVEL_SEED+n*7919+0x9E3779B9)|0); // separate AI stream: layout stays identical
 // maze: 9 -> 13 early, frozen until 20, then grows again (15 at 25, 19 at 35, cap 21)
@@ -1037,14 +1323,28 @@ if(!opts.length){stack.pop();continue;}
 const pick=opts[(rng()*opts.length)|0];
 grid[idx(cx+pick[2]/2,cy+pick[3]/2)]=0;grid[idx(pick[0],pick[1])]=0;stack.push([pick[0],pick[1]]);}
   // loops capped so high levels stay a maze + rooms (bossfights get extra loops + big pits)
-  const bossHere=BOSSES.find(b=>b.at===n);
-  const bigArena=bossHere||n===25; // warlord levels + IT's level all need room to breathe
+  const bossHere=forceBoss||BOSSES.find(b=>b.at===n);
+  const bigArena=bossHere||n===25||n===666; // warlord levels + IT's level all need room to breathe
   const loops=((GW*GH/30)|0)+Math.min(4,n>>2)+(bigArena?((GW*GH/20)|0):0);
   for(let i=0;i<loops;i++)grid[idx(1+((rng()*(GW-2))|0),1+((rng()*(GH-2))|0))]=0;
   const nRooms=bigArena?3:2,roomBase=bigArena?5:3,roomVar=bigArena?3:1;
   for(let r=0;r<nRooms;r++){const rw=roomBase+((rng()*roomVar)|0),rh=roomBase+((rng()*roomVar)|0),
  rx=1+((rng()*(GW-rw-2))|0),ry=1+((rng()*(GH-rh-2))|0);
- for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)grid[idx(x,y)]=0;}
+  for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)grid[idx(x,y)]=0;}
+  if(layV>0){ // deep layout variant pass (own stream: base maze above is untouched)
+   const lrng=mulberry32((LEVEL_SEED*7+n*911+0x27D4EB2F)|0);
+   if(layV===1){ // OPEN ARENA: gut the middle, scatter pillar cover
+    for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++)if(grid[idx(x,y)]===1&&lrng()<.45)grid[idx(x,y)]=0;
+    const pills=((GW*GH/50)|0)+4;
+    for(let p=0;p<pills;p++){const px=1+((lrng()*(GW-2))|0),py=1+((lrng()*(GH-2))|0);
+     if(grid[idx(px,py)]===0&&Math.abs(px-1)+Math.abs(py-1)>3)grid[idx(px,py)]=1;}}
+   else if(layV===2){ // WARRENS: extra big rooms on top of the base ones
+    for(let r=0;r<4;r++){const rw=4+((lrng()*4)|0),rh=4+((lrng()*4)|0),
+     rx=1+((lrng()*Math.max(1,GW-rw-1))|0),ry=1+((lrng()*Math.max(1,GH-rh-1))|0);
+     for(let y=ry;y<Math.min(GH-1,ry+rh);y++)for(let x=rx;x<Math.min(GW-1,rx+rw);x++)grid[idx(x,y)]=0;}}
+   else{ // LOOP FIELD: knock out far more walls than the base loop pass
+    const knocks=((GW*GH/8)|0);
+    for(let i=0;i<knocks;i++)grid[idx(1+((lrng()*(GW-2))|0),1+((lrng()*(GH-2))|0))]=0;}}
   // bossfight arena: clear a 7x7 pit around the warlord's door (preliminary farthest
   // tile) so the fight has room to breathe. The carve is rng-free; dist is recomputed after.
   let dist=bfsDist(1,1);
@@ -1084,7 +1384,7 @@ exitMesh.position.set(exitPos.x,1.6,exitPos.z);exitMesh.rotation.y=rng()*6.28;sc
  const envSt=applyEnvStyle(n,rng);
   let count=(n===25)?0:Math.min(n>60?110:80,Math.round(6+n*1.23)); // scales up: ~7 at 1, ~18 at 10, ~31 at 20, ~55 at 40, ~80 at 60, then +1/lvl to a 110 cap for the deep game
   // boss level: the warlord drops in at the farthest open tile (bossHere defined with the rooms above)
-  if(bossHere)count=Math.ceil(count/2); // bossfights: half the trash so the warlord reads
+  if(bossHere||n===666)count=Math.ceil(count/2); // bossfights: half the trash so the warlord reads
 const cands=[];
 for(let y=1;y<GH-1;y++)for(let x=1;x<GW-1;x++)
 if(grid[idx(x,y)]===0&&dist[idx(x,y)]>5)cands.push({x,y,d:dist[idx(x,y)]});
@@ -1100,8 +1400,12 @@ const t=cands.splice(pickI,1)[0];
 const px=(t.x+.5)*TS,pz=(t.y+.5)*TS;
 const minGap=count>50?3.5:5; // relax spacing on dense late levels so all 110 fit
 if(spawned.some(p=>Math.hypot(p.x-px,p.z-pz)<minGap)){i--;continue;} // min spacing
-spawned.push({x:px,z:pz});
- const d=scaledDef(pickDef(n,rng),n,rng);
+ spawned.push({x:px,z:pz});
+  let baseD=pickDef(n,rng);
+  if(n>=30&&(i%6===5)){ // deep guaranteed mix: every 6th spawn is scripted role pressure
+   const mix=[DEFS[4],DEFS[6],DEFS[1],DEFS[5]]; // spitter battery / circler / dasher / siege
+   baseD=mix[(n+i)%mix.length]||baseD;}
+  const d=scaledDef(baseD,n,rng);
  let sx=px,sz=pz; // jittered spawn must keep .5m clearance: resample, fall back to tile center
  for(let tries=0;tries<8;tries++){const jx=px+(rng()-.5)*2,jz=pz+(rng()-.5)*2;
   if(!collide(jx,jz,.5)){sx=jx;sz=jz;break;}}
@@ -1109,12 +1413,57 @@ spawned.push({x:px,z:pz});
  spawnEnemy(d,sn.x,sn.z);} // trash scales: smooth per-level growth + tinted variants from 30
    foesEl.textContent=enemies.length;
   if(bossHere){const bs=snapOutOfWall((bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS,.8);spawnEnemy(scaledDef(bossHere,n,rng),bs.x,bs.z);}
-   // endless: rare wandering warlords past 25 (12% per level, never on 25)
-   if(n>25&&n!==25&&rng()<.12){const rb=BOSSES[(rng()*BOSSES.length)|0];
-    const rd=scaledDef(rb,n,rng);
-    const ws=snapOutOfWall((bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS,.8);
-    spawnEnemy(rd,ws.x,ws.z);
-   showMsg('⚠ '+rd.name+' STIRS IN THE DEEP — LEVEL '+n+' ⚠',3000);}
+   if(n===666){ // the number of the beast: every warlord wears the VOID at once, for fun
+    const spots=[{x:bossSpot.x,y:bossSpot.y}];
+    for(let ring=1;ring<=6&&spots.length<3;ring++)
+     for(let oy=-ring;oy<=ring&&spots.length<3;oy++)for(let ox=-ring;ox<=ring&&spots.length<3;ox++){
+      if(Math.max(Math.abs(ox),Math.abs(oy))!==ring)continue;
+      const tx=bossSpot.x+ox,ty=bossSpot.y+oy;
+      if(tx<1||ty<1||tx>=GW-1||ty>=GH-1||grid[ty*GW+tx]!==0)continue;
+      if(spots.some(s=>Math.abs(s.x-tx)+Math.abs(s.y-ty)<3))continue;
+      spots.push({x:tx,y:ty});}
+    for(let bi=0;bi<3;bi++){const bp=spots[Math.min(bi,spots.length-1)];
+     const bs=snapOutOfWall((bp.x+.5)*TS,(bp.y+.5)*TS,.8);
+     spawnEnemy(scaledDef(BOSSES[bi],n,rng,'VOID'),bs.x,bs.z);}}
+   // endless: wandering warlords past 25 — 12% early, up to 35% in the deep (never on 25).
+   // past 60 a stir can bring a PAIR. Past 30, themed war parties keep packs varied.
+   function ringSpotWorld(bx,by,used,minSep){ // open tile ring-search around a tile, world coords
+    for(let ring=1;ring<=6;ring++)
+     for(let oy=-ring;oy<=ring;oy++)for(let ox=-ring;ox<=ring;ox++){
+      if(Math.max(Math.abs(ox),Math.abs(oy))!==ring)continue;
+      const tx=bx+ox,ty=by+oy;
+      if(tx<1||ty<1||tx>=GW-1||ty>=GH-1||grid[ty*GW+tx]!==0)continue;
+      const px=(tx+.5)*TS,pz=(ty+.5)*TS;
+      if(used.some(s=>Math.hypot(s.x-px,s.z-pz)<minSep))continue;
+      return{x:px,z:pz};}
+    return null;}
+   if(n>25&&n!==25){const wChance=n<40?.12:Math.min(.35,.12+(n-40)*.015);
+    if(rng()<wChance){const rb=BOSSES[(rng()*BOSSES.length)|0];
+     const rd=scaledDef(rb,n,rng);
+     const ws=snapOutOfWall((bossSpot.x+.5)*TS,(bossSpot.y+.5)*TS,.8);
+     spawnEnemy(rd,ws.x,ws.z);
+     spawned.push({x:ws.x,z:ws.z});
+     let wmsg='⚠ '+rd.name+' STIRS IN THE DEEP — LEVEL '+n+' ⚠';
+     if(n>=60&&enemies.length<105&&rng()<.25){ // deep pair: two warlords, one level
+      const rb2=BOSSES[(rng()*BOSSES.length)|0],rd2=scaledDef(rb2,n,rng);
+      const ps=ringSpotWorld(bossSpot.x,bossSpot.y,spawned,3*TS);
+      const psn=ps?snapOutOfWall(ps.x,ps.z,.8):ws;
+      spawnEnemy(rd2,psn.x,psn.z);
+      spawned.push({x:psn.x,z:psn.z});
+      wmsg='⚠ '+rd.name+' + '+rd2.name+' STIR IN THE DEEP — LEVEL '+n+' ⚠';}
+     showMsg(wmsg,3000);}}
+   if(n>30&&n!==25&&!bossHere&&enemies.length<105&&rng()<.18){ // war party: themed squad near the far door
+    const themes=[{name:'SPITTER BATTERY',units:['sp','sp','sp','ma']},
+     {name:'DASH PACK',units:['d3','d3','d3','rf']},
+     {name:'SIEGE PARTY',units:['ma','go','rf','sp']},
+     {name:'GOUGER WALL',units:['go','go','wr','wr']}];
+    const th=themes[(rng()*themes.length)|0];let placed=0;
+    for(const u of th.units){const bd=DEFS.find(d=>d.a===u);if(!bd)continue;
+     const ps=ringSpotWorld(bossSpot.x,bossSpot.y,spawned,2.5*TS);if(!ps)break;
+     const psn=snapOutOfWall(ps.x,ps.z,.5);
+     spawnEnemy(scaledDef(bd,n,rng),psn.x,psn.z);
+     spawned.push({x:psn.x,z:psn.z});placed++;}
+    if(placed)showMsg('⚠ '+th.name+' GUARDS LEVEL '+n+' ⚠',3000);}
 levelTotal=enemies.length; // herd baseline: late-level stragglers converge, last 3 hunt
 player.x=SX;player.z=SZ;player.yaw=rng()*6.28;
 if(n===25){ // IT itself: vulnerable from the start, no exit until it dies
@@ -1134,34 +1483,48 @@ sfx('roar',stalker.x,stalker.z);}
    for(let r=0;r<rolls;r++)if(prng()<.1)
     for(let t=0;t<20;t++){const tx=1+((prng()*(GW-2))|0),ty=1+((prng()*(GH-2))|0);
      if(grid[ty*GW+tx]===0&&dist[ty*GW+tx]>5){spawnNadePickup((tx+.5)*TS,(ty+.5)*TS);break;}}}
-   pendingMUS=genMusic(n); // next track swaps in on the next bar line
+   pendingMUS=genMusic(n,LEVEL_SEED); // next track swaps in on the next bar line
    {let embedded=0; // final safety net: no actor may start life inside a wall
     for(const e of enemies)if(collide(e.x,e.z,.5)){const sn3=snapOutOfWall(e.x,e.z,.5);e.x=sn3.x;e.z=sn3.z;e.s.position.set(e.x,e.def.s/2,e.z);embedded++;}
     if(stalker&&collide(stalker.x,stalker.z,.8)){const sn4=snapOutOfWall(stalker.x,stalker.z,.8);stalker.x=sn4.x;stalker.z=sn4.z;embedded++;}
     if(embedded)console.warn('[dood] snapped '+embedded+' wall-embedded spawn(s) on level '+n);}
    mmC.style.display=(n===25)?'none':(mmOn?'block':'none'); // stalker boss: no minimap
    const unlockMsg=applyLoadout(n); // guns/upgrades purely from level: direct entry just works
-   const lvlLabel='LEVEL '+n;
+   updLevelHud();
+   const lvlLabel=dailyMode?('DAILY '+(dailyStage+1)+'/3'):('LEVEL '+n);
    let base;
-  if(n===25)base='⚠ IT HAS COME — KILL IT ⚠';
-  else if(bossHere)base='⚠ '+bossHere.name+' HAS COME — LEVEL '+n+' ⚠';
+  if(n===666)base='⚠ LEVEL 666 — EVERY WARLORD WEARS THE VOID ⚠';
+  else if(n===25)base='⚠ IT HAS COME — KILL IT ⚠';
+  else if(bossHere)base=dailyMode?('⚠ '+bossHere.name+' HAS COME — '+lvlLabel+' ⚠'):('⚠ '+bossHere.name+' HAS COME — LEVEL '+n+' ⚠');
   else{const nv=VARIANTS.find(v=>v.at===n);
    base=nv?lvlLabel+' — ⚠ '+nv.tag+' DEMONS STALK THESE DEPTHS ⚠':lvlLabel;}
-  showMsg(unlockMsg?base+' · '+unlockMsg:base,3000);}
+  if(dailyMode&&dailyStage===2&&!unlockMsg)base+=' · FINAL STAGE';
+  if(dailyMode&&dailyStage===0)base+=' · FINAL: '+dailyBossFor(dailySeed).name+' AT LV30';
+  if(layV===1)base+=' · OPEN ARENA';
+  else if(layV===2)base+=' · WARRENS';
+  else if(layV===3)base+=' · LOOP FIELD';
+  showMsg(unlockMsg?base+' · '+unlockMsg:base,3000);
+  if(running&&unlockMsg&&unlockMsg.indexOf('ACQUIRED')>=0)maybeSwapTip(); // mid-run unlock, first time only
+  saveRun(false);} // level-entry snapshot: closing the tab offers CONTINUE from here
 // ---------- level flow (seeded) ----------
 // ---------- input ----------
 const keys={};addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-function lockPointer(){if(document.body.classList.contains('has-touch'))return;try{renderer.domElement.requestPointerLock();}catch(e){}}
+function lockPointer(){if(touchPlay())return;try{renderer.domElement.requestPointerLock();}catch(e){}}
 renderer.domElement.addEventListener('click',()=>{if(running)lockPointer();});
 document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&running)player.yaw-=e.movementX*.0026;});
-let shooting=false;let burstLeft=0,burstBuf=false; // burst rifle: 5-round bursts, one per click + one buffered
+let shooting=false;let burstLeft=0,burstBuf=false,burstFired=0; // burst rifle: 5-round bursts, one per click + one buffered
 let railCharge=0; // railgun: hold a full second to charge, release early cancels
 function killCharge(){railCharge=0;chargeBeam.material.opacity=0;stopChargeSnd(false);}
-function queueBurst(){if(!running||dying)return;if(burstLeft>0)burstBuf=true;else burstLeft=wepDef('ar').burst||3;}
+function queueBurst(){if(!running||dying)return;if(burstLeft>0)burstBuf=true;else{burstLeft=wepDef('ar').burst||5;burstFired=0;}}
+function endBurstCut(){ // released mid-burst: flat 0.2s cooldown if any rounds went out
+ shooting=false;
+ if(burstLeft>0&&burstFired>0)wepCool.ar=Math.max(wepCool.ar||0,.2);
+ burstLeft=0;burstBuf=false;burstFired=0;}
 addEventListener('mousedown',e=>{if(e.button===0&&running&&document.pointerLockElement===renderer.domElement){shooting=true;if(curWep==='ar')queueBurst();}});
-addEventListener('mouseup',()=>{shooting=false;burstLeft=0;burstBuf=false;}); // release cuts the burst dead
+addEventListener('mouseup',()=>{endBurstCut();}); // release cuts the burst dead, partial cooldown applies
 function selectWep(id){if(id===curWep||!ownedWeapons(level).includes(id))return;
-curWep=id;buildGun(id);updWpnHud(level);wepCool[id]=Math.max(wepCool[id]||0,.25);burstLeft=0;burstBuf=false;killCharge();} // switching costs a beat on the gun you grab, voids any burst/charge
+if(!tipSwapSeen){tipSwapSeen=true;storeSet('dood_tip_swap','1');hideTip();}
+curWep=id;buildGun(id,level);updWpnHud(level);wepCool[id]=Math.max(wepCool[id]||0,.25);burstLeft=0;burstBuf=false;burstFired=0;killCharge();} // switching costs a beat on the gun you grab, voids any burst/charge
 addEventListener('wheel',e=>{if(!running)return;const o=ownedWeapons(level);if(o.length<2)return;
 let i=(o.indexOf(curWep)+(e.deltaY>0?1:-1)+o.length)%o.length;selectWep(o[i]);},{passive:true});
 addEventListener('keydown',e=>{if(!running)return;const k=e.key;
@@ -1171,6 +1534,7 @@ let muzzle=0;const wepCool={sg:0,ar:0,sn:0,rg:0}; // per-gun cooldowns: firing o
 // hitscan: ONE predictable target — nearest demon to the crosshair inside a tight cone.
 // (old version damaged everything in a wide arc, so far demons stole near kills)
 function shoot(wid){wid=wid||curWep;const W=wepDef(wid),mul=wepMul(wid,level);
+levelShots++; // pacifist tracking: any trigger pull counts, even a whiff
 const dmg=W.dmg*mul,closeDmg=(W.closeDmg||W.dmg)*mul;
 wepCool[wid]=W.cd;muzzle=W.muz;recoil=W.kick;shake=Math.min(1.2,shake+W.shake);
 flash.scale.set(W.flashS,W.flashS,1);
@@ -1194,10 +1558,11 @@ cands.sort((a,b)=>a.score-b.score);
 if(!cands.length){sfx(snd);lamp.intensity=400;return;} // whiffed
 sfx(wid==='sg'&&cands[0].dist<4?'shotBig':snd); // point-blank shotgun gets the punchy boom
 if(wid==='sg'&&cands[0].dist<4)shake=Math.min(1.2,shake+.35); // shotgun only: double shake up close
-const maxHits=W.pierce+1;let beamEnd=null;
+const maxHits=W.pierce+1;let beamEnd=null;let killsThisShot=0;
 for(let i=0;i<cands.length&&i<maxHits;i++){const c=cands[i],close=c.dist<4;
 const dd=close?closeDmg:dmg;
 if(c.stalker){const sx=stalker.x,sz=stalker.z;stalker.hp-=dd;stalker.flash=.08;sfx('hit',sx,sz);
+if(wid!=='sg')stalkerOtherWep=true; // anything but buckshot voids the purist trophy
 blood(sx,2.5,sz,20,3.5,(sx-player.x)/(c.dist||1),(sz-player.z)/(c.dist||1),Math.random()*(close?10:6));
 beamEnd={x:sx,y:2.5,z:sz};
 if(stalker.hp<=0)killStalker();}
@@ -1206,15 +1571,17 @@ if(close&&wid==='sg'){const px=(e.x-player.x)/(c.dist||1),pz=(e.z-player.z)/(c.d
 if(!collide(e.x+px*1.2,e.z,.5))e.x+=px*1.2;
 if(!collide(e.x,e.z+pz*1.2,.5))e.z+=pz*1.2;}
 e.hp-=dd;e.flash=.08;sfx('hit',e.x,e.z);
+if(e.def.name==='GORGUT')e.gorgutShot=true; // any bullet voids the grenades-only trophy
 if(e.hp>0){
-if(e.dash){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1.5)*.5);} // any shot interrupts dashes
+if(e.dash&&!e.def.boss){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1.5)*.5);} // shots interrupt trash dashes — warlords charge through gunfire
 if(!e.def.boss){let sd=0; // close blasts stun (variants shrug, OBLIVION ignores)...
 if(close)sd=.35*(e.def.stunMul??1);
 if(e.def.stunWeak)sd=Math.max(sd,.45); // ...but wraiths + rotfiends reel from EVERY shot
 if(sd>0)e.stun=Math.max(e.stun||0,sd);}}
 blood(e.x,e.def.s*.6,e.z,16,3,(e.x-player.x)/(c.dist||1),(e.z-player.z)/(c.dist||1),Math.random()*(close?10:6));
 beamEnd={x:e.x,y:e.def.s*.6,z:e.z};
-if(e.hp<=0)kill(e,(e.x-player.x)/(c.dist||1),(e.z-player.z)/(c.dist||1),Math.random()*(close?10:6),close,wid==='rg');}}
+if(e.hp<=0){killsThisShot++;if(wid==='sg'&&close)levelSgClose++;kill(e,(e.x-player.x)/(c.dist||1),(e.z-player.z)/(c.dist||1),Math.random()*(close?10:6),close,wid==='rg');}}}
+if(wid==='rg'&&killsThisShot>=7)achUnlock('rg7'); // seven demons, one slug
 if(wid==='rg'){const dx0=-Math.sin(player.yaw),dz0=-Math.cos(player.yaw);
 const ex=beamEnd?beamEnd.x:player.x+dx0*W.range,
 ez=beamEnd?beamEnd.z:player.z+dz0*W.range,
@@ -1223,37 +1590,48 @@ fireBeam(player.x,1.5,player.z,ex,ey,ez);railBlast(ex,ey,ez,26,8);}
 // muzzle lamp kick
 lamp.intensity=400;}
 // ---------- grenades: 3 per level, lobbed with G. Blast stuns + hurls enemies away and
-// burns linearly with distance: 100 dmg / 7m slide at 0m -> 10 dmg / 3m slide at 10m,
-// nothing beyond 10m. (Stalker IT is too massive to care.)
+// burns linearly with distance: 50 dmg / 7m slide at 0m -> 5 dmg / 3m slide at 11.5m,
+// nothing beyond 11.5m. Bosses take half again (25 max). (Stalker IT is too massive to care.)
 let nades=3,nadeCd=0;const nadeFly=[],nadePickups=[];
+const NADE_R=11.5,NADE_R2=NADE_R*NADE_R;
 const nadeGeo=new THREE.SphereGeometry(.18,8,6);
-const nadeMat=new THREE.MeshBasicMaterial({color:0x7dff5e});
+const nadeMat=new THREE.MeshBasicMaterial({color:0x3fa9ff});
 const nadePickupGeo=new THREE.OctahedronGeometry(.35);
-const nadePickupMat=new THREE.MeshLambertMaterial({color:0x0a5a0a,emissive:0x39ff14,emissiveIntensity:.8});
+const nadePickupMat=new THREE.MeshLambertMaterial({color:0x0a2a5a,emissive:0x2a9fff,emissiveIntensity:.9});
 function updNadeHud(){const el=document.getElementById('grn');if(el)el.textContent=nades;}
 function throwNade(){if(!running||dying||nadeCd>0)return;
-if(nades<=0){showMsg('NO GRENADES — GRAB A GREEN CACHE',1200);nadeCd=.5;return;}
+if(nades<=0){showMsg('NO GRENADES — GRAB A BLUE CACHE',1200);nadeCd=.5;return;}
 nades--;nadeCd=.5;updNadeHud();
+if(!tipNadeSeen){tipNadeSeen=true;storeSet('dood_tip_nade','1');hideTip();}
 const dx0=-Math.sin(player.yaw),dz0=-Math.cos(player.yaw);
 const m=new THREE.Mesh(nadeGeo,nadeMat);m.position.set(player.x+dx0*.8,1.5,player.z+dz0*.8);scene.add(m);
 nadeFly.push({m,x:m.position.x,y:1.5,z:m.position.z,vx:dx0*14,vy:4,vz:dz0*14,fuse:1.0});}
 function explodeNade(x,y,z){
-sfx('shotBig',x,z);shake=Math.min(1.2,shake+.5);lamp.intensity=400;
-blood(x,Math.max(.5,y),z,30,5,0,0,0);splat(x,z,true);
+sfx('boom',x,z);
+const pd=Math.hypot(player.x-x,player.z-z); // violent up close, still felt far away
+shake=Math.min(1.5,shake+Math.max(.8,1.5-pd*.04));
+rumble=Math.min(1.5,rumble+Math.max(.8,1.5-pd*.04)); // slow-decay envelope: shake lasts as long as the noise
+lamp.intensity=600;
+boomFx(x,Math.max(.8,y),z);scorch(x,z);
+for(const e of enemies){const ax=e.x-x,az=e.z-z;if(ax*ax+az*az<900)e.alert=true;} // blast echoes 50% further than gunshots (30m vs 20m)
 const dead=[];
 for(let i=0;i<enemies.length;i++){const e=enemies[i],dx=e.x-x,dz=e.z-z,d2=dx*dx+dz*dz;
-if(d2>100)continue;
+if(d2>NADE_R2)continue;
 const dist=Math.sqrt(d2),nx=dx/(dist||1),nz=dz/(dist||1);
-e.hp-=Math.round(100-9*dist);
+let gDmg=Math.round((100-9*dist*10/NADE_R)/2);
+if(e.def.boss)gDmg=Math.ceil(gDmg/2);
+e.hp-=gDmg;
 e.flash=.08;
 if(e.dash){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1.5)*.5);}
 e.gz=1.2; // blast stun: everyone reels, warlords included
-const sv=(7-.4*dist)*3; // slide 7m at 0m -> 3m at 10m (travel = v0/3 at decay 3/s)
+const sv=(7-.4*dist*10/NADE_R)*3; // slide 7m at 0m -> 3m at edge (travel = v0/3 at decay 3/s)
 e.svX=nx*sv;e.svZ=nz*sv;
 sfx('hit',e.x,e.z);
-blood(e.x,e.def.s*.6,e.z,12,3,nx,nz,4);
+fireP(e.x,e.def.s*.6,e.z,12,4,nx,nz,4);
 if(e.hp<=0)dead.push([e,nx,nz]);}
-for(const t of dead)kill(t[0],t[1],t[2],4,false,true);}
+for(const t of dead)kill(t[0],t[1],t[2],4,false,true);
+if(dead.length>=3)achUnlock('nade3'); // one blast, three+ demons
+}
 function tickNades(dt){
 for(let i=nadeFly.length-1;i>=0;i--){const g=nadeFly[i];g.fuse-=dt;
 g.vy-=12*dt;
@@ -1273,7 +1651,19 @@ p.m.rotation.y+=dt*2;p.m.position.y=.5+Math.sin(frameNow*.003+p.ph)*.15;
 if(Math.hypot(p.x-player.x,p.z-player.z)<1.3){scene.remove(p.m);nadePickups.splice(i,1);
 sfx('wave',p.x,p.z);
 if(nades<6){nades++;updNadeHud();showMsg('+1 GRENADE',1000);}else showMsg('GRENADES FULL',1000);}}}
-function kill(e,dx,dz,kick,close,vap){kills++;kEl.textContent=kills;sfx('die',e.x,e.z);
+function kill(e,dx,dz,kick,close,vap,free){if(!free){kills++;levelKills++;kEl.textContent=kills;}sfx('die',e.x,e.z);
+try{if(!free&&pureRun&&window.Bestiary)window.Bestiary.record(e.def.a,e.def.variant||null);}catch(_){}
+if(!free&&pureRun)try{if(window.Achievements){const A=window.Achievements,kr=A.checkKills(1);
+ if(kr.total<=1)achUnlock('firstblood');
+ if(kr.isNew)achToastTier('kills',kr.total+' LIFETIME KILLS');
+ const fr=A.checkFoe(e.def.a);
+ if(fr.isNew)achToastTier('foe_'+e.def.a,fr.count+' '+A.foePlural(e.def.a).toUpperCase());
+ if(e.def.variant)achUnlock('var_'+e.def.variant);
+ if(e.def.boss){if(e.def.name==='GORGUT'){achUnlock('gorgut');if(!e.gorgutShot)achUnlock('gorgut_nades');}
+  else if(e.def.name==='MORGLA')achUnlock('morgla');
+  else if(e.def.name==='BAALZEVUR')achUnlock('baal');}
+ if(window.Bestiary){const bc=window.Bestiary.count();if(bc.got>=bc.total)achUnlock('bestiary');}
+}}catch(_){}
 const big=!!e.def.big;
 if(vap){scene.remove(e.s);freeEnemyMat(e.s.material);} // vaporized (railgun/grenade): no corpse, just a blast mark
 else{
@@ -1295,6 +1685,10 @@ if(e.def.boss){bossBooms.push({t:0,dur:1.5,x:e.x,z:e.z});sfx('roar',e.x,e.z);sho
  foesEl.textContent=enemies.length;
 if(!enemies.length){ // level clear — except 25: no exit until IT dies
 if(level!==25){exitOpen=true;exitMesh.material.color.setHex(0x39ff14);exitGlow.color.setHex(0x39ff14);
+if(!diedThisLevel){ // no trophies for a level you died on: revive smites are free, not flawless
+if(player.hp>=levelStartHp)achUnlock('flawless'); // cleared without taking a scratch
+if(levelShots<=0)achUnlock('pacifist'); // finished the whole level without firing
+if(levelKills>0&&levelKills===levelSgClose)achUnlock('sg_pb');} // every kill was a close-range shotgun blast
 sfx('wave',exitPos.x,exitPos.z);
 // stalker spawns far from the EXIT (and far from you) — never camps the portal
 const st=stalkerSpawnTile(Math.floor(player.x/TS),Math.floor(player.z/TS));
@@ -1308,6 +1702,10 @@ sfx('roar',stalker.x,stalker.z);
 showMsg('LEVEL CLEAR — IT HUNGERS — RUN TO THE PORTAL',3000);}
 else if(stalkerVulnerable)showMsg('IT STILL LIVES — FINISH IT',2500);}}
 function killStalker(){const sx=stalker.x,sz=stalker.z; // IT dies: chained gory detonation, then victory
+ try{if(pureRun&&window.Bestiary){window.Bestiary.record('it',null);
+  const bc=window.Bestiary.count();if(bc.got>=bc.total)achUnlock('bestiary');}}catch(_){}
+ achUnlock('it');
+ if(!stalkerOtherWep)achUnlock('it_sg'); // shotgun purist: no other gun touched IT
  stalkerVulnerable=false;shooting=false;
  stalkerDying={t:0,dur:2.2,x:sx,z:sz,s:ssRef(stalker)};
  scene.remove(stalker.s);stalker=null;
@@ -1333,17 +1731,31 @@ function tickBoom(d,dt,finalFn){
 function tickStalkerDeath(dt){
  if(stalkerDying&&tickBoom(stalkerDying,dt,win))stalkerDying=null;
  for(let i=bossBooms.length-1;i>=0;i--)if(tickBoom(bossBooms[i],dt,null))bossBooms.splice(i,1);}
-function win(){running=false;document.exitPointerLock();
+function win(){running=false;document.exitPointerLock();clearRunSave();refreshContinue();
 document.querySelector('#overlay h2').textContent='DOOD — HELL CONQUERED';
 document.getElementById('ovt').innerHTML=`IT IS DEAD. 25 levels cleared · ${kills} kills · ${gibCount} gibs.<br>Hell is quiet. For now.`;
 document.getElementById('start').style.display='none'; // won: only ENDLESS remains
 document.getElementById('adretry').style.display='none';
 document.getElementById('endless').style.display='inline-block';
+document.getElementById('daily').style.display='inline-block';
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'});
-document.getElementById('overlay').classList.remove('hidden');}
+ document.getElementById('overlay').classList.remove('hidden');updBestBtn();}
+function dailyWin(){running=false;document.exitPointerLock();clearRunSave();refreshContinue();
+document.querySelector('#overlay h2').textContent='DOOD — DAILY CONQUERED';
+document.getElementById('ovt').innerHTML=`📅 DAILY ${dailyLabel} cleared · 3/3 stages · ${kills} kills · ${gibCount} gibs.<br>Same seed for everyone today — come back tomorrow.`;
+document.getElementById('start').style.display='inline-block';
+document.getElementById('start').textContent='⛧ ENTER ⛧';
+document.getElementById('adretry').style.display='none';
+document.getElementById('endless').style.display='none';
+document.getElementById('daily').style.display='inline-block';
+if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'});
+document.getElementById('overlay').classList.remove('hidden');updBestBtn();
+sfx('wave',player.x,player.z);
+achUnlock('daily');}
 // ---------- death pause: gun gone, player gibs fly, overlay waits 1.25s ----------
 let dying=null;
 function tickFx(dt){ // blood particles + gibs: runs in-game and during the death pause
+tickBooms(dt);
 // blood particles: skip the 900-scan entirely when nothing is alive
 if(pAlive>0){
 for(let j=0;j<PMAX;j++){if(pLife[j]<=0)continue;pLife[j]-=dt;
@@ -1396,7 +1808,7 @@ gibs.length=w;}}
 // ---------- loop ----------
 const clock=new THREE.Clock();
 let lastTouchGame=false,frameNow=0,bfsBudget=10,idleAcc=0;
-function syncTouchUI(){const on=running&&document.body.classList.contains('has-touch');
+function syncTouchUI(){const on=running&&touchPlay();
  if(on!==lastTouchGame){lastTouchGame=on;document.body.classList.toggle('touch-game',on);}}
 function frame(){requestAnimationFrame(frame);
 if(document.hidden)return; // rAF already throttles, but skip sim+render work entirely
@@ -1411,9 +1823,9 @@ try{
 for(const k in wepCool)wepCool[k]=Math.max(0,wepCool[k]-dt);
 muzzle=Math.max(0,muzzle-dt);
 if(shooting&&(wepCool[curWep]||0)<=0&&curWep!=='ar'&&curWep!=='rg')shoot(); // hold-to-fire, everyone but rifle/railgun
-if(curWep==='ar'&&(wepCool.ar||0)<=0&&burstLeft>0){shoot('ar');burstLeft--; // burst round every .07s
-if(burstLeft<=0){wepCool.ar=Math.max(wepCool.ar,wepDef('ar').burstCd||.15); // burst cooldown before the next
-if(burstBuf){burstBuf=false;burstLeft=wepDef('ar').burst||4;}}} // buffered click chains the next burst
+if(curWep==='ar'&&(wepCool.ar||0)<=0&&burstLeft>0){shoot('ar');burstLeft--;burstFired++; // burst round every .07s
+if(burstLeft<=0){wepCool.ar=Math.max(wepCool.ar,.2);burstFired=0; // full 5-round burst: 0.2s cooldown
+if(burstBuf){burstBuf=false;burstLeft=wepDef('ar').burst||5;}}} // buffered click chains the next burst
 if(curWep==='rg'&&shooting&&!dying&&(wepCool.rg||0)<=0){ // railgun: hold a full second to charge
 if(railCharge<=0)startChargeSnd();
 railCharge=Math.min(1,railCharge+dt/(wepDef('rg').charge||1));
@@ -1485,7 +1897,8 @@ if(e.def.dash){ // dash attackers: telegraphed straight-line zoom, zero steering
    let clear=true;
    for(let dd=.6;dd<=need;dd+=.6){if(collide(e.x+ndx*dd,e.z+ndz*dd,.5)){clear=false;break;}}
     if(!clear){e.dashCd=.5+aiRand()*.5;} // retry soon after repositioning, don't suicide
-   else{e.dash={phase:'wind',t:DD.windup,dx:0,dz:0};sfx('dashwarn',e.x,e.z);}}
+    else{e.dash={phase:'wind',t:DD.windup,dx:0,dz:0};sfx('dashwarn',e.x,e.z);
+     if(e.def.boss)showMsg('⚠ '+e.def.name+' CHARGES — DODGE!',1400);}}
    if(e.dash&&e.dash.phase==='wind'){ // WARNING: planted, flashing — direction locks at launch, sidestep now
    e.dash.t-=dt;
    if(e.dash.t<=0){const l=d||1,ldx=dx/l,ldz=dz/l;
@@ -1510,7 +1923,7 @@ if(e.def.dash){ // dash attackers: telegraphed straight-line zoom, zero steering
   e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
   const pdx=player.x-e.x,pdz=player.z-e.z;
   if(pdx*pdx+pdz*pdz<1.69){ // dash connects (~1.3m)
-   player.hp-=DD.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+   player.hp-=DD.dmg;lastHurtBy=e.def.a;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
    dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);
    blood(player.x,1.4,player.z,10,2,pdx/(d||1),pdz/(d||1),2);
     e.dash=null;e.dashCd=DD.cd*(0.8+aiRand()*0.4);
@@ -1538,7 +1951,7 @@ if(e.def.ranged&&!(e.routeT>0)&&d<e.def.range&&getLOS()){
   if(e.shotT<=0){fireEnemyShot(e);e.shotT=e.def.shotCd*(0.8+aiRand()*0.4);}
   e.s.position.set(e.x,e.def.s/2+Math.sin(frameNow*.006+e.z)*.08,e.z);
   e.s.material.color.setHex(e.flash>0?0xff8080:e.tint);
-  e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+  e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;lastHurtBy=e.def.a;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
  dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);blood(player.x,1.4,player.z,10,2,(player.x-e.x)/(d||1),(player.z-e.z)/(d||1),2);
  if(player.hp<=0){die(`RIPPED APART on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}
  continue;}
@@ -1566,7 +1979,7 @@ if(e.hp/e.maxhp<th){e.phase++;let placed=0;
 for(let k=0;k<8&&placed<2;k++){const a=aiRand()*6.28,sx=e.x+Math.cos(a)*4,sz=e.z+Math.sin(a)*4;
 if(!collide(sx,sz,.5)){spawnEnemy(scaledDef(DEFS[0],level,aiRand),sx,sz).alert=true;levelTotal++;placed++;}}
 if(placed)showMsg(e.def.name+' CALLS ITS CHILDREN',1500);}}}
-e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
+e.atk-=dt;if(d<1.4&&e.atk<=0){e.atk=.9;player.hp-=e.def.dmg;lastHurtBy=e.def.a;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',e.x,e.z);
 dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);blood(player.x,1.4,player.z,10,2,(player.x-e.x)/(d||1),(player.z-e.z)/(d||1),2);
 if(player.hp<=0){die(`RIPPED APART on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
 separate(dt); // soft body push: packs drift apart, no stacking
@@ -1596,7 +2009,7 @@ else{stalker.x=nx;stalker.z=nz;
 stalker.s.position.set(stalker.x,3,stalker.z);
 stalker.s.material.color.setHex(stalker.flash>0?0xff8080:0xffffff);
 const pdx=player.x-stalker.x,pdz=player.z-stalker.z;
-if(pdx*pdx+pdz*pdz<4.84){player.hp-=30;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
+if(pdx*pdx+pdz*pdz<4.84){player.hp-=30;lastHurtBy='it';hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
 dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,120);
 blood(player.x,1.4,player.z,10,2,pdx/(d||1),pdz/(d||1),2);
 stalker.dash=null;stalker.dashCd=(stalker.enraged?3:5)*(0.8+aiRand()*0.4);
@@ -1622,7 +2035,7 @@ if(!clear)stalker.dashCd=.5+aiRand()*.5;
 else{stalker.dash={phase:'wind',t:.6,dx:0,dz:0};sfx('dashwarn',stalker.x,stalker.z);}}}
 let mx=dx/d,mz=dz/d;
 stalker.routeT=Math.max(0,(stalker.routeT||0)-dt);
-if(d>3.5&&d<17&&getSLOS()){ // strafe: wide circle, barely closing — never stand still
+if(fight&&d>3.5&&d<17&&getSLOS()){ // bossfight strafe: wide circle, barely closing — never stand still
 if(aiRand()<dt*.4)stalker.orbit*=-1;
 const qx=mx*.45+(-mz*stalker.orbit),qz=mz*.45+(mx*stalker.orbit),ql=Math.sqrt(qx*qx+qz*qz)||1;
 mx=qx/ql;mz=qz/ql;}
@@ -1643,7 +2056,7 @@ stalker.s.position.set(stalker.x,3+Math.sin(frameNow*.008)*.15,stalker.z);
 stalker.s.material.color.setHex(stalker.flash>0?0xff8080:0xffffff);}
 stalker.screech-=dt;if(stalker.screech<=0){stalker.screech=3+aiRand()*2.5;sfx('screech',stalker.x,stalker.z);}
 stalker.atk-=dt;
-if(d<1.6&&stalker.atk<=0){stalker.atk=1;player.hp-=25;hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
+if(d<1.6&&stalker.atk<=0){stalker.atk=1;player.hp-=25;lastHurtBy='it';hpEl.textContent=Math.max(0,Math.round(player.hp));sfx('hurt',stalker.x,stalker.z);
 dmgEl.style.opacity=1;setTimeout(()=>dmgEl.style.opacity=0,150);blood(player.x,1.4,player.z,16,3,dx/d,dz/d,3);
 if(player.hp<=0){die(`EATEN BY IT on level ${level} · ${kills} kills · ${gibCount} gibs.<br>Click RE-ENTER.`);}}}
 // exit arrow: only once the level is clear — rotate toward portal + distance
@@ -1655,8 +2068,13 @@ arrowSpan.textContent=Math.round(Math.sqrt(ex*ex+ez*ez))+'m';}
 else arrowEl.style.display='none';}
 if(exitMesh){const pu=exitOpen?1:.4;exitMesh.material.opacity=pu*(.6+.3*Math.sin(frameNow*.006));
 if(exitOpen&&Math.hypot(player.x-exitPos.x,player.z-exitPos.z)<1.8){
-level++;wEl.textContent=level;player.hp=Math.min(100,player.hp+30);hpEl.textContent=Math.round(player.hp);
-sfx('wave',exitPos.x,exitPos.z);genLevel(level);}}
+if(dailyMode){ // daily: 3 fixed stages, then victory — no level 25, no endless bleed
+dailyStage++;player.hp=Math.min(100,player.hp+20);hpEl.textContent=Math.round(player.hp);
+sfx('wave',exitPos.x,exitPos.z);
+if(dailyStage>=DAILY_DIFFS.length)dailyWin();
+else{level=DAILY_DIFFS[dailyStage];updLevelHud();genLevel(level,dailyForceBoss());}}
+else{level++;wEl.textContent=level;player.hp=Math.min(100,player.hp+20);hpEl.textContent=Math.round(player.hp);
+sfx('wave',exitPos.x,exitPos.z);genLevel(level);}}}
 tickFx(dt); // blood + gibs fly (also runs during the death pause via the dying branch below)
 // corpses slide to a stop (knocked back on death, never through walls)
 for(const c of corpses){if(c.vx*c.vx+c.vz*c.vz<.0025){c.vx=c.vz=0;continue;}
@@ -1672,9 +2090,10 @@ const bobA=bobAmt;
 camera.position.set(player.x,1.6+Math.sin(bobPhase*2)*.04*bobA,player.z);
 camera.rotation.set(0,player.yaw,0);
 shake=Math.max(0,shake-dt*1.8);
-if(shake>0){const s=shake*shake; // positional + rotational kick in all axes
-camera.position.x+=(Math.random()-.5)*.3*s;camera.position.y+=(Math.random()-.5)*.3*s;camera.position.z+=(Math.random()-.5)*.2*s;
-camera.rotation.x+=(Math.random()-.5)*.06*s;camera.rotation.y+=(Math.random()-.5)*.06*s;}
+rumble=Math.max(0,rumble-dt*.8); // 1.5 peak rumbles out over ~1.9s, with the boom tail
+if(shake>0||rumble>0){const s=Math.max(shake,rumble),s2=s*s; // positional + rotational kick in all axes
+camera.position.x+=(Math.random()-.5)*.3*s2;camera.position.y+=(Math.random()-.5)*.3*s2;camera.position.z+=(Math.random()-.5)*.2*s2;
+camera.rotation.x+=(Math.random()-.5)*.06*s2;camera.rotation.y+=(Math.random()-.5)*.06*s2;}
 gun.position.x=Math.sin(bobPhase)*.023*bobA;
 gun.position.y=-.26+Math.sin(bobPhase*2)*.023*bobA-recoil*.15;
  if(muzzle>0)camera.position.y+=Math.random()*.05;
@@ -1696,7 +2115,7 @@ gun.position.y=-.26+Math.sin(bobPhase*2)*.023*bobA-recoil*.15;
     if(collide(player.x+tx,player.z+tz,.4))break;ox=tx;oz=tz;}
    camera.position.set(player.x+ox,dy,player.z+oz);
    camera.rotation.set(dying.pitch*e2,player.yaw,dying.roll*e2); // tipped over, cheek on the stone
-   shake=Math.max(0,shake-dt*1.2);
+   shake=Math.max(0,shake-dt*1.2);rumble=Math.max(0,rumble-dt*.8);
    if(shake>0){const s=shake*shake;
     camera.position.x+=(Math.random()-.5)*.3*s;camera.position.y+=(Math.random()-.5)*.3*s;
     camera.rotation.z+=(Math.random()-.5)*.06*s;}}
@@ -1714,8 +2133,9 @@ gun.position.y=-.26+Math.sin(bobPhase*2)*.023*bobA-recoil*.15;
   renderer.render(scene,camera);
 }
 // death: gun vanishes, you burst into gibs, world freezes — overlay waits 2s
-function die(msg){if(dying)return;running=false;document.exitPointerLock();
-gun.visible=false;shooting=false;burstLeft=0;burstBuf=false;killCharge();muzzle=0;flash.material.opacity=0;
+function die(msg){if(dying)return;running=false;document.exitPointerLock();diedThisLevel=true;saveRun(true); // dead: save marks it so reopening can't resurrect you
+if(lastHurtBy==='d1')achUnlock('impdeath'); // the weakest thing down here. tell no one.
+gun.visible=false;shooting=false;burstLeft=0;burstBuf=false;burstFired=0;killCharge();muzzle=0;flash.material.opacity=0;
 blood(player.x,1.4,player.z,70,6,0,0,0);
 splat(player.x,player.z,true);
 gibBurst(player.x,1.4,player.z,true,0,0,0,true); // 22 gibs, no direction: all shove
@@ -1724,51 +2144,161 @@ shake=1; // full screenshake on death
 dying={t:0,msg,fallA:Math.random()*6.28,roll:(1.2+Math.random()*0.4)*(Math.random()<.5?-1:1),
  pitch:0.3+Math.random()*0.3,impacted:false};}
 function showDeath(msg){document.getElementById('ovt').innerHTML=msg;
-document.querySelector('#overlay h2').textContent='DOOD — U DIED';
+document.querySelector('#overlay h2').textContent=dailyMode?('DOOD — DAILY FAILED (STAGE '+(dailyStage+1)+'/3)'):('DOOD — U DIED');
 document.getElementById('start').style.display='inline-block';
 document.getElementById('start').textContent='⛧ RE-ENTER ⛧';
+document.getElementById('daily').style.display='inline-block';
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'});
-document.getElementById('adretry').style.display=adRetryUsed?'none':'inline-block';
-document.getElementById('overlay').classList.remove('hidden');}
+document.getElementById('adretry').style.display=adRetriesLeft>0?'inline-block':'none';
+document.getElementById('adretry').textContent='📺 WATCH AD TO RETRY ('+adRetriesLeft+' LEFT)';
+ document.getElementById('overlay').classList.remove('hidden');updBestBtn();refreshContinue();}
 document.getElementById('adretry').onclick=()=>{
-if(adRetryUsed||!window.HellAds)return;
+if(adRetriesLeft<=0||!window.HellAds)return;
 HellAds.play(document.getElementById('adover'),{secs:5,exclude:'dood',onStart:()=>{adPlaying=true;},onDone:()=>revive()});};
 function revive(){ // the ad smote nearby demons and banished IT to the far side
-adRetryUsed=true;adPlaying=false;document.getElementById('adretry').style.display='none';
-player.hp=100;hpEl.textContent='100';gun.visible=true;dying=null;
-{const near=[];for(let i=0;i<enemies.length;i++){const e=enemies[i],dx=e.x-player.x,dz=e.z-player.z;if(dx*dx+dz*dz<144)near.push(e);}for(const e of near)kill(e);}
+adRetriesLeft=Math.max(0,adRetriesLeft-1);adPlaying=false;document.getElementById('adretry').style.display='none';
+player.hp=100;hpEl.textContent='100';gun.visible=true;dying=null;diedThisLevel=true;
+{const near=[];for(let i=0;i<enemies.length;i++){const e=enemies[i],dx=e.x-player.x,dz=e.z-player.z;if(dx*dx+dz*dz<144)near.push(e);}for(const e of near)kill(e,0,0,0,false,false,true);} // free=true: smitten, no kills/bestiary/trophies
 if(stalker){const st=stalkerSpawnTile(Math.floor(player.x/TS),Math.floor(player.z/TS));
 const sn2=snapOutOfWall((st.x+.5)*TS,(st.y+.5)*TS,.8);
 stalker.x=sn2.x;stalker.z=sn2.z;stalker.wx=player.x;stalker.wz=player.z;stalker.repath=0;stalker.atk=1;}
  showMsg('REVIVED BY AD — IT HAS BEEN BANISHED (for now)',2500);
  document.getElementById('overlay').classList.add('hidden');running=true;
  camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0; // back on your feet
- lockPointer();}
+ lockPointer();saveRun(false);}
+// ---------- bestiary panel (separate file dood/bestiary.js, embedded here) ----------
+function updBestBtn(){try{if(window.Bestiary)document.getElementById('bestbtn').textContent='📖 BESTIARY ('+window.Bestiary.label()+')';}catch(e){}}
+document.getElementById('bestbtn').onclick=()=>{
+try{if(window.Bestiary)window.Bestiary.render(document.getElementById('bestBody'));}catch(e){}
+document.getElementById('bestPanel').classList.add('open');};
+document.getElementById('bestClose').onclick=()=>{document.getElementById('bestPanel').classList.remove('open');};
+updBestBtn();
+// ---------- achievements (separate file dood/achievements.js, embedded here) ----------
+// toast queue: gold banner under the HUD, never steals the lvlmsg boss-warning slot
+let achToastQ=[],achToastOn=false;
+function pumpAchToast(){if(achToastOn)return;const nx=achToastQ.shift();if(!nx)return;const el=document.getElementById('achtoast');
+ if(!el)return;achToastOn=true;el.textContent=nx;el.classList.add('show');
+ setTimeout(()=>{el.classList.remove('show');achToastOn=false;setTimeout(pumpAchToast,400);},2600);}
+function achToast(t){achToastQ.push(t);pumpAchToast();}
+function updAchBtn(){try{if(window.Achievements)document.getElementById('achbtn').textContent='🏆 ACHIEVEMENTS ('+window.Achievements.label()+')';}catch(e){}}
+function achToastTier(id,sub){try{if(window.Achievements){const d=window.Achievements.byId(id);
+ if(d)achToast('🏆 '+d.name+' — '+sub);
+ try{sfx('wave',player.x,player.z);}catch(_){}updAchBtn();}}catch(e){}}
+function achUnlock(id){if(!pureRun)return;try{if(window.Achievements&&window.Achievements.unlock(id)){
+ const d=window.Achievements.byId(id);if(d)achToast('🏆 '+d.name+' — '+d.desc);
+ try{sfx('wave',player.x,player.z);}catch(_){}updAchBtn();}}catch(e){}}
+document.getElementById('achbtn').onclick=()=>{
+ try{if(window.Achievements)window.Achievements.render(document.getElementById('achBody'));}catch(e){}
+ document.getElementById('achPanel').classList.add('open');};
+document.getElementById('achClose').onclick=()=>{document.getElementById('achPanel').classList.remove('open');};
+updAchBtn();
 document.getElementById('seedrnd').onclick=()=>{document.getElementById('seedin').value=(Math.random()*1e9)|0;};
+// ---------- run save: snapshot on level entry, death marks it dead (no save-scum).
+// closing the tab mid-run offers CONTINUE; dying then closing offers nothing.
+const RUN_SAVE_KEY='dood_run_v1';
+const INTRO_BLURB='Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.';
+function resetTitle(){document.querySelector('#overlay h2').textContent='DOOD';document.getElementById('ovt').innerHTML=INTRO_BLURB;}
+function saveRun(dead){try{
+ localStorage.setItem(RUN_SAVE_KEY,JSON.stringify({seed:LEVEL_SEED,level,kills,gibs:gibCount,
+ hp:dead?0:Math.round(player.hp),ad:adRetriesLeft,daily:dailyMode?1:0,stage:dailyStage,
+ dseed:dailySeed,dlabel:dailyLabel,pure:pureRun?1:0,dead:dead?1:0,ts:Date.now()}));}catch(e){}}
+function loadRunSave(){try{const s=localStorage.getItem(RUN_SAVE_KEY);return s?JSON.parse(s):null;}catch(e){return null;}}
+function clearRunSave(){try{localStorage.removeItem(RUN_SAVE_KEY);}catch(e){}}
+function refreshContinue(){try{const sv=loadRunSave(),el=document.getElementById('continue');
+ const ok=!!(sv&&!sv.dead&&(sv.level|0)>0);
+ el.style.display=ok?'inline-block':'none';
+ if(ok)el.textContent=sv.daily?('▶ CONTINUE DAILY '+(sv.stage+1)+'/3'):('▶ CONTINUE LV'+sv.level);}catch(e){}}
+document.getElementById('continue').onclick=()=>{
+ if(running)return;
+ const sv=loadRunSave();if(!sv||sv.dead||!((sv.level|0)>0))return;
+ dailyMode=!!sv.daily;pureRun=sv.pure!==0;
+ LEVEL_SEED=sv.seed|0;level=Math.max(1,sv.level|0);
+ if(dailyMode){dailyStage=Math.min(2,Math.max(0,sv.stage|0));dailySeed=sv.dseed|0;dailyLabel=sv.dlabel||String(dailySeed);
+  level=DAILY_DIFFS[Math.min(dailyStage,DAILY_DIFFS.length-1)];}
+ else dailyStage=0;
+ player.hp=Math.min(100,Math.max(1,sv.hp||100));kills=sv.kills|0;gibCount=sv.gibs|0;
+ adRetriesLeft=(sv.ad==null?2:sv.ad|0);dying=null;gun.visible=true;
+ lastOwned=[];lastWepMul={};curWep='sg';burstLeft=0;burstBuf=false;burstFired=0;killCharge();
+ document.getElementById('adretry').style.display='none';
+ document.getElementById('endless').style.display='none';
+ document.getElementById('daily').style.display='none';
+ document.getElementById('continue').style.display='none';
+ hpEl.textContent=Math.round(player.hp);kEl.textContent=kills;gEl.textContent=gibCount;wEl.textContent=level;updLevelHud();
+ resetTitle();
+ genLevel(level,dailyMode?dailyForceBoss():null);
+ document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
+ camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0;
+ lockPointer();fit();maybeNadeTip();maybeSwapTip();};
 document.getElementById('start').onclick=()=>{
-// seed setup: empty seed field = normal mode; otherwise the given seed at the given level
-const sv=parseInt(document.getElementById('seedin').value,10);
-LEVEL_SEED=isNaN(sv)?LEVEL_SEED_DEFAULT:sv;
- level=Math.max(1,parseInt(document.getElementById('lvlIn').value,10)||1);
+// normal run: always LV1 default seed — custom seed/level runs use CUSTOM below (no unlocks)
+dailyMode=false;pureRun=true;
+LEVEL_SEED=LEVEL_SEED_DEFAULT;
+ level=1;
   // reset
-  player.hp=100;kills=0;gibCount=0;adRetryUsed=false;dying=null;gun.visible=true;
-  lastOwned=[];lastWepMul={};curWep='sg';burstLeft=0;burstBuf=false;killCharge(); // fresh arsenal: applyLoadout() announces what this level grants
+  player.hp=100;kills=0;gibCount=0;adRetriesLeft=2;dying=null;gun.visible=true;
+  lastOwned=[];lastWepMul={};curWep='sg';burstLeft=0;burstBuf=false;burstFired=0;killCharge(); // fresh arsenal: applyLoadout() announces what this level grants
 document.getElementById('adretry').style.display='none';
 document.getElementById('endless').style.display='none';
+document.getElementById('daily').style.display='none';
 hpEl.textContent='100';kEl.textContent='0';wEl.textContent=level;gEl.textContent='0';
  genLevel(level);
  document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
  camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0; // back on your feet
- lockPointer();fit();};
-document.getElementById('endless').onclick=()=>{ // optional endless: hell keeps going past 25
+ lockPointer();fit();maybeNadeTip();maybeSwapTip();};
+document.getElementById('customstart').onclick=()=>{
+// custom seed/level run: sandbox practice — no bestiary entries, no achievements
+dailyMode=false;pureRun=false;
+const sv=parseInt(document.getElementById('seedin').value,10);
+LEVEL_SEED=isNaN(sv)?LEVEL_SEED_DEFAULT:sv;
+ level=Math.max(1,parseInt(document.getElementById('lvlIn').value,10)||1);
+  // reset
+  player.hp=100;kills=0;gibCount=0;adRetriesLeft=2;dying=null;gun.visible=true;
+  lastOwned=[];lastWepMul={};curWep='sg';burstLeft=0;burstBuf=false;burstFired=0;killCharge(); // fresh arsenal: applyLoadout() announces what this level grants
+document.getElementById('adretry').style.display='none';
 document.getElementById('endless').style.display='none';
-level=26;player.hp=100;adRetryUsed=false;
+document.getElementById('daily').style.display='none';
+hpEl.textContent='100';kEl.textContent='0';wEl.textContent=level;gEl.textContent='0';
+ genLevel(level);
+ document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
+ camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0; // back on your feet
+ lockPointer();fit();showTip('CUSTOM RUN — bestiary & achievements disabled',7000);};
+document.getElementById('endless').onclick=()=>{ // optional endless: hell keeps going past 25
+dailyMode=false;pureRun=true;
+document.getElementById('endless').style.display='none';
+document.getElementById('daily').style.display='none';
+level=26;player.hp=100;adRetriesLeft=2;
 hpEl.textContent='100';wEl.textContent='26';
  genLevel(26);
  document.getElementById('overlay').classList.add('hidden');running=true;
  camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0; // back on your feet
- lockPointer();fit();};
-fit();frame();
+ lockPointer();fit();maybeNadeTip();maybeSwapTip();};
+document.getElementById('daily').onclick=()=>{
+dailySeed=dailySeedForToday();dailyMode=true;dailyStage=0;pureRun=true;
+dailyLabel=String(dailySeed);
+LEVEL_SEED=dailySeed;level=DAILY_DIFFS[0];
+player.hp=100;kills=0;gibCount=0;adRetriesLeft=2;dying=null;gun.visible=true;
+lastOwned=[];lastWepMul={};curWep='sg';burstLeft=0;burstBuf=false;burstFired=0;killCharge();
+document.getElementById('adretry').style.display='none';
+document.getElementById('endless').style.display='none';
+document.getElementById('daily').style.display='none';
+hpEl.textContent='100';kEl.textContent='0';gEl.textContent='0';updLevelHud();
+genLevel(level,dailyForceBoss());
+document.getElementById('overlay').classList.add('hidden');running=true;ac();startMusic();
+camera.position.set(player.x,1.6,player.z);camera.rotation.set(0,player.yaw,0);shake=0;
+lockPointer();fit();maybeNadeTip();maybeSwapTip();};
+// warmup: compile the additive-blend explosion programs once behind the title
+// screen (with the persistent blast light on) so the first real boom never hitches.
+const _boomWarm=[];
+try{
+for(const p of [{c:0xffb040,o:1},{c:0xfff6d8,o:1},{c:0xffd070,o:.95}]){
+const wm=new THREE.MeshBasicMaterial({color:p.c,transparent:true,opacity:p.o,depthWrite:false,blending:THREE.AdditiveBlending});
+const q=new THREE.Mesh(boomFireGeo,wm);q.position.set(0,-50,0);scene.add(q);_boomWarm.push(q);}
+boomLight.position.set(0,-50,0);boomLight.intensity=BOOM_PEAK;
+renderer.render(scene,camera);
+for(const q of _boomWarm)scene.remove(q);
+boomLight.intensity=0;
+}catch(e){}
+fit();refreshContinue();frame();
 if(window.HellAds)HellAds.mount(document.getElementById('doodad'),{exclude:'dood'}); // slop banner on the title overlay
 </script>
 </body>
