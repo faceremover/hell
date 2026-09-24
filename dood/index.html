@@ -9,12 +9,12 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-body{background:#0a0202;color:#ffb0a0;font-family:monospace;height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:4px 4px calc(4px + env(safe-area-inset-bottom));gap:2px;touch-action:manipulation;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-h1{font-size:18px;letter-spacing:3px;color:#ff2a00;text-shadow:3px 3px 0 #3d0000,0 0 20px rgba(255,40,0,.7);line-height:1.2;flex:none}
-.sub{color:#b06a5a;font-style:italic;font-size:10px;flex:none;text-align:center;max-width:98vw;line-height:1.5}
+body{background:#0a0202;color:#ffb0a0;font-family:monospace;height:100dvh;min-height:100dvh;max-height:100dvh;overflow:hidden;display:flex;flex-direction:column;align-items:center;padding:4px 4px calc(4px + env(safe-area-inset-bottom));gap:4px;touch-action:manipulation;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+h1{font-size:18px;letter-spacing:3px;color:#ff2a00;text-shadow:3px 3px 0 #3d0000,0 0 20px rgba(255,40,0,.7);line-height:1.2;flex:none;position:relative;z-index:1}
+.sub{color:#b06a5a;font-style:italic;font-size:10px;flex:none;text-align:center;max-width:98vw;line-height:1.5;position:relative;z-index:1;margin-bottom:10px}
 body.has-touch .sub{font-size:10px}
 body.has-touch .sub .desk-only{display:none}
-#wrap{--mm:148px;position:relative;width:min(99vw,1500px,calc((100dvh - 70px) * 1.7778));aspect-ratio:16/9;border:4px solid #4a0d00;box-shadow:0 0 0 4px #0d0208,0 0 0 8px #ff3b00,0 0 50px rgba(255,40,0,.4);touch-action:none;overflow:hidden;flex:none;max-height:calc(100dvh - 70px);min-height:0;isolation:isolate;background:#070203}
+#wrap{--mm:148px;position:relative;width:min(99vw,1500px,calc((100dvh - 92px) * 1.7778));aspect-ratio:16/9;border:4px solid #4a0d00;box-shadow:0 0 0 4px #0d0208,0 0 0 8px #ff3b00,0 0 50px rgba(255,40,0,.4);touch-action:none;overflow:hidden;flex:none;max-height:calc(100dvh - 92px);min-height:0;isolation:isolate;background:#070203}
 /* integrated HUD: overlaid top strip inside the game frame, clears the minimap */
 #hud{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;gap:4px 14px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:13px;color:#ffd93b;text-align:center;padding:8px calc(var(--mm) + 14px) 10px 12px;background:linear-gradient(to bottom,rgba(5,0,0,.82),rgba(5,0,0,0));pointer-events:none;text-shadow:1px 1px 0 #000}
 #hud b{color:#fff}
