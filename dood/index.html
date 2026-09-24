@@ -31,6 +31,14 @@ body.touch-game #touch{display:block}
 #wepBtn{position:absolute;right:30px;bottom:30px;width:58px;height:58px;border-radius:50%;background:rgba(10,40,90,.6);border:2px solid #7df9ff;color:#fff;font-size:20px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:2}
 #muteBtn,#musicBtn,#mapBtn{position:absolute;left:12px;width:44px;height:44px;border-radius:50%;background:rgba(10,10,20,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font-size:18px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:2}
 #muteBtn{top:64px}#musicBtn{top:116px}#mapBtn{top:168px}
+#fsBtn{position:absolute;right:8px;top:calc(var(--mm) + 16px);width:44px;height:44px;border-radius:50%;background:rgba(10,10,20,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font-size:18px;font-family:monospace;padding:0;pointer-events:auto;touch-action:none;z-index:7;cursor:pointer}
+/* true fullscreen: game frame takes the whole screen, chrome gone */
+#wrap:fullscreen{width:100vw !important;max-width:none !important;height:100vh !important;max-height:none !important;aspect-ratio:auto !important;border:0 !important;box-shadow:none !important}
+#wrap:-webkit-full-screen{width:100vw !important;max-width:none !important;height:100vh !important;max-height:none !important;aspect-ratio:auto !important;border:0 !important;box-shadow:none !important}
+/* iOS Safari fallback (no element fullscreen on iPhone): fixed overlay filling the visual viewport */
+body.fake-fs{padding:0 !important;gap:0 !important;height:100dvh !important}
+body.fake-fs h1,body.fake-fs .sub{display:none !important}
+body.fake-fs #wrap{position:fixed !important;inset:0 !important;width:100vw !important;max-width:100vw !important;height:100dvh !important;max-height:100dvh !important;flex:none !important;aspect-ratio:auto !important;border:0 !important;box-shadow:none !important;z-index:50}
 #jumpLook{position:absolute;right:0;top:0;width:60%;height:100%;pointer-events:auto;touch-action:none;z-index:1}
 #wrap canvas{display:block;width:100%;height:100%}
 #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:radial-gradient(120% 90% at 50% 10%,rgba(120,20,0,.55) 0%,rgba(12,1,0,.94) 55%,rgba(5,0,0,.97) 100%);text-align:center;padding:20px;z-index:8;overflow-y:auto}
@@ -150,9 +158,10 @@ body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));f
 </head>
 <body>
 <h1>🔥 DOOD</h1>
-<div class="sub">WASD move · mouse look · click shoot · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · P minimap</span></div>
+<div class="sub">WASD move · mouse look · click shoot · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · P minimap · F fullscreen</span></div>
 <div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
 <div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button><button id="nadeBtn" title="grenade">💣</button><button id="wepBtn" title="switch weapon">⇄</button><button id="muteBtn" title="mute">🔊</button><button id="musicBtn" title="music">🎵</button><button id="mapBtn" title="minimap">🗺</button></div>
+<button id="fsBtn" title="fullscreen (F)">⛶</button>
 <div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>WASD</b> move · <b>MOUSE</b> look · <b>CLICK</b> shoot · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
 <div id="adover"></div>
 <div id="bestPanel"><div id="bestCloseRow"><button id="bestClose">✕ CLOSE</button></div><div id="bestBody"></div></div>
@@ -888,8 +897,35 @@ n3.connect(f3);f3.connect(g3);g3.connect(dest);n3.start(et2);n3.stop(et2+.92);}}
 function updMuteIcon(){try{document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';}catch(e){}}
 function toggleMute(){muted=!muted;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;updMuteIcon();}
 function toggleMusic(){musicOn=!musicOn;if(musicBus)musicBus.gain.value=(muted||!musicOn)?0:MUSIC_VOL;showMsg(musicOn?('MUSIC ON · '+((MUS&&MUS.label)||'')):'MUSIC OFF',1200);}
+function updFsIcon(){try{document.getElementById('fsBtn').textContent=(document.fullscreenElement||document.webkitFullscreenElement||document.body.classList.contains('fake-fs'))?'✕':'⛶';}catch(e){}}
+async function toggleFullscreen(){
+ try{
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+   if(document.exitFullscreen)await document.exitFullscreen();
+   else if(document.webkitExitFullscreen)document.webkitExitFullscreen();
+   document.body.classList.remove('fake-fs');
+  }else{
+   const el=wrap;
+   const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+   if(req){
+    try{
+     const p=req.call(el,window.navigator&&/iPhone|iPad|iPod/.test(navigator.userAgent)?undefined:{navigationUI:'hide'});
+     if(p&&p.catch)await p.catch(()=>document.body.classList.add('fake-fs'));
+    }catch(e){document.body.classList.add('fake-fs');}
+    // iPhones report no error but never enter fullscreen: fall back if nothing happened
+    setTimeout(()=>{if(!document.fullscreenElement&&!document.webkitFullscreenElement)document.body.classList.add('fake-fs');updFsIcon();fit();},300);
+   }else{document.body.classList.toggle('fake-fs');}
+   try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}catch(e){}
+  }
+ }catch(e){document.body.classList.toggle('fake-fs');}
+ updFsIcon();setTimeout(fit,60);setTimeout(fit,300);}
+try{document.getElementById('fsBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();toggleFullscreen();});}catch(e){}
+try{document.getElementById('fsBtn').addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();toggleFullscreen();},{passive:false});}catch(e){}
+document.addEventListener('fullscreenchange',()=>{updFsIcon();fit();});
+document.addEventListener('webkitfullscreenchange',()=>{updFsIcon();fit();});
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(k==='m')toggleMute();
-if(k==='n')toggleMusic();});
+if(k==='n')toggleMusic();
+if(k==='f')toggleFullscreen();});
 // ---------- DOOM-ish synth loop: chugging E-minor riff + bass + drums ----------
 let musicBus=null,mStep=0,mNext=0,mTimer=null,lastSec='',musicOn=true;const MUSIC_VOL=.16; // quiet bed under the SFX (was .5)
 // ---------- generative metal engine: per-(seed,level) key/scale/tempo/motif ----------
