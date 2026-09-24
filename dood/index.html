@@ -85,10 +85,14 @@ body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));f
 #daily{background:#3a0a6a;border-color:#c07bff}
 #bestbtn{background:#2a2118;border-color:#c9a86a}
 #achbtn{background:#2a2118;border-color:#ffd93b}
-#bestPanel,#achPanel{position:absolute;inset:0;display:none;z-index:10;background:rgba(8,4,2,.96);overflow-y:auto;padding:16px 14px 30px;text-align:left}
-#bestPanel.open,#achPanel.open{display:block}
-#bestCloseRow,#achCloseRow{text-align:right;margin-bottom:8px}
-#bestClose,#achClose{font-size:13px;padding:6px 14px;min-height:0}
+#setbtn{background:#1c2a1a;border-color:#7dff5e}
+#setPanel .setRow{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:440px;margin:10px auto 0;font-size:12px;color:#e8a080;text-align:left}
+#setPanel .setRow select{background:#1a0500;color:#ffd93b;border:1px solid #ffb300;font-family:monospace;font-size:13px;padding:8px;min-height:44px;max-width:60%}
+#setPanel .setNote{max-width:440px;margin:12px auto 0;font-size:11px;color:#b06a5a;line-height:1.6;text-align:center}
+#bestPanel,#achPanel,#setPanel{position:absolute;inset:0;display:none;z-index:10;background:rgba(8,4,2,.96);overflow-y:auto;padding:16px 14px 30px;text-align:left}
+#bestPanel.open,#achPanel.open,#setPanel.open{display:block}
+#bestCloseRow,#achCloseRow,#setCloseRow{text-align:right;margin-bottom:8px}
+#bestClose,#achClose,#setClose{font-size:13px;padding:6px 14px;min-height:0}
 #achtoast{position:absolute;left:50%;top:52px;transform:translateX(-50%);z-index:6;max-width:92%;text-align:center;font-size:14px;color:#ffd93b;background:rgba(10,6,0,.88);border:2px solid #ffd93b;border-radius:6px;padding:8px 16px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;text-shadow:1px 1px 0 #000}
 #achtoast.show{opacity:1}
 .bestHead{margin-bottom:10px}
@@ -162,10 +166,11 @@ body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));f
 <div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
 <div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button><button id="nadeBtn" title="grenade">💣</button><button id="wepBtn" title="switch weapon">⇄</button><button id="muteBtn" title="mute">🔊</button><button id="musicBtn" title="music">🎵</button><button id="mapBtn" title="minimap">🗺</button></div>
 <button id="fsBtn" title="fullscreen (F)">⛶</button>
-<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>WASD</b> move · <b>MOUSE</b> look · <b>CLICK</b> shoot · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
+<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button><button id="setbtn">⚙ SETTINGS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>WASD</b> move · <b>MOUSE</b> look · <b>CLICK</b> shoot · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
 <div id="adover"></div>
 <div id="bestPanel"><div id="bestCloseRow"><button id="bestClose">✕ CLOSE</button></div><div id="bestBody"></div></div>
 <div id="achPanel"><div id="achCloseRow"><button id="achClose">✕ CLOSE</button></div><div id="achBody"></div></div>
+<div id="setPanel"><div id="setCloseRow"><button id="setClose">✕ CLOSE</button></div><div id="setBody"><div class="bestHead"><div class="bestTitle">⚙ SETTINGS</div><div class="bestSub">Performance options. Saved automatically, apply instantly.</div></div><div class="setRow"><span>RESOLUTION</span><select id="setRes"><option value="high">High (sharp)</option><option value="balanced">Balanced</option><option value="low">Low (fast)</option></select></div><div class="setRow"><span>SMOOTH WALLS</span><select id="setSmooth"><option value="off">Off (crisp pixels)</option><option value="on">On</option></select></div><div class="setRow"><span>PARTICLES (blood · fire · gibs)</span><select id="setParticles"><option value="high">High</option><option value="low">Low</option><option value="min">Minimal</option></select></div><div class="setRow"><span>BLOOD DECALS (pools · scorch)</span><select id="setDecals"><option value="on">On</option><option value="reduced">Reduced</option><option value="off">Off</option></select></div><div class="setRow"><span>EXPLOSION LIGHT FLASH</span><select id="setFlash"><option value="on">On</option><option value="off">Off</option></select></div><div class="setRow"><span>FRAME RATE</span><select id="setFps"><option value="30">30 (battery saver)</option><option value="60">60</option><option value="unlimited">Unlimited</option></select></div><div class="setNote">Slow device? Lower RESOLUTION first — it is the biggest speedup. FRAME RATE 30 halves battery drain on phones.</div></div></div>
 <div id="achtoast"></div>
 </div>
 <script type="module">
@@ -413,7 +418,7 @@ const scorchMat=new THREE.MeshBasicMaterial({map:scorchTex,transparent:true,opac
 // two-tier decal caps: big blood pools (under corpses) + blast scorch marks are the
 // trail you leave behind, so they get a huge cap — effectively the whole level's
 // history. Gib chips + wall stains churn in a small cap and can never evict a pool.
-const SPLAT_BIG_MAX=300,SPLAT_SMALL_MAX=80;
+let SPLAT_BIG_MAX=300,SPLAT_SMALL_MAX=80;
 function pushSplat(m,big){scene.add(m);splats.push({m,big:!!big});
 let nb=0,ns=0;for(const s of splats)s.big?nb++:ns++;
 if(big&&nb>SPLAT_BIG_MAX)evictSplat(true);
@@ -1115,7 +1120,7 @@ let pAlive=0,pColDirty=false,rsAlive=0;
 // park the whole pool underground with a red tint: uninit points must never render black at origin
 for(let j=0;j<PMAX;j++){pPos[j*3+1]=-99;pCol[j*3]=.6;pCol[j*3+1]=0;pCol[j*3+2]=0;}
 let pHead=0;
-function blood(x,y,z,n,pow,dx,dz,kick){pColDirty=true;for(let i=0;i<n;i++){const j=pHead;pHead=(pHead+1)%PMAX;
+function blood(x,y,z,n,pow,dx,dz,kick){n=Math.max(1,Math.round(n*perfParticleMul));pColDirty=true;for(let i=0;i<n;i++){const j=pHead;pHead=(pHead+1)%PMAX;
 if(pLife[j]<=0&&pAlive<PMAX)pAlive++;
 pPos[j*3]=x;pPos[j*3+1]=y;pPos[j*3+2]=z;
 // uniform random direction at 0-pow speed, plus the directional shove
@@ -1130,7 +1135,7 @@ pCol[j*3]=c[0]/255;pCol[j*3+1]=c[1]/255;pCol[j*3+2]=c[2]/255;}}
 const booms=[];
 const boomFireGeo=new THREE.SphereGeometry(1,14,10);
 const boomRingGeo=new THREE.RingGeometry(.85,1,32);
-function fireP(x,y,z,n,pow,dx,dz,kick){pColDirty=true;for(let i=0;i<n;i++){const j=pHead;pHead=(pHead+1)%PMAX;
+function fireP(x,y,z,n,pow,dx,dz,kick){n=Math.max(1,Math.round(n*perfParticleMul));pColDirty=true;for(let i=0;i<n;i++){const j=pHead;pHead=(pHead+1)%PMAX;
 if(pLife[j]<=0&&pAlive<PMAX)pAlive++;
 pPos[j*3]=x;pPos[j*3+1]=y;pPos[j*3+2]=z;
 const sp=Math.random()*pow,a=Math.random()*6.28,b=Math.acos(2*Math.random()-1);
@@ -1171,27 +1176,30 @@ const t=Math.min(1,b.age/b.life);
 b.fm.scale.setScalar(.6+t*5.5);b.fm.material.opacity=1*(1-t);
 b.core.scale.setScalar(.35+t*2.6);b.core.material.opacity=1*(1-t);
 const rs=1+t*9.2;b.ring.scale.set(rs,rs,1);b.ring.material.opacity=.95*(1-t);
-peak=Math.max(peak,BOOM_PEAK*(1-t));
+peak=Math.max(peak,(perfFlash?BOOM_PEAK:0)*(1-t));
 if(b.age>=b.life){scene.remove(b.fm);scene.remove(b.core);scene.remove(b.ring);
 b.fm.material.dispose();b.core.material.dispose();b.ring.material.dispose();booms.splice(i,1);}}
 if(booms.length){const b=booms[booms.length-1];boomLight.position.set(b.x,b.y+1,b.z);}
 boomLight.intensity=peak;}
-function splat(x,z,big){const m=new THREE.Mesh(splatGeo,splatMat);
+function splat(x,z,big){if(perfDecalsOff)return;const m=new THREE.Mesh(splatGeo,splatMat);
 const s=big?3.4:2;m.scale.set(s,s,1);
 m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.03+Math.random()*.01,z);
 m.renderOrder=0;pushSplat(m,big);}
 function splatSmall(x,z){ // gib chips leave a small splat — small cap, never evicts pools
- const m=new THREE.Mesh(splatGeo,splatSmallMat);
+ if(perfDecalsOff)return;
+  const m=new THREE.Mesh(splatGeo,splatSmallMat);
 m.scale.set(.9,.9,1);
  m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.04,z);
  m.renderOrder=0;pushSplat(m,false);}
 function scorch(x,z){ // grenade blast mark: charred ground, not a blood pool
- const m=new THREE.Mesh(splatGeo,scorchMat);
+ if(perfDecalsOff)return;
+  const m=new THREE.Mesh(splatGeo,scorchMat);
  const s=5.75+Math.random()*.9;m.scale.set(s,s,1);
  m.rotation.x=-Math.PI/2;m.rotation.z=Math.random()*6.28;m.position.set(x,.025,z);
  m.renderOrder=0;pushSplat(m,true);}
 function splatWall(x,y,z,nx,nz){ // snap to the nearest solid-tile face: exact plane + outward normal
- y=Math.max(.3,Math.min(3.4,y));
+ if(perfDecalsOff)return;
+  y=Math.max(.3,Math.min(3.4,y));
  const gx=Math.floor(x/TS),gy=Math.floor(z/TS),EPS=.03;
  // candidate faces from solid 4-neighbours: [faceX|faceZ, normalX, normalZ, rotY]
  const cands=[];
@@ -1217,7 +1225,8 @@ function splatWall(x,y,z,nx,nz){ // snap to the nearest solid-tile face: exact p
  m.renderOrder=0;pushSplat(m,false);}
 function gibBurst(x,y,z,big,dx,dz,kick,close,dbl){const vm=dbl?2:1,n=(big?11:6)*(close?2:1)*(dbl?2:1);gibCount+=n;gEl.textContent=gibCount;
 try{if(pureRun&&window.Achievements){const gr=window.Achievements.checkGibs(n);if(gr.isNew)achToastTier('gibs',gr.total+' LIFETIME GIBS');}}catch(_){}
-for(let i=0;i<n;i++){const bigGib=Math.random()<.5;const s=new THREE.Sprite(allocGibMat(bigGib));
+const sn=Math.max(1,Math.round(n*perfParticleMul)); // fewer sprites on low, same gib/achievement count
+for(let i=0;i<sn;i++){const bigGib=Math.random()<.5;const s=new THREE.Sprite(allocGibMat(bigGib));
 const sc=bigGib?.4+Math.random()*.3:.15+Math.random()*.12;s.scale.set(sc,sc,1);s.position.set(x,y,z);s.renderOrder=2;scene.add(s);
 // uniform random direction at 1-7 speed (x2 when doubled), plus the shove along the shot direction
 const sp=(1+Math.random()*6)*vm,a=Math.random()*6.28,b=Math.acos(2*Math.random()-1);
@@ -1869,7 +1878,10 @@ function syncTouchUI(){const on=running&&touchPlay();
  if(on!==lastTouchGame){lastTouchGame=on;document.body.classList.toggle('touch-game',on);}}
 function frame(){requestAnimationFrame(frame);
 if(document.hidden)return; // rAF already throttles, but skip sim+render work entirely
-const dt=Math.min(.05,clock.getDelta());
+const rawDt=clock.getDelta();
+if(perfFpsCap>0){fpsAcc+=rawDt;if(fpsAcc<1/perfFpsCap)return;} // frame limiter: step sim at the capped rate
+const dt=Math.min(.05,perfFpsCap>0?fpsAcc:rawDt);
+fpsAcc=0;
 frameNow=performance.now();
 bfsBudget=10; // cap BFS pathfinds per frame so 110 foes can't spike together
 syncTouchUI();
@@ -1889,7 +1901,7 @@ railCharge=Math.min(1,railCharge+dt/(wepDef('rg').charge||1));
 const dx0=-Math.sin(player.yaw),dz0=-Math.cos(player.yaw),dd=aimDist();
 setLine(chargeGeo,player.x,1.5,player.z,player.x+dx0*dd,1.4,player.z+dz0*dd);
 chargeBeam.material.opacity=.2+.6*railCharge;
-if(Math.random()<dt*railCharge*100)railSpark(); // 0/s cold -> 100/s at full charge, framerate-independent
+if(Math.random()<dt*railCharge*100*perfParticleMul)railSpark(); // 0/s cold -> 100/s at full charge, framerate-independent
 flash.material.opacity=Math.min(1,railCharge); // muzzle coils glow as it builds
 flash.scale.set(.5+railCharge*1.3,.5+railCharge*1.3,1);
 lamp.intensity=Math.max(lamp.intensity,220+railCharge*180);
@@ -2249,6 +2261,45 @@ document.getElementById('achbtn').onclick=()=>{
  document.getElementById('achPanel').classList.add('open');};
 document.getElementById('achClose').onclick=()=>{document.getElementById('achPanel').classList.remove('open');};
 updAchBtn();
+// ---------- performance settings: persisted in localStorage, apply instantly, safe mid-run ----------
+// (globals are read at spawn/render time, so lowering them takes effect immediately)
+let perf={res:'high',smooth:'off',particles:'high',decals:'on',flash:'on',fps:'unlimited'};
+try{const sv=storeGet('dood_perf_v1');if(sv)perf=Object.assign(perf,JSON.parse(sv));}catch(e){}
+if(perf.smooth===undefined&&perf.mip==='on')perf.smooth='on'; // renamed from mipmapping
+delete perf.mip;
+let perfParticleMul=1,perfDecalsOff=false,perfFlash=true,perfFpsCap=0,fpsAcc=0;
+function applySmooth(on){ // smooth walls: trilinear mips + 4x aniso on floors/walls. Demon sprites stay nearest.
+ const maxA=renderer.capabilities.getMaxAnisotropy();
+ for(const t of [floorTex,wallTex]){
+  if(on){t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.anisotropy=Math.min(4,maxA);}
+  else{t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.anisotropy=1;}
+  t.needsUpdate=true;}}
+function applyPerf(){
+ perfParticleMul=perf.particles==='low'?0.5:perf.particles==='min'?0.2:1;
+ perfDecalsOff=perf.decals==='off';
+ if(perf.decals==='reduced'){SPLAT_BIG_MAX=120;SPLAT_SMALL_MAX=30;}
+ else{SPLAT_BIG_MAX=300;SPLAT_SMALL_MAX=80;}
+ perfFlash=perf.flash!=='off';
+ perfFpsCap=perf.fps==='30'?30:perf.fps==='60'?60:0;fpsAcc=0; // 0 = every rAF (uncapped)
+ // render scale, not a dpr ceiling: a ceiling does nothing on dpr<=cap displays
+ // (most desktops), while a scale below 1 always shrinks the backbuffer — the
+ // canvas CSS size is untouched so the GPU just upscales a softer image.
+ const scale=perf.res==='low'?0.5:perf.res==='balanced'?0.7:1;
+ try{renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)*scale);fit();}catch(e){}
+ try{applySmooth(perf.smooth==='on');}catch(e){}
+ try{storeSet('dood_perf_v1',JSON.stringify(perf));}catch(e){}}
+function syncPerfUI(){try{
+ document.getElementById('setRes').value=perf.res;
+ document.getElementById('setSmooth').value=perf.smooth;
+ document.getElementById('setParticles').value=perf.particles;
+ document.getElementById('setDecals').value=perf.decals;
+ document.getElementById('setFlash').value=perf.flash;
+ document.getElementById('setFps').value=perf.fps;}catch(e){}}
+document.getElementById('setbtn').onclick=()=>{syncPerfUI();document.getElementById('setPanel').classList.add('open');};
+document.getElementById('setClose').onclick=()=>{document.getElementById('setPanel').classList.remove('open');};
+for(const [id,key] of [['setRes','res'],['setSmooth','smooth'],['setParticles','particles'],['setDecals','decals'],['setFlash','flash'],['setFps','fps']]){
+ document.getElementById(id).onchange=e=>{perf[key]=e.target.value;applyPerf();};}
+applyPerf();syncPerfUI();
 document.getElementById('seedrnd').onclick=()=>{document.getElementById('seedin').value=(Math.random()*1e9)|0;};
 // ---------- run save: snapshot on level entry, death marks it dead (no save-scum).
 // closing the tab mid-run offers CONTINUE; dying then closing offers nothing.
