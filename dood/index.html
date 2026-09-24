@@ -71,6 +71,9 @@ button{font-family:monospace;font-size:16px;padding:10px 26px;background:#c41e00
 button:hover{filter:brightness(1.15)}
 button:active{transform:translateY(1px)}
 #dmg{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px 40px rgba(255,0,0,.55);opacity:0;transition:opacity .1s;z-index:4}
+#faceblood{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+#faceblood .fbsplat{position:absolute;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated;opacity:.9;transition:opacity .45s}
+#faceblood .fbspatter{position:absolute;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated;opacity:.85;transition:opacity .5s}
 #lvlmsg{position:absolute;left:0;right:0;top:14%;text-align:center;color:#7dff5e;font-size:22px;letter-spacing:2px;pointer-events:none;z-index:4;text-shadow:2px 2px 0 #000,0 0 18px rgba(80,255,80,.6);opacity:0;transition:opacity .4s;padding:0 8px}
 #tip{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;max-width:92%;text-align:center;font-size:13px;color:#ffe9a8;background:rgba(10,2,0,.8);border:1px solid rgba(255,179,0,.7);border-radius:6px;padding:7px 14px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap}
 #tip.show{opacity:1}
@@ -163,14 +166,14 @@ body.touch-game #tip{bottom:auto;top:calc(64px + env(safe-area-inset-top,0px));f
 <body>
 <h1>🔥 DOOD</h1>
   <div class="sub">WASD / arrows move · mouse look · click / CTRL / SPACE shoot · E use · G grenade · wheel / 1-4 weapons<span class="desk-only"> · click to lock mouse · M mute · N music · TAB/P minimap · F fullscreen</span></div>
-<div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
+<div id="wrap"><div id="hud"><span>HP <b id="hp">100</b></span><span>KILLS <b id="kills">0</b></span><span>LEVEL <b id="wave">1</b></span><span>FOES <b id="foes">0</b></span><span>GIBS <b id="gibn">0</b></span><span>WPN <b id="wpn">SHOTGUN</b></span><span>GRND <b id="grn">3</b></span></div><div id="dmg"></div><div id="faceblood"></div><div id="lvlmsg"></div><div id="tip"></div><div id="exitarrow">▲<span></span></div><canvas id="minimap" width="148" height="148"></canvas>
 <div id="touch"><div id="jumpLook"></div><div id="stick"><div id="nub"></div></div><button id="fireBtn">◉</button><button id="nadeBtn" title="grenade">💣</button><button id="wepBtn" title="switch weapon">⇄</button><button id="muteBtn" title="mute">🔊</button><button id="musicBtn" title="music">🎵</button><button id="mapBtn" title="minimap">🗺</button></div>
 <button id="fsBtn" title="fullscreen (F)">⛶</button>
-<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 6 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button><button id="setbtn">⚙ SETTINGS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>W/S/↑/↓</b> move · <b>A/D/&lt;/&gt;</b> strafe · <b>←/→</b> turn (<b>ALT</b> = strafe) · <b>MOUSE</b> look · <b>CLICK/CTRL/SPACE</b> shoot · <b>E</b> use · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>TAB/P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
+<div id="overlay"><div class="ov-inner"><div class="kicker">HELL'S DEMON WAREHOUSE</div><h2>DOOD</h2><div class="tagline">DESCEND · EXTERMINATE · REPEAT</div><p id="ovt">Seeded demon warehouse. Clear each level, walk into the green portal to descend.<br>Kill everything. Blood will pool, bodies stay down, gibs fly.</p><div class="feat"><span>🔥 25 LEVELS</span><span>👹 8 DEMONS + 3 WARLORDS</span><span>🔫 4 GUNS · 7 VARIANT TIERS</span><span>📅 DAILY · ∞ ENDLESS</span></div><button id="start">⛧ ENTER ⛧</button><button id="continue">▶ CONTINUE</button><div class="menu-row"><button id="daily">📅 DAILY</button><button id="bestbtn">📖 BESTIARY</button><button id="achbtn">🏆 ACHIEVEMENTS</button><button id="setbtn">⚙ SETTINGS</button></div><button id="adretry">📺 WATCH AD TO RETRY (2 PER RUN)</button><button id="endless">∞ ENDLESS (26+)</button><div class="keys"><b>W/S/↑/↓</b> move · <b>A/D/&lt;/&gt;</b> strafe · <b>←/→</b> turn (<b>ALT</b> = strafe) · <b>MOUSE</b> look · <b>CLICK/CTRL/SPACE</b> shoot · <b>E</b> use · <b>G</b> grenade · <b>1–4 / wheel</b> weapons · <b>TAB/P</b> minimap<br>📱 left stick moves · drag right side to aim · ◉ shoot · 💣 grenade · ⇄ weapon</div><div id="customdiv">— CUSTOM RUN (no bestiary / achievements) —</div><div id="seedrow">SEED <input id="seedin" placeholder="default" title="empty = default seed"> <button id="seedrnd" title="randomize seed">🎲</button> LV <input id="lvlIn" type="number" value="1" min="1" title="starting level"> <button id="customstart" title="start custom seed/level run (no unlocks)">▶ CUSTOM</button></div><div id="doodad"></div></div></div>
 <div id="adover"></div>
 <div id="bestPanel"><div id="bestCloseRow"><button id="bestClose">✕ CLOSE</button></div><div id="bestBody"></div></div>
 <div id="achPanel"><div id="achCloseRow"><button id="achClose">✕ CLOSE</button></div><div id="achBody"></div></div>
-<div id="setPanel"><div id="setCloseRow"><button id="setClose">✕ CLOSE</button></div><div id="setBody"><div class="bestHead"><div class="bestTitle">⚙ SETTINGS</div><div class="bestSub">Performance options. Saved automatically, apply instantly.</div></div><div class="setRow"><span>RESOLUTION</span><select id="setRes"><option value="high">High (sharp)</option><option value="balanced">Balanced</option><option value="low">Low (fast)</option></select></div><div class="setRow"><span>SMOOTH WALLS</span><select id="setSmooth"><option value="off">Off (crisp pixels)</option><option value="on">On</option></select></div><div class="setRow"><span>PARTICLES (blood · fire · gibs)</span><select id="setParticles"><option value="high">High</option><option value="low">Low</option><option value="min">Minimal</option></select></div><div class="setRow"><span>BLOOD DECALS (pools · scorch)</span><select id="setDecals"><option value="on">On</option><option value="reduced">Reduced</option><option value="off">Off</option></select></div><div class="setRow"><span>EXPLOSION LIGHT FLASH</span><select id="setFlash"><option value="on">On</option><option value="off">Off</option></select></div><div class="setRow"><span>FRAME RATE</span><select id="setFps"><option value="30">30 (battery saver)</option><option value="60">60</option><option value="unlimited">Unlimited</option></select></div><div class="setNote">Slow device? Lower RESOLUTION first — it is the biggest speedup. FRAME RATE 30 halves battery drain on phones.</div></div></div>
+<div id="setPanel"><div id="setCloseRow"><button id="setClose">✕ CLOSE</button></div><div id="setBody"><div class="bestHead"><div class="bestTitle">⚙ SETTINGS</div><div class="bestSub">Performance options. Saved automatically, apply instantly.</div></div><div class="setRow"><span>RESOLUTION</span><select id="setRes"><option value="high">High (sharp)</option><option value="balanced">Balanced</option><option value="low">Low (fast)</option></select></div><div class="setRow"><span>SMOOTH WALLS</span><select id="setSmooth"><option value="off">Off (crisp pixels)</option><option value="on">On</option></select></div><div class="setRow"><span>PARTICLES (blood · fire · gibs)</span><select id="setParticles"><option value="high">High</option><option value="low">Low</option><option value="min">Minimal</option></select></div><div class="setRow"><span>BLOOD DECALS (pools · scorch)</span><select id="setDecals"><option value="on">On</option><option value="reduced">Reduced</option><option value="off">Off</option></select></div><div class="setRow"><span>SCREEN BLOOD (lens)</span><select id="setScreenBlood"><option value="high">High (very much)</option><option value="subtle">Subtle</option><option value="none">None</option></select></div><div class="setRow"><span>EXPLOSION LIGHT FLASH</span><select id="setFlash"><option value="on">On</option><option value="off">Off</option></select></div><div class="setRow"><span>FRAME RATE</span><select id="setFps"><option value="30">30 (battery saver)</option><option value="60">60</option><option value="unlimited">Unlimited</option></select></div><div class="setNote">Slow device? Lower RESOLUTION first — it is the biggest speedup. FRAME RATE 30 halves battery drain on phones.</div></div></div>
 <div id="achtoast"></div>
 </div>
 <script type="module">
@@ -355,18 +358,16 @@ const ENV_STYLES=[
     for(let x=0;x<s;x+=32){const v=(fr()*10|0);g.fillStyle='rgb('+(28+v)+','+(26+v)+','+(22+v)+')';g.fillRect(x+1,0,30,s);
      g.fillStyle='#050505';g.fillRect(x,0,1,s);
      g.fillStyle='#1a1512';g.fillRect(x+4,8,24,2);g.fillRect(x+4,s-10,24,2);}}}];
-// pure per (seed, level): replays the no-repeat chain from level 1 every time,
-// so entering LV n directly gives the same style as playing 1..n to get there.
-// (The old version compared against session-global lastFloor/lastWall, so the
-// same seed+level styled differently depending on play history.)
+// pure per (seed, level), O(1): direct hash, no replay of the 2..n chain.
+// (the old version replayed the whole chain per call, so starting a custom
+// run at a very high level froze the tab — O(n) wall-style picks per genLevel.)
+// No-repeat rule kept against the previous level's pick; level 1 is techbase.
 function styleForLevel(seed,n,salt){
  if(n<=1)return 0; // level 1 is always techbase
- let prev=0,cur=0;
- for(let k=2;k<=n;k++){
-  cur=(mulberry32((seed*31+k*101+salt)|0)()*ENV_STYLES.length)|0;
-  if(cur===prev)cur=(cur+1)%ENV_STYLES.length;
-  prev=cur;}
- return cur;}
+ const L=ENV_STYLES.length;
+ const cur=(mulberry32((seed*31+n*101+salt)|0)()*L)|0;
+ const prv=(n<=2)?0:((mulberry32((seed*31+(n-1)*101+salt)|0)()*L)|0);
+ return cur===prv?(cur+1)%L:cur;}
 function applyEnvStyle(n,rng){
  rng();rng(); // style no longer draws from the layout stream; burn the 2 draws so seeded layouts/spawns don't shift
  const fi=styleForLevel(LEVEL_SEED,n,7),wi=styleForLevel(LEVEL_SEED,n,1013);
@@ -382,11 +383,11 @@ const floorTex=canvasTex(128,(g,s)=>{g.fillStyle='#3a2418';g.fillRect(0,0,s,s);f
 floorTex.wrapS=floorTex.wrapT=THREE.RepeatWrapping;floorTex.repeat.set(8,8);
 const wallTex=canvasTex(128,(g,s)=>{g.fillStyle='#4a2c1c';g.fillRect(0,0,s,s);for(let y=0;y<s;y+=16){g.fillStyle='#5e3a24';g.fillRect(0,y,s,14);}g.fillStyle='rgba(0,0,0,.35)';for(let i=0;i<120;i++)g.fillRect(Math.random()*s,Math.random()*s,2,2);});
 wallTex.wrapS=wallTex.wrapT=THREE.RepeatWrapping;wallTex.repeat.set(4,1);
-const splatTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);g.globalAlpha=.92;g.fillStyle='#5e0000';
+const splatTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);g.globalAlpha=.92;g.fillStyle='#700b0b';
 for(let i=0;i<22;i++){const a=Math.random()*6.28,d=6+Math.random()*18;g.beginPath();g.arc(32+Math.cos(a)*d,32+Math.sin(a)*d,2+Math.random()*4,0,7);g.fill();}
-g.beginPath();g.arc(32,32,10,0,7);g.fill();g.globalAlpha=.5;g.fillStyle='#3d0000';
+g.beginPath();g.arc(32,32,10,0,7);g.fill();g.globalAlpha=.5;g.fillStyle='#480808';
 g.beginPath();g.arc(32,32,14,0,7);g.fill();});
-const wallSplatTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);g.globalAlpha=.85;g.fillStyle='#5e0000';
+const wallSplatTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);g.globalAlpha=.85;g.fillStyle='#700b0b';
 for(let i=0;i<9;i++){const a=Math.random()*6.28,d=4+Math.random()*20;g.beginPath();g.arc(32+Math.cos(a)*d,32+Math.sin(a)*d,1+Math.random()*2.2,0,7);g.fill();}
 g.beginPath();g.arc(32,32,4.5,0,7);g.fill();});
 const scorchTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);
@@ -397,6 +398,13 @@ g.globalAlpha=.55;g.fillStyle='#1c1611';
 g.beginPath();g.arc(32,32,16,0,7);g.fill();
 g.globalAlpha=.7;g.fillStyle='#000';
 for(let i=0;i<36;i++)g.fillRect(8+Math.random()*48,8+Math.random()*48,2,2);});
+// soft radial aura for high-variant glows (tinted per-variant via material color)
+const glowTex=canvasTex(64,(g,s)=>{g.clearRect(0,0,s,s);
+const r=g.createRadialGradient(32,32,2,32,32,30);
+r.addColorStop(0,'rgba(255,255,255,.85)');r.addColorStop(.4,'rgba(255,255,255,.3)');r.addColorStop(1,'rgba(255,255,255,0)');
+g.fillStyle=r;g.fillRect(0,0,s,s);});
+glowTex.magFilter=THREE.LinearFilter;glowTex.minFilter=THREE.LinearFilter;
+const tmpCol=new THREE.Color(); // scratch: per-frame variant color cycling, no alloc
 // ---------- maze arena (mangler-style backtracker + loops + rooms, seeded) ----------
 let GW=0,GH=0,grid=[];
 const TS=5;
@@ -544,6 +552,7 @@ const BOSSES=[
 {a:'bz',d:'bzd',hp:140,sp:3.8,s:6,dmg:35,big:1,name:'BAALZEVUR',at:20,boss:1,enrage:1,summon:1}];
 // hardcore variants: tougher, differently-tinted versions of the same demons for deep levels.
 // first variants appear at 30; higher tiers unlock the deeper you go. Same sprite, new color.
+// STORM+ tiers carry a tinted aura glow (additive child sprite); PRISMATIC cycles the rainbow.
 // each tier has FIXED higher HP/damage (step jumps, never a per-level creep — a BLOODIED
 // imp is always the same BLOODIED imp). Variants are also faster (capped, still outrunnable),
 // attack more often (shorter shot/dash cooldowns = more dodgeable attacks), spit faster
@@ -554,9 +563,10 @@ const VARIANTS=[
 {at:30,tag:'BLOODIED',tint:0xff5040,hpMul:1.3,dmgMul:1.2,spMul:1.06,sMul:1.05,cdMul:.93,projSpdMul:1.05,stunMul:.8},
 {at:45,tag:'VENOM',tint:0x51ff7a,hpMul:1.5,dmgMul:1.35,spMul:1.09,sMul:1.1,cdMul:.86,projSpdMul:1.1,stunMul:.6},
 {at:60,tag:'VOID',tint:0xc07bff,hpMul:2.2,dmgMul:1.5,spMul:1.12,sMul:1.15,cdMul:.8,projSpdMul:1.15,stunMul:.4},
-{at:75,tag:'STORM',tint:0x5ecfff,hpMul:3.0,dmgMul:1.65,spMul:1.15,sMul:1.18,cdMul:.74,projSpdMul:1.2,stunMul:.25},
-{at:90,tag:'INFERNO',tint:0xffc93b,hpMul:4.0,dmgMul:1.8,spMul:1.17,sMul:1.22,cdMul:.68,projSpdMul:1.25,stunMul:.1},
-{at:110,tag:'OBLIVION',tint:0xf2f2f2,hpMul:5.0,dmgMul:2.0,spMul:1.18,sMul:1.26,cdMul:.62,projSpdMul:1.3,stunMul:0}];
+{at:75,tag:'STORM',tint:0x5ecfff,hpMul:3.0,dmgMul:1.65,spMul:1.15,sMul:1.18,cdMul:.74,projSpdMul:1.2,stunMul:.25,glow:0x5ecfff},
+{at:90,tag:'INFERNO',tint:0xffc93b,hpMul:4.0,dmgMul:1.8,spMul:1.17,sMul:1.22,cdMul:.68,projSpdMul:1.25,stunMul:.1,glow:0xffc93b},
+{at:110,tag:'OBLIVION',tint:0xf2f2f2,hpMul:5.0,dmgMul:2.0,spMul:1.18,sMul:1.26,cdMul:.62,projSpdMul:1.3,stunMul:0,glow:0xf2f2f2},
+{at:130,tag:'PRISMATIC',tint:0xffffff,hpMul:6.0,dmgMul:2.2,spMul:1.19,sMul:1.28,cdMul:.58,projSpdMul:1.35,stunMul:0,glow:0xffffff,flashCycle:1}];
 const SP_CAP=7.2; // nobody outruns the player by much: variant + smooth speed clamps here
 function smoothScale(n){ // steady per-level pressure past 29, applies to every foe; no HP/damage scaling
  if(n<=29)return{sp:1,cd:1,projSpd:1};
@@ -586,7 +596,7 @@ function scaledDef(base,n,rng,forceTag){ // pick a variant tier (weighted, seede
   if(tier<0)tier=unlocked;}}
  if(tier<0){d.name=base.name;return d;}
  const V=VARIANTS[tier];
- d={...d,tint:V.tint,name:base.name+' '+V.tag,variant:V.tag};
+ d={...d,tint:V.tint,name:base.name+' '+V.tag,variant:V.tag,glow:V.glow||null,flashCycle:!!V.flashCycle};
  // fixed per-tier toughness: step jumps per variant, never a per-level creep.
  // warlords keep their base damage (they already hit like trucks), but take the HP.
  d.hp=Math.ceil(d.hp*V.hpMul);
@@ -621,15 +631,20 @@ function deadMat(texKey,tint){const k=texKey+'|'+tint;let m=deadMatCache[k];
 function spawnEnemy(d,x,z){const s=new THREE.Sprite(allocEnemyMat(TEX[d.a],d.tint||0xffffff));
 s.renderOrder=1;
 s.scale.set(d.s,d.s,1);s.position.set(x,d.s/2,z);scene.add(s);
-const e={def:d,s,hp:d.hp,maxhp:d.hp,tint:d.tint||0xffffff,spd:d.sp,x,z,atk:0,flash:0,repath:0,wx:x,wz:z,phase:0,enraged:false,alert:!!d.boss,wanderT:0,shotT:1+aiRand()*1.5,orbit:aiRand()<.5?1:-1,dash:null,dashCd:2+aiRand()*2,stun:0,gz:0,svX:0,svZ:0,routeT:0,stuck:0};
+// aura glow for high variants: additive child sprite, follows the parent for
+// free (no per-frame position sync) and leaves the scene with it
+let glow=null;
+if(d.glow){const gm=new THREE.SpriteMaterial({map:glowTex,transparent:true,opacity:.3,depthWrite:false,blending:THREE.AdditiveBlending,color:d.glow});
+glow=new THREE.Sprite(gm);glow.scale.set(1.7,1.7,1);glow.position.set(0,0,-.05);glow.renderOrder=0;s.add(glow);}
+const e={def:d,s,glow,hp:d.hp,maxhp:d.hp,tint:d.tint||0xffffff,spd:d.sp,x,z,atk:0,flash:0,repath:0,wx:x,wz:z,phase:0,enraged:false,alert:!!d.boss,wanderT:0,shotT:1+aiRand()*1.5,orbit:aiRand()<.5?1:-1,dash:null,dashCd:2+aiRand()*2,stun:0,gz:0,svX:0,svZ:0,routeT:0,stuck:0};
 enemies.push(e);foesEl.textContent=enemies.length;return e;}
 function pickDef(n,rng){const pool=DEFS.filter(d=>n>=d.min);
 const w=pool.map(d=>d.hp<=3?3:1);let t=rng()*w.reduce((a,b)=>a+b,0);
 for(let i=0;i<pool.length;i++){t-=w[i];if(t<=0)return pool[i];}return pool[0];}
 // ---------- arsenal: unlocks + upgrades scale alongside the demon variants (last variant at
-// 110, last upgrade at 110). Each upgrade multiplies damage by UP_MUL. Entering a later level
+// 130, last upgrade at 110). Each upgrade multiplies damage by UP_MUL. Entering a later level
 // directly grants everything at/below it via applyLoadout().
-// balance targets: endgame trash peaks at 70hp (OBLIVION gouger 14x5). Final DPS:
+// balance targets: endgame trash peaks at 84hp (PRISMATIC gouger 14x6). Final DPS:
 // SG 5.7/0.6s=10, AR 5x1.06/0.4s=13 (5-round bursts), SN 19.8/1.6s=12, RG 37.2/3s=12 — every
 // gun stays viable, nothing one-shots the toughest trash: railgun needs 2 slugs, sniper 4
 // rounds, shotgun ~13 shells far / ~8 point-blank.
@@ -1231,6 +1246,66 @@ const sc=bigGib?.4+Math.random()*.3:.15+Math.random()*.12;s.scale.set(sc,sc,1);s
 // uniform random direction at 1-7 speed (x2 when doubled), plus the shove along the shot direction
 const sp=(1+Math.random()*6)*vm,a=Math.random()*6.28,b=Math.acos(2*Math.random()-1);
  gibs.push({s,bigGib,vx:Math.sin(b)*Math.cos(a)*sp+dx*kick*vm,vy:Math.cos(b)*sp+Math.random()*2*vm,vz:Math.sin(b)*Math.sin(a)*sp+dz*kick*vm,rot:(Math.random()-.5)*10,age:0,life:2.5+Math.random()*2});}}
+const facebloodEl=document.getElementById('faceblood');
+const faceV=new THREE.Vector3(); // scratch for lens projection, no per-hit alloc
+function faceXY(x,y,z){ // world point -> lens % coords; behind-camera falls back to nearest edge
+ faceV.set(x,y,z).applyMatrix4(camera.matrixWorldInverse); // view space: forward is -z
+ if(faceV.z>-0.05)return [faceV.x>=0?88:12,50];
+ faceV.set(x,y,z).project(camera);
+ return [Math.min(98,Math.max(2,(faceV.x*0.5+0.5)*100)),Math.min(98,Math.max(2,(-faceV.y*0.5+0.5)*100))];}
+function pixelSplat(w,h,base,vary,fill){ // chunky random sprite, 1 canvas px per cell: dense core, ragged edge, per-pixel shade variance
+ const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+ const g=cv.getContext('2d'),cx=(w-1)/2,cy=(h-1)/2,m=Math.max(cx,cy)||1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const d=Math.hypot(x-cx,y-cy)/m;
+  if(Math.random()<fill*(1.15-d)){
+   const v=(Math.random()-.5)*vary;
+   g.fillStyle='rgb('+((base[0]+v)|0)+','+((base[1]+v)|0)+','+((base[2]+v)|0)+')';
+   g.fillRect(x,y,1,1);}}
+ return cv.toDataURL();}
+const blobUrls=[],sprayDropUrls=[],sprayStreakUrls=[]; // pre-rolled pixel variants: gib blobs dark + heavy, wound spray bright + small
+for(let i=0;i<8;i++)blobUrls.push(pixelSplat(7,7,[148,16,16],36,.95));
+for(let i=0;i<8;i++)sprayDropUrls.push(pixelSplat(4,4,[190,30,30],44,.9));
+for(let i=0;i<8;i++)sprayStreakUrls.push(pixelSplat(3,8,[190,30,30],44,.9));
+function faceSplat(n,lx,ly,sp){ // blood on the lens: tiny flecks that fade in a few seconds, clustered where it hit your vision (random when unplaced)
+ if(perfScreenBlood==='none')return;
+ n=Math.max(1,Math.round(n||1));
+ if(perfScreenBlood==='high')n=Math.round(n*2.5);
+ const sbig=perfScreenBlood==='high'?1.35:1,scap=perfScreenBlood==='high'?120:48;
+ for(let k=0;k<n;k++){
+ if(!facebloodEl)return;
+ while(facebloodEl.childElementCount>scap)facebloodEl.firstChild.remove(); // cap: close-range showers can't flood the DOM
+ const px=(lx===undefined)?Math.random()*100:Math.min(98,Math.max(2,lx+(Math.random()-.5)*2*(sp||8)));
+ const py=(ly===undefined)?Math.random()*100:Math.min(98,Math.max(2,ly+(Math.random()-.5)*2*(sp||8)));
+ const s=(8+Math.random()*16)*sbig,d=document.createElement('div');
+ d.className='fbsplat';
+ d.style.cssText='left:'+px.toFixed(1)+'%;top:'+py.toFixed(1)+'%;width:'+s.toFixed(1)+'px;height:'+(s*(0.6+Math.random()*0.7)).toFixed(1)+'px;transform:rotate('+((Math.random()*360)|0)+'deg)';
+ d.style.backgroundImage='url('+blobUrls[(Math.random()*blobUrls.length)|0]+')';
+ facebloodEl.appendChild(d);
+ const hold=2000+Math.random()*3000; // stays 2-5s, then fades
+ setTimeout(()=>{d.style.opacity='0';},hold);
+ setTimeout(()=>{d.remove();},hold+600);}}
+function faceSpatter(n,lx,ly,sp){ // close-range spray when your shots land: sparse bright droplets + flung streaks — smaller, brighter and quicker than heavy gib blobs, clustered around the wound
+ if(perfScreenBlood==='none')return;
+ n=Math.max(1,Math.round(n||1));
+ if(perfScreenBlood==='high')n=Math.round(n*2.5);
+ const sbig=perfScreenBlood==='high'?1.35:1,scap=perfScreenBlood==='high'?120:48;
+ for(let k=0;k<n;k++){
+ if(!facebloodEl)return;
+ while(facebloodEl.childElementCount>scap)facebloodEl.firstChild.remove();
+ const px=(lx===undefined)?Math.random()*100:Math.min(98,Math.max(2,lx+(Math.random()-.5)*2*(sp||34)));
+ const py=(ly===undefined)?Math.random()*100:Math.min(98,Math.max(2,ly+(Math.random()-.5)*2*(sp||34)));
+ const d=document.createElement('div');
+ d.className='fbspatter';
+ let w,h,url;
+ if(Math.random()<.25){url=sprayStreakUrls[(Math.random()*sprayStreakUrls.length)|0];w=(5+Math.random()*5)*sbig;h=(16+Math.random()*22)*sbig;} // flung streak
+ else{url=sprayDropUrls[(Math.random()*sprayDropUrls.length)|0];w=(4+Math.random()*6)*sbig;h=w*(.7+Math.random()*.6);} // droplet
+ d.style.cssText='left:'+px.toFixed(1)+'%;top:'+py.toFixed(1)+'%;width:'+w.toFixed(1)+'px;height:'+h.toFixed(1)+'px;transform:rotate('+((Math.random()*360)|0)+'deg)';
+ d.style.backgroundImage='url('+url+')';
+ facebloodEl.appendChild(d);
+ const hold=1200+Math.random()*1300; // quick spray: gone in ~1.2-2.5s
+ setTimeout(()=>{d.style.opacity='0';},hold);
+ setTimeout(()=>{d.remove();},hold+500);}}
 // ---------- enemy projectiles: dodgeable spit from ranged foes ----------
 const projMat=new THREE.SpriteMaterial({color:0x7dff5e,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
 const projMatPurple=new THREE.SpriteMaterial({color:0xb050ff,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending});
@@ -1271,7 +1346,11 @@ function aiRand(){return aiRng?aiRng():Math.random();}
 let level=1,exitOpen=false,exitMesh=null,exitGlow=null,exitPos={x:0,z:0},stalker=null,adRetriesLeft=2,adPlaying=false,stalkerVulnerable=false,levelTotal=0;
 let levelStartHp=100; // flawless tracking: hp at level entry (heals happen before genLevel)
 let diedThisLevel=false; // set on death/revive: blocks flawless/pacifist/sg_pb for this level
-let pureRun=true; // normal ENTER / DAILY / ENDLESS runs earn bestiary + achievements; custom seed/LV runs don't
+let pureRun=true; // normal ENTER / DAILY / ENDLESS runs earn bestiary + achievements; custom seed/LV runs don't.
+ // INVARIANT: while pureRun is false nothing may write the Bestiary/Achievements stores.
+ // One-shot deeds are gated centrally in achUnlock/achToastTier below; tiered lifetime
+ // counters (checkKills/checkGibs/checkDepth/checkFoe/checkArsenal) and Bestiary.record
+ // each check pureRun at their call site. Keep every gate: custom sandbox must stay trophy-free.
 let levelShots=0,levelKills=0,levelSgClose=0,lastHurtBy=null,stalkerOtherWep=false; // per-level achievement tracking, reset in genLevel
 // ---------- daily challenge: seed = current date (YYYYMMDD), 3 stages at
 // difficulties 10 / 23 / 30, stage 3 always packs a (deterministic) random warlord.
@@ -1333,7 +1412,7 @@ function drawMinimap(){
  if(exitMesh)dot(exitPos.x,exitPos.z,exitOpen?'#39ff14':'#ff2222',Math.max(2.5,cell*.4));
   for(const e of enemies){
    if(e.dash&&e.dash.phase==='wind')dot(e.x,e.z,'#ffffff',Math.max(3,cell*.5)); // dash telegraph: white blip
-   else dot(e.x,e.z,e.def&&e.def.boss?'#ff00ff':(e.def&&e.def.ranged?'#39c1ff':'#ff6a2a'));}
+   else dot(e.x,e.z,e.def&&e.def.boss?'#ff00ff':(e.def&&e.def.a==='sp'?'#51ff7a':(e.def&&e.def.ranged?'#39c1ff':'#ff6a2a')));}
   for(const p of nadePickups)dot(p.x,p.z,'#3fa9ff',Math.max(2,cell*.35)); // grenade caches
   if(stalker)dot(stalker.x,stalker.z,(stalker.dash&&stalker.dash.phase==='wind')?'#ffffff':'#c0f',Math.max(3,cell*.45));
  // player arrow: forward = (-sin yaw, -cos yaw), map world x->x, world z->y
@@ -1344,7 +1423,7 @@ function drawMinimap(){
  mmG.restore();
 }
 function clearActors(){
-for(const e of enemies){scene.remove(e.s);freeEnemyMat(e.s.material);}
+for(const e of enemies){if(e.glow){e.s.remove(e.glow);e.glow.material.dispose();e.glow=null;}scene.remove(e.s);freeEnemyMat(e.s.material);}
 for(const c of corpses){scene.remove(c.s);} // corpse materials are shared via deadMatCache: never dispose per-corpse
 for(const sp of splats)scene.remove(sp.m);
 for(const g of gibs){scene.remove(g.s);freeGibMat(g.s.material,g.bigGib);}
@@ -1354,6 +1433,7 @@ for(const p of nadePickups)scene.remove(p.m);
 if(wallMesh){scene.remove(wallMesh);if(wallMesh.geometry)wallMesh.geometry.dispose();wallMesh.dispose();wallMesh=null;wallGeo=null;}
 wallMeshes.length=0;
 enemies=[];corpses=[];splats=[];gibs=[];projs=[];nadeFly.length=0;nadePickups.length=0;
+if(typeof facebloodEl!=='undefined'&&facebloodEl)facebloodEl.replaceChildren(); // fresh level, clean lens
 pLife.fill(0);rsLife.fill(0);pAlive=0;rsAlive=0;pColDirty=false;for(let j=0;j<PMAX;j++)pPos[j*3+1]=-99;
 if(exitMesh){scene.remove(exitMesh);exitMesh=null;}
 if(exitGlow){scene.remove(exitGlow);exitGlow=null;}
@@ -1374,7 +1454,7 @@ function genLevel(n,forceBoss){
  aiRng=mulberry32((LEVEL_SEED+n*7919+0x9E3779B9)|0); // separate AI stream: layout stays identical
 // maze: 9 -> 13 early, frozen until 20, then grows again (15 at 25, 19 at 35, cap 21)
 GW=9+Math.min(4,n);GH=9+Math.min(4,n);
-if(n>20){const ex=Math.min(8,(((n-20)/5)|0)*2);GW+=ex;GH+=ex;}
+if(n>20){const ex=Math.min(8,Math.floor((n-20)/5)*2);GW+=ex;GH+=ex;}
 if(GW%2===0)GW++;if(GH%2===0)GH++;
 grid=new Array(GW*GH).fill(1);
 const idx=(x,y)=>y*GW+x;
@@ -1391,7 +1471,7 @@ grid[idx(cx+pick[2]/2,cy+pick[3]/2)]=0;grid[idx(pick[0],pick[1])]=0;stack.push([
   // loops capped so high levels stay a maze + rooms (bossfights get extra loops + big pits)
   const bossHere=forceBoss||BOSSES.find(b=>b.at===n);
   const bigArena=bossHere||n===25||n===666; // warlord levels + IT's level all need room to breathe
-  const loops=((GW*GH/30)|0)+Math.min(4,n>>2)+(bigArena?((GW*GH/20)|0):0);
+  const loops=((GW*GH/30)|0)+Math.min(4,Math.floor(n/4))+(bigArena?((GW*GH/20)|0):0);
   for(let i=0;i<loops;i++)grid[idx(1+((rng()*(GW-2))|0),1+((rng()*(GH-2))|0))]=0;
   const nRooms=bigArena?3:2,roomBase=bigArena?5:3,roomVar=bigArena?3:1;
   for(let r=0;r<nRooms;r++){const rw=roomBase+((rng()*roomVar)|0),rh=roomBase+((rng()*roomVar)|0),
@@ -1545,7 +1625,7 @@ sfx('roar',stalker.x,stalker.z);}
   // rare grenade caches from level 20 on: 1 roll at 20 -> 8 at 100, 10% each.
   // own rng stream so seeded layouts/spawns never shift.
   if(n>=20){const prng=mulberry32((LEVEL_SEED+n*7919+0x51ab)|0);
-   const rolls=Math.min(8,1+(((n-20)*7/80)|0));
+   const rolls=Math.min(8,1+Math.floor((n-20)*7/80));
    for(let r=0;r<rolls;r++)if(prng()<.1)
     for(let t=0;t<20;t++){const tx=1+((prng()*(GW-2))|0),ty=1+((prng()*(GH-2))|0);
      if(grid[ty*GW+tx]===0&&dist[ty*GW+tx]>5){spawnNadePickup((tx+.5)*TS,(ty+.5)*TS);break;}}}
@@ -1647,6 +1727,7 @@ const maxHits=W.pierce+1;let beamEnd=null;let killsThisShot=0;
 for(let i=0;i<cands.length&&i<maxHits;i++){const c=cands[i],close=c.dist<4;
 const dd=close?closeDmg:dmg;
 if(c.stalker){const sx=stalker.x,sz=stalker.z;stalker.hp-=dd;stalker.flash=.08;sfx('hit',sx,sz);
+if(c.dist<(wid==='rg'?10:3)){const wp=faceXY(sx,2.5,sz);faceSpatter(wid==='rg'?20-19*(c.dist/10):15-14*(c.dist/3),wp[0],wp[1],34);} // wound sprays the lens: 1 at 3m / 15 point-blank — railgun vaporizes out to 10m, 20 max
 if(wid!=='sg')stalkerOtherWep=true; // anything but buckshot voids the purist trophy
 blood(sx,2.5,sz,20,3.5,(sx-player.x)/(c.dist||1),(sz-player.z)/(c.dist||1),Math.random()*(close?10:6));
 beamEnd={x:sx,y:2.5,z:sz};
@@ -1656,12 +1737,14 @@ if(close&&wid==='sg'){const px=(e.x-player.x)/(c.dist||1),pz=(e.z-player.z)/(c.d
 if(!collide(e.x+px*1.2,e.z,.5))e.x+=px*1.2;
 if(!collide(e.x,e.z+pz*1.2,.5))e.z+=pz*1.2;}
 e.hp-=dd;e.flash=.08;sfx('hit',e.x,e.z);
+if(c.dist<(wid==='rg'?10:3)){const wp=faceXY(e.x,e.def.s*.6,e.z);faceSpatter(wid==='rg'?20-19*(c.dist/10):15-14*(c.dist/3),wp[0],wp[1],34);} // wound sprays the lens: 1 at 3m / 15 point-blank — railgun vaporizes out to 10m, 20 max
 if(e.def.name==='GORGUT')e.gorgutShot=true; // any bullet voids the grenades-only trophy
 if(e.hp>0){
-if(e.dash&&!e.def.boss){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1.5)*.5);} // shots interrupt trash dashes — warlords charge through gunfire
-if(!e.def.boss){let sd=0; // close blasts stun (variants shrug, OBLIVION ignores)...
+if(e.dash&&!e.def.boss){const heavy=wid==='rg'||wid==='sn'||(wid==='sg'&&close); // mauler only respects heavy hits: point-blank buckshot, sniper, rail — burst rifle + far shotgun never break its dash
+if(e.def.a!=='ma'||heavy){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1.5)*.5);}} // shots interrupt trash dashes — warlords charge through gunfire
+if(wid!=='ar'&&!e.def.boss){let sd=0; // heavy hits stun: close blasts stagger (variants shrug, OBLIVION ignores)... burst rifle never staggers
 if(close)sd=.35*(e.def.stunMul??1);
-if(e.def.stunWeak)sd=Math.max(sd,.45); // ...but wraiths + rotfiends reel from EVERY shot
+if(e.def.stunWeak)sd=Math.max(sd,.45); // ...but wraiths + rotfiends reel from EVERY heavy shot
 if(sd>0)e.stun=Math.max(e.stun||0,sd);}}
 blood(e.x,e.def.s*.6,e.z,16,3,(e.x-player.x)/(c.dist||1),(e.z-player.z)/(c.dist||1),Math.random()*(close?10:6));
 beamEnd={x:e.x,y:e.def.s*.6,z:e.z};
@@ -1711,9 +1794,18 @@ if(e.dash){e.dash=null;e.dashCd=Math.max(e.dashCd||0,(e.def.dash?e.def.dash.cd:1
 e.gz=1.2; // blast stun: everyone reels, warlords included
 const sv=(7-.4*dist*10/NADE_R)*3; // slide 7m at 0m -> 3m at edge (travel = v0/3 at decay 3/s)
 e.svX=nx*sv;e.svZ=nz*sv;
-sfx('hit',e.x,e.z);
-fireP(e.x,e.def.s*.6,e.z,12,4,nx,nz,4);
-if(e.hp<=0)dead.push([e,nx,nz]);}
+ sfx('hit',e.x,e.z);
+ fireP(e.x,e.def.s*.6,e.z,12,4,nx,nz,4);
+ { // debris lane: victim roughly in your direction from the blast — shredded matter rains onto your lens
+  const qx=player.x-x,qz=player.z-z,pl=Math.hypot(qx,qz)||0.001;
+  if((qx*nx+qz*nz)/pl>0.6&&perfScreenBlood!=='none'&&running&&!dying){ // ~53° cone: roughly downstream is enough
+   const vd=Math.hypot(player.x-e.x,player.z-e.z),fall=1-Math.min(1,vd/15); // your distance to the shredded victim — full shower on top of it, nothing past 15m
+   const nSpray=Math.round(25*fall),nSpeck=Math.round(8*fall);
+   if(nSpray>0||nSpeck>0){const sx=e.x,sy=e.def.s*.6,sz=e.z,dl=Math.random()*Math.min(1.2,pd/10); // scattered arrival: instant up to distance-capped max
+    setTimeout(()=>{if(!running||dying)return;const wp=faceXY(sx,sy,sz);
+     if(nSpray>0)faceSpatter(nSpray,wp[0],wp[1],34);
+     if(nSpeck>0)faceSplat(nSpeck,wp[0],wp[1],9);},dl*1000);}}}
+ if(e.hp<=0)dead.push([e,nx,nz]);}
 for(const t of dead)kill(t[0],t[1],t[2],4,false,true);
 if(dead.length>=3)achUnlock('nade3'); // one blast, three+ demons
 }
@@ -1750,11 +1842,13 @@ if(!free&&pureRun)try{if(window.Achievements){const A=window.Achievements,kr=A.c
  if(window.Bestiary){const bc=window.Bestiary.count();if(bc.got>=bc.total)achUnlock('bestiary');}
 }}catch(_){}
 const big=!!e.def.big;
+if(e.glow){e.s.remove(e.glow);e.glow.material.dispose();e.glow=null;} // aura dies with its demon: never lingers on corpses
 if(vap){scene.remove(e.s);freeEnemyMat(e.s.material);} // vaporized (railgun/grenade): no corpse, just a blast mark
 else{
-// corpse: shared dead material by (texture|tint) — live material goes back to the pool
+// corpse: shared dead material by (texture|tint) — live material goes back to the pool.
+// static def tint as the cache key: PRISMATIC's cycling e.tint would mint a new shared entry per kill.
 freeEnemyMat(e.s.material);
-e.s.material=deadMat(e.def.d,e.tint||0xffffff);
+e.s.material=deadMat(e.def.d,e.def.tint||0xffffff);
 e.s.scale.set(e.def.s,e.def.s*.6,1);e.s.position.y=.35;e.dead=true;
 let cvx=dx||0,cvz=dz||0;
 if(!cvx&&!cvz){const a=Math.random()*6.28;cvx=Math.cos(a);cvz=Math.sin(a);} // directionless kill: random shove
@@ -1861,6 +1955,12 @@ rsGeo.attributes.position.needsUpdate=true;
 }
 // gibs fly, stick to walls briefly, then drop + land
 for(const g of gibs){g.age+=dt;
+ if(running&&!dying&&!g.stuck){ // live gibs only: plastered wall-gibs never count
+  const ghx=g.s.position.x-camera.position.x,ghy=g.s.position.y-camera.position.y,ghz=g.s.position.z-camera.position.z;
+  if(ghx*ghx+ghy*ghy+ghz*ghz<1.69){ // ~1.3m catch sphere around the lens: kills fling gibs away, so cast a wide net
+   const fwx=-Math.sin(player.yaw),fwz=-Math.cos(player.yaw),fhl=Math.hypot(ghx,ghz)||0.001;
+   if(fhl<0.05||(ghx*fwx+ghz*fwz)/fhl>0.15){const fp=faceXY(g.s.position.x,g.s.position.y,g.s.position.z); // only from where you're looking — fleck lands where it hit your vision
+    faceSplat(1,fp[0],fp[1],7);g.age=g.life;continue;}}}
  if(g.stuck>0){g.stuck-=dt; // plastered: slides down slowly, then drops
   g.s.position.y=Math.max(.4,g.s.position.y-(g.slideV||0)*dt);
   g.s.material.rotation+=g.rot*dt*0.2;
@@ -1954,6 +2054,9 @@ for(const e of enemies){const dx=player.x-e.x,dz=player.z-e.z,d=Math.sqrt(dx*dx+
 let eLOS=-1; // line-of-sight computed lazily once per enemy per frame, reused below
 const getLOS=()=>{if(eLOS<0)eLOS=los(e.x,e.z,player.x,player.z)?1:0;return eLOS;};
 if(e.flash>0)e.flash=Math.max(0,e.flash-dt); // single authority: flash always ticks, color resolved per-branch below
+if(e.def.flashCycle){e.tint=tmpCol.setHSL((frameNow*.0006)%1,1,.6).getHex(); // PRISMATIC: body + aura cycle the rainbow; branches below read e.tint
+ if(e.glow)e.glow.material.color.setHex(e.tint);}
+else if(e.glow)e.glow.material.opacity=.24+.08*Math.sin(frameNow*.005+e.z); // aura breathing: subtle pulse, never a strobe
 if(e.gz>0){e.gz-=dt; // grenade blast: tumbling slide, no actions until it wears off
 if(!collide(e.x+e.svX*dt,e.z,.5))e.x+=e.svX*dt;
 if(!collide(e.x,e.z+e.svZ*dt,.5))e.z+=e.svZ*dt;
@@ -2276,7 +2379,8 @@ function pumpAchToast(){if(achToastOn)return;const nx=achToastQ.shift();if(!nx)r
  setTimeout(()=>{el.classList.remove('show');achToastOn=false;setTimeout(pumpAchToast,400);},2600);}
 function achToast(t){achToastQ.push(t);pumpAchToast();}
 function updAchBtn(){try{if(window.Achievements)document.getElementById('achbtn').textContent='🏆 ACHIEVEMENTS ('+window.Achievements.label()+')';}catch(e){}}
-function achToastTier(id,sub){try{if(window.Achievements){const d=window.Achievements.byId(id);
+function achToastTier(id,sub){if(!pureRun)return; // custom runs: no toasts, ever
+ try{if(window.Achievements){const d=window.Achievements.byId(id);
  if(d)achToast('🏆 '+d.name+' — '+sub);
  try{sfx('wave',player.x,player.z);}catch(_){}updAchBtn();}}catch(e){}}
 function achUnlock(id){if(!pureRun)return;try{if(window.Achievements&&window.Achievements.unlock(id)){
@@ -2289,11 +2393,12 @@ document.getElementById('achClose').onclick=()=>{document.getElementById('achPan
 updAchBtn();
 // ---------- performance settings: persisted in localStorage, apply instantly, safe mid-run ----------
 // (globals are read at spawn/render time, so lowering them takes effect immediately)
-let perf={res:'high',smooth:'off',particles:'high',decals:'on',flash:'on',fps:'unlimited'};
+let perf={res:'high',smooth:'off',particles:'high',decals:'on',screenblood:'subtle',flash:'on',fps:'unlimited'};
 try{const sv=storeGet('dood_perf_v1');if(sv)perf=Object.assign(perf,JSON.parse(sv));}catch(e){}
 if(perf.smooth===undefined&&perf.mip==='on')perf.smooth='on'; // renamed from mipmapping
 delete perf.mip;
-let perfParticleMul=1,perfDecalsOff=false,perfFlash=true,perfFpsCap=0,fpsAcc=0;
+if(perf.screenblood===undefined)perf.screenblood='subtle'; // new setting: old saves default to subtle
+let perfParticleMul=1,perfDecalsOff=false,perfScreenBlood='subtle',perfFlash=true,perfFpsCap=0,fpsAcc=0;
 function applySmooth(on){ // smooth walls: trilinear mips + 4x aniso on floors/walls. Demon sprites stay nearest.
  const maxA=renderer.capabilities.getMaxAnisotropy();
  for(const t of [floorTex,wallTex]){
@@ -2303,6 +2408,7 @@ function applySmooth(on){ // smooth walls: trilinear mips + 4x aniso on floors/w
 function applyPerf(){
  perfParticleMul=perf.particles==='low'?0.5:perf.particles==='min'?0.2:1;
  perfDecalsOff=perf.decals==='off';
+ perfScreenBlood=perf.screenblood||'subtle';
  if(perf.decals==='reduced'){SPLAT_BIG_MAX=120;SPLAT_SMALL_MAX=30;}
  else{SPLAT_BIG_MAX=300;SPLAT_SMALL_MAX=80;}
  perfFlash=perf.flash!=='off';
@@ -2318,12 +2424,13 @@ function syncPerfUI(){try{
  document.getElementById('setRes').value=perf.res;
  document.getElementById('setSmooth').value=perf.smooth;
  document.getElementById('setParticles').value=perf.particles;
- document.getElementById('setDecals').value=perf.decals;
+  document.getElementById('setDecals').value=perf.decals;
+  document.getElementById('setScreenBlood').value=perf.screenblood;
  document.getElementById('setFlash').value=perf.flash;
  document.getElementById('setFps').value=perf.fps;}catch(e){}}
 document.getElementById('setbtn').onclick=()=>{syncPerfUI();document.getElementById('setPanel').classList.add('open');};
 document.getElementById('setClose').onclick=()=>{document.getElementById('setPanel').classList.remove('open');};
-for(const [id,key] of [['setRes','res'],['setSmooth','smooth'],['setParticles','particles'],['setDecals','decals'],['setFlash','flash'],['setFps','fps']]){
+for(const [id,key] of [['setRes','res'],['setSmooth','smooth'],['setParticles','particles'],['setDecals','decals'],['setScreenBlood','screenblood'],['setFlash','flash'],['setFps','fps']]){
  document.getElementById(id).onchange=e=>{perf[key]=e.target.value;applyPerf();};}
 applyPerf();syncPerfUI();
 document.getElementById('seedrnd').onclick=()=>{document.getElementById('seedin').value=(Math.random()*1e9)|0;};

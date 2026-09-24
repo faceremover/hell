@@ -11,8 +11,9 @@ var TIERS=[
  {tag:'VENOM',at:45,tint:'#51ff7a',blurb:'Marinated in nukage. Tougher hide, snappier attacks.'},
  {tag:'VOID',at:60,tint:'#c07bff',blurb:'Half-phased out of reality. Hits hard, barely flinches.'},
  {tag:'STORM',at:75,tint:'#5ecfff',blurb:'Crackling fast. Stuns slide right off.'},
- {tag:'INFERNO',at:90,tint:'#ffc93b',blurb:'Walks like the floor is lava because it is. Bring railguns.'},
- {tag:'OBLIVION',at:110,tint:'#f2f2f2',blurb:'The last thing the deep game shows you. Immune to stuns.'}];
+  {tag:'INFERNO',at:90,tint:'#ffc93b',blurb:'Walks like the floor is lava because it is. Bring railguns.'},
+  {tag:'OBLIVION',at:110,tint:'#f2f2f2',blurb:'Pale as the end of things. Immune to stuns.'},
+  {tag:'PRISMATIC',at:130,tint:'#ffffff',blurb:'Cycles every color and hits like the end of the world. Immune to stuns.'}];
 // id = enemy def sprite key ('it' = the level-25 stalker, recorded separately).
 // stats are BASE values: variants multiply HP/damage/speed from here.
 var ENTRIES=[
