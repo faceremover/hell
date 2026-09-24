@@ -176,10 +176,31 @@ window.addEventListener('error',e=>{const o=document.getElementById('ovt');
 window.addEventListener('unhandledrejection',e=>{const o=document.getElementById('ovt');
  if(o&&!window.__doodErr){window.__doodErr=true;o.innerHTML='⚠ ERROR: '+(e.reason&&e.reason.message||e.reason)+' — send a screenshot.';}});
 // ---------- renderer/scene ----------
+// WebGL context creation fails on some browsers/devices (WebGL disabled, blocked by
+// shields/extensions, too many tabs holding contexts, old GPU/driver). Retry with
+// progressively plainer options before giving up with a human-readable message.
 const wrap=document.getElementById('wrap');
-const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+let renderer=null;
+try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}
+catch(e1){try{renderer=new THREE.WebGLRenderer({antialias:false});}catch(e2){renderer=null;}}
+if(!renderer||!renderer.getContext()){
+ window.__doodErr=true; // keep the generic error hook from overwriting this below
+ const o=document.getElementById('ovt');
+ if(o)o.innerHTML='⚠ WEBGL UNAVAILABLE — DOOD needs WebGL to render.<br><br>'+
+  'Try: latest Chrome / Edge / Firefox / Safari · enable hardware acceleration '+
+  '(chrome://settings/system) · turn off shields/extensions blocking WebGL · '+
+  'close other tabs (browsers cap live graphics contexts) · update GPU drivers.<br>'+
+  'Reload the page after changing anything.';
+ const st=document.getElementById('start');
+ if(st)st.style.display='none';
+ throw new Error('WebGL unavailable');}
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 wrap.prepend(renderer.domElement);
+// mid-game context loss (driver reset, GPU hiccup) otherwise freezes on a dead frame
+// with no explanation: tell the player, and refit when the browser restores it.
+renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();
+ try{showMsg('GRAPHICS CONTEXT LOST — RELOADING THE PAGE FIXES IT',4000);}catch(_){}},false);
+renderer.domElement.addEventListener('webglcontextrestored',()=>{try{fit();}catch(_){}},false);
 function fit(){try{if(!wrap.clientWidth||!wrap.clientHeight)return;const w=wrap.clientWidth,h=wrap.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}catch(e){}}
 wrap.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(e.target&&wrap.contains(e.target))e.preventDefault();});
