@@ -1,0 +1,2320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SNIBA SNIB</title>
+<meta name="description" content="A sidescrolling story about family, scissors, and the correct legal paperwork.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nosifer&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blood:#ff1a00; --lava:#ff6a00; --gold:#ffcc33; --ash:#c9a68a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0a0202;color:#ffb0a0;
+  font-family:"Courier New",Courier,monospace;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;cursor:pointer}
+canvas{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated}
+#wrap{position:fixed;inset:0}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.05;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>")}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:55;
+  background:radial-gradient(ellipse at 50% 45%,transparent 40%,rgba(0,0,0,.55) 88%,rgba(0,0,0,.86) 100%)}
+
+#hud{position:fixed;left:0;right:0;top:0;z-index:40;padding:10px 12px;display:none;gap:8px;
+  align-items:flex-start;flex-wrap:wrap;pointer-events:none;font-size:13px;letter-spacing:.5px}
+.pill{background:rgba(10,2,2,.84);border:2px solid #7a1a00;border-bottom-color:#c41e00;
+  border-radius:4px;padding:5px 9px;line-height:1.25;box-shadow:3px 3px 0 rgba(0,0,0,.6);white-space:nowrap}
+.pill b{color:var(--gold)}
+#timer.panic{animation:tpulse .5s steps(2) infinite;border-color:var(--blood)}
+@keyframes tpulse{0%{color:#fff;background:#c41e00}100%{color:#ffb0a0;background:rgba(10,2,2,.84)}}
+#hearts{letter-spacing:2px;font-size:16px}
+#snibwrap{flex:1;min-width:130px;max-width:300px}
+#snibbar{height:11px;background:#1c0505;border:2px solid #7a1a00;margin-top:4px;overflow:hidden}
+#snibfill{height:100%;width:0%;background:linear-gradient(90deg,#7a1a00,#ff1a00 68%,#ffcc33)}
+#actname{font-family:VT323,monospace;font-size:22px;color:var(--gold);letter-spacing:2px}
+
+#dlg{position:fixed;left:0;right:0;bottom:0;z-index:50;display:none;padding:14px;
+  background:linear-gradient(180deg,rgba(10,2,2,0),rgba(6,1,1,.94) 32%,#060101);pointer-events:auto}
+#dlg.on{display:block}
+#who{font-family:VT323,monospace;font-size:30px;line-height:1;letter-spacing:3px;color:var(--gold);
+  text-shadow:0 0 14px rgba(255,120,0,.55);margin-bottom:3px}
+#txt{font-size:16px;line-height:1.45;color:#ffd9c9;min-height:3em;max-width:940px;margin:0 auto;text-shadow:0 1px 0 #000}
+#txt .cursor{color:var(--blood);animation:blink .6s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#dbox{max-width:940px;margin:0 auto;position:relative}
+#next{position:absolute;right:2px;bottom:-4px;color:var(--gold);font-size:18px;animation:bob .9s infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+#choices{display:none;flex-direction:column;gap:6px;margin-top:10px}
+#choices button{background:#1b0404;color:#ffd9c9;border:2px solid #c41e00;border-radius:4px;
+  padding:9px 12px;text-align:left;font-size:15px;box-shadow:3px 3px 0 rgba(0,0,0,.55)}
+#choices button:hover,#choices button:focus-visible{background:#c41e00;color:#fff;outline:none}
+#hint{font-size:11px;opacity:.5;text-align:center;margin-top:7px}
+.redact{background:#ffb0a0;color:#ffb0a0;padding:0 3px;user-select:none;border-radius:1px}
+
+.ov{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;
+  padding:16px;overflow:auto;background:radial-gradient(ellipse at 50% 30%,#1c0603,#050101 75%)}
+.ov.on{display:flex}
+.card{max-width:940px;width:100%;text-align:center}
+h1.logo{font-family:Nosifer,monospace;font-size:clamp(44px,11vw,118px);margin:0 0 4px;
+  background:linear-gradient(180deg,#fff2b0,#ff6a00 45%,#b30000);-webkit-background-clip:text;
+  background-clip:text;color:transparent;letter-spacing:4px;
+  filter:drop-shadow(0 0 26px rgba(255,60,0,.55));animation:breathe 3.4s ease-in-out infinite}
+@keyframes breathe{50%{filter:drop-shadow(0 0 44px rgba(255,60,0,.85))}}
+.tag{color:var(--ash);font-size:14px;letter-spacing:1px;margin:6px 0 2px}
+.tag.low{opacity:.6;font-size:12px}
+.field{display:flex;gap:8px;justify-content:center;align-items:center;margin:14px 0;flex-wrap:wrap}
+.field label{font-family:VT323,monospace;font-size:24px;color:var(--gold);letter-spacing:2px}
+input[type=text]{background:#1b0404;border:2px solid #c41e00;color:#ffcc33;font-family:VT323,monospace;
+  font-size:24px;padding:6px 10px;width:190px;text-align:center;border-radius:4px}
+input[type=text]:focus{outline:2px solid var(--gold)}
+.btn{background:linear-gradient(180deg,#ff8a00,#b30000);color:#fff5e8;border:2px solid #ffb300;
+  border-radius:5px;padding:12px 20px;font-size:17px;letter-spacing:2px;font-weight:bold;
+  box-shadow:4px 4px 0 #000;text-transform:uppercase}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+.btn.ghost{background:#1b0404;color:#ffb0a0;border-color:#7a1a00;box-shadow:3px 3px 0 #000;font-weight:normal}
+.btn.ghost:hover{background:#2a0606;color:#fff}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.fine{font-size:11px;opacity:.5;margin-top:16px;line-height:1.7}
+.fine a{color:#ffb0a0}
+.store{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.chip{background:#160404;border:2px solid #7a1a00;border-radius:20px;padding:5px 12px;font-size:12px;color:#ffcf9a}
+.chip.gold{border-color:var(--gold);color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:18px 0}
+.stat{background:#160404;border:2px solid #7a1a00;border-radius:5px;padding:10px}
+.stat b{display:block;font-family:VT323,monospace;font-size:30px;color:var(--gold);line-height:1}
+.stat i{font-style:normal;font-size:11px;color:#e8b89a;letter-spacing:1px}
+.cast{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:3px 14px;text-align:left;
+  font-size:13px;margin:8px auto 12px;max-height:30vh;overflow:auto;padding:10px;max-width:940px;
+  background:#0d0303;border:2px solid #4a1000;border-radius:5px}
+.cast div{opacity:.28}
+.cast div.met{opacity:1;color:#ffd9c9}
+.cast div.met b{color:var(--gold)}
+#endtitle{font-family:VT323,monospace;font-size:clamp(30px,7vw,66px);color:var(--gold);letter-spacing:3px;margin:10px 0}
+#endblurb{color:#ffd9c9;font-size:16px;line-height:1.6;max-width:700px;margin:0 auto}
+.blackout{background:#000;color:#c40000;font-family:VT323,monospace;
+  font-size:clamp(19px,3.6vw,36px);letter-spacing:4px;line-height:1.5;padding:24px;text-shadow:0 0 22px #ff1a00}
+.ctrllist{text-align:left;max-width:620px;margin:0 auto;line-height:2.1;color:#ffd9c9;font-size:15px}
+
+#touch{position:fixed;left:0;right:0;bottom:0;z-index:45;display:none;justify-content:space-between;
+  align-items:flex-end;padding:14px 16px calc(14px + env(safe-area-inset-bottom));pointer-events:none}
+#touch.on{display:flex}
+.tgrp{display:flex;gap:10px;pointer-events:auto}
+.tb{width:58px;height:58px;border-radius:50%;background:rgba(20,4,4,.7);border:2px solid #c41e00;
+  color:#ffcf9a;font-size:20px;display:flex;align-items:center;justify-content:center;user-select:none}
+.tb:active{background:#c41e00;color:#fff}
+.tb.jump{width:72px;height:72px;border-color:var(--gold);color:var(--gold)}
+#adslot{max-width:940px;margin:0 auto;width:100%}
+#toast{position:fixed;left:0;right:0;top:20%;z-index:66;text-align:center;pointer-events:none;
+  font-family:VT323,monospace;font-size:clamp(17px,3.2vw,32px);letter-spacing:2px;color:var(--gold);
+  text-shadow:0 0 18px #ff1a00,0 2px 0 #000;padding:0 12px}
+#actcard{position:fixed;inset:0;z-index:64;display:none;align-items:center;justify-content:center;
+  pointer-events:none;background:linear-gradient(90deg,rgba(5,1,1,.92),rgba(5,1,1,.35),rgba(5,1,1,.92))}
+#actcard.on{display:flex}
+#actcard .in{text-align:center;animation:acfade 3.4s forwards}
+@keyframes acfade{0%{opacity:0;transform:translateX(-24px)}14%{opacity:1;transform:none}
+  78%{opacity:1;transform:none}100%{opacity:0;transform:translateX(20px)}}
+#actcard h2{font-family:VT323,monospace;font-size:clamp(30px,7vw,64px);color:var(--gold);
+  letter-spacing:4px;margin:0;text-shadow:0 0 26px #ff1a00}
+#actcard p{color:#e8b89a;font-size:14px;letter-spacing:2px;margin:6px 0 0}
+</style>
+</head>
+<body>
+
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="vig"></div><div id="grain"></div>
+
+<div id="hud">
+  <div class="pill" id="actname">ACT I</div>
+  <div class="pill" id="timer"><b>SNIBA IN</b> 9:00</div>
+  <div class="pill" id="hearts">♥♥♥</div>
+  <div class="pill" id="inv">—</div>
+  <div class="pill" id="snibwrap">SNIBA SNIB<b id="snibpct">0%</b><div id="snibbar"><div id="snibfill"></div></div></div>
+</div>
+
+<div id="actcard"><div class="in"><h2 id="acT">ACT I</h2><p id="acS"></p></div></div>
+
+<div id="touch">
+  <div class="tgrp"><div class="tb" data-k="left">◀</div><div class="tb" data-k="right">▶</div></div>
+  <div class="tgrp"><div class="tb" data-k="talk">E</div><div class="tb jump" data-k="jump">▲</div></div>
+</div>
+
+<div id="dlg">
+  <div id="dbox">
+    <div id="who">—</div>
+    <div id="txt"></div>
+    <div id="next">▼</div>
+  </div>
+  <div id="choices"></div>
+  <div id="hint">[E] / [SPACE] / TAP TO CONTINUE</div>
+</div>
+
+<div id="toast"></div>
+
+<div class="ov on" id="title">
+  <div class="card">
+    <h1 class="logo">SNIBA SNIB</h1>
+    <div class="tag">A SIDESCROLLING STORY ABOUT FAMILY, SCISSORS, AND THE CORRECT LEGAL PAPERWORK.</div>
+    <div class="store">
+      <span class="chip gold">★ 4.9 RATING</span><span class="chip">🏆 500M+ DOWNLOADS*</span>
+      <span class="chip">👑 VIP 12</span><span class="chip gold">EDITORS' CHOICE*</span>
+      <span class="chip">📦 NOW WITH FAMILY</span>
+    </div>
+    <div class="field">
+      <label for="nm">WHAT IS YOUR NAME?</label>
+      <input id="nm" type="text" maxlength="10" value="PRÖT" autocomplete="off" spellcheck="false">
+      <button class="btn ghost" id="rnd">RANDOMISE</button>
+    </div>
+    <div class="tag low">recommended name: PRÖT · 9 MINUTES · CONTAINS ONE (1) FAMILY, ONE (1) DEATH, ZERO (0) SPOILERS</div>
+    <div class="row">
+      <button class="btn" id="play">⛧ ENTER ⛧</button>
+      <button class="btn ghost" id="howto">CONTROLS</button>
+      <button class="btn ghost" id="mute">MUSIC: ON</button>
+    </div>
+    <div id="adslot" style="margin-top:16px"></div>
+    <div class="fine">
+      *choice made by Dave · no refunds · souls processed daily · progress saved (to your browser)<br>
+      v6.66 · 6 acts · supports standing still (badly) · customer support: no · made with Unity (not really)<br>
+      <a href="../">← BACK TO HELL</a>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="howto">
+  <div class="card">
+    <h1 class="logo" style="font-size:clamp(26px,6vw,52px)">CONTROLS</h1>
+    <div class="ctrllist">
+      [A] / [←] MOVE LEFT · [D] / [→] MOVE RIGHT<br>
+      [W] / [↑] / [SPACE] JUMP — twice, if you find the hubcap<br>
+      [E] TALK · AND ADVANCE DIALOGUE · AND ANSWER ARROWS<br>
+      [M] MUTE · [P] PAUSE · [H] THIS SCREEN<br><br>
+      THE WHOLE GAME IS WALKING RIGHT.
+    </div>
+    <div class="row"><button class="btn" id="howback">BACK</button></div>
+  </div>
+</div>
+
+<div class="ov" id="pause">
+  <div class="card">
+    <h1 class="logo" style="font-size:clamp(26px,6vw,52px)">PAUSED</h1>
+    <div class="tag">dave has been notified.</div>
+    <div class="row">
+      <button class="btn" id="resume">RESUME</button>
+      <button class="btn ghost" id="ptitle">ABANDON (GIVE UP)</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="dead">
+  <div class="card">
+    <h1 class="logo" style="font-size:clamp(30px,7vw,58px)">💀 YOU FAILED</h1>
+    <div class="tag" id="deadtxt">the hell is eternal and so is this.</div>
+    <div class="row">
+      <button class="btn" id="retry">📺 WATCH AD TO RETRY</button>
+      <button class="btn ghost" id="giveup">GIVE UP</button>
+    </div>
+    <div class="fine">2 ads per run. that is the deal. dave made the deal.</div>
+  </div>
+</div>
+
+<div class="ov" id="blackout"><div class="blackout" id="blacktxt"></div></div>
+
+<div class="ov" id="endov">
+  <div class="card">
+    <h1 class="logo" style="font-size:clamp(26px,6vw,48px)">THANK YOU FOR PLAYING</h1>
+    <div id="endtitle">—</div>
+    <div id="endblurb"></div>
+    <div class="stats" id="endstats"></div>
+    <div class="tag">PEOPLE YOU MET</div>
+    <div class="cast" id="endcast"></div>
+    <div class="store">
+      <span class="chip gold">★ RATE 5★ (only option)</span>
+      <span class="chip">📺 WATCH AD (+3⚡ FREE!!)</span>
+      <span class="chip">⛧ NO REFUNDS</span><span class="chip">💎 500 GEMS</span>
+    </div>
+    <div class="row">
+      <button class="btn" id="again">▶ PLAY AGAIN</button>
+      <button class="btn ghost" id="home">← BACK TO HELL</button>
+    </div>
+    <div class="fine" id="endfine"></div>
+  </div>
+</div>
+
+<script src="../hell-ads.js"></script>
+<script>
+"use strict";
+/* ===========================================================================
+   SNIBA SNIB
+   a sidescrolling story about family, scissors, and the correct legal paperwork
+   =========================================================================== */
+
+const VH=540; let VW=960;
+const GY=412;
+const LINE_X=80;              // left edge of every act. acts run right.
+const PW=20, PH=36;
+const RUN=540;                 // 9:00. it is his fault.
+const GRAV=1750;
+
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ------------------------------------------------------------------ save -- */
+const SAVEKEY='snibasnib_v1';
+let save={best:null,endings:{},cast:{},runs:0};
+try{const raw=localStorage.getItem(SAVEKEY); if(raw) save=Object.assign(save,JSON.parse(raw));}catch(e){}
+function persist(){try{localStorage.setItem(SAVEKEY,JSON.stringify(save));}catch(e){}}
+function met(id){ if(id&&!save.cast[id]){save.cast[id]=1;persist();} }
+
+/* ----------------------------------------------------------------- audio -- */
+let AC=null,master=null,musGain=null,sfxGain=null,muted=false,musTimer=null;
+function audio(){
+  if(AC) return AC;
+  const C=window.AudioContext||window.webkitAudioContext; if(!C) return null;
+  AC=new C();
+  master=AC.createGain(); master.gain.value=0.5; master.connect(AC.destination);
+  musGain=AC.createGain(); musGain.gain.value=0.30; musGain.connect(master);
+  sfxGain=AC.createGain(); sfxGain.gain.value=0.55; sfxGain.connect(master);
+  return AC;
+}
+function beep(f,d,type,g,t0){
+  if(!AC||muted) return; const T=t0||AC.currentTime;
+  const o=AC.createOscillator(),gn=AC.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(f,T);
+  gn.gain.setValueAtTime(0,T); gn.gain.linearRampToValueAtTime(g==null?0.24:g,T+0.008);
+  gn.gain.exponentialRampToValueAtTime(0.0008,T+d);
+  o.connect(gn); gn.connect(sfxGain); o.start(T); o.stop(T+d+0.02);
+}
+function sweep(f1,f2,d,type,g,t0){
+  if(!AC||muted) return; const T=t0||AC.currentTime;
+  const o=AC.createOscillator(),gn=AC.createGain();
+  o.type=type||'sawtooth'; o.frequency.setValueAtTime(f1,T);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),T+d);
+  gn.gain.setValueAtTime(0,T); gn.gain.linearRampToValueAtTime(g==null?0.28:g,T+0.01);
+  gn.gain.exponentialRampToValueAtTime(0.0008,T+d);
+  o.connect(gn); gn.connect(sfxGain); o.start(T); o.stop(T+d+0.02);
+}
+function noise(d,g,lp,t0){
+  if(!AC||muted) return; const T=t0||AC.currentTime;
+  const n=Math.max(1,Math.floor(AC.sampleRate*d)),buf=AC.createBuffer(1,n,AC.sampleRate),ch=buf.getChannelData(0);
+  for(let i=0;i<n;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+  const src=AC.createBufferSource(); src.buffer=buf;
+  const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(lp||2400,T);
+  f.frequency.exponentialRampToValueAtTime(140,T+d);
+  const gn=AC.createGain(); gn.gain.value=g==null?0.4:g;
+  src.connect(f); f.connect(gn); gn.connect(sfxGain); src.start(T);
+}
+const SFX={
+  jump(){ sweep(330,760,0.13,'square',0.18); },
+  land(){ noise(0.07,0.12,900); },
+  stomp(){ sweep(700,120,0.11,'square',0.22); noise(0.08,0.14,1500); },
+  hurt(){ sweep(240,60,0.34,'sawtooth',0.26); },
+  die(){ sweep(400,40,1.1,'sawtooth',0.32); noise(0.9,0.28,1200); },
+  heal(){ if(!AC) return; [523,659,784,1047].forEach((f,i)=>beep(f,0.14,'triangle',0.2,AC.currentTime+i*0.07)); },
+  gem(){ if(!AC) return; beep(1180,0.06,'square',0.14); beep(1760,0.09,'square',0.12,AC.currentTime+0.05); },
+  item(){ if(!AC) return; [440,554,659,880].forEach((f,i)=>beep(f,0.16,'triangle',0.18,AC.currentTime+i*0.075)); },
+  talk(){ beep(rnd(600,760),0.028,'square',0.07); },
+  type(){ if(AC&&!muted&&Math.random()<0.55) beep(rnd(500,900),0.014,'square',0.032); },
+  stamp(){ noise(0.13,0.4,700); sweep(180,50,0.16,'square',0.2); },
+  paper(){ noise(0.24,0.12,4200); },
+  qte(){ if(!AC) return; [880,1320].forEach((f,i)=>beep(f,0.09,'square',0.2,AC.currentTime+i*0.08)); },
+  snip(){ if(!AC||muted) return; noise(0.5,0.55,6000); sweep(2600,110,0.4,'sawtooth',0.32); beep(55,1.5,'sine',0.3,AC.currentTime+0.03); },
+  organ(){ if(!AC||muted) return; const T=AC.currentTime,f=[261.6,329.6,392,523.3];
+    for(let k=0;k<3;k++) f.forEach((x,i)=>beep(x,3.4-k*0.7,'square',0.05,T+i*0.06+k*0.42)); },
+  ring(){ if(!AC||muted) return; for(let i=0;i<3;i++){ beep(1046,0.22,'square',0.12,AC.currentTime+i*0.42);
+    beep(1318,0.22,'square',0.1,AC.currentTime+0.1+i*0.42);} }
+};
+function toggleMute(){
+  audio(); muted=!muted;
+  $('#mute').textContent='MUSIC: '+(muted?'OFF (coward)':'ON');
+  if(master) master.gain.value=muted?0:0.5;
+}
+
+const TRACKS={
+  1:{bpm:96, root:55.0, bass:[0,0,3,3,5,5,3,2], lead:[7,10,12,10,7,5,3,5], dr:1},
+  2:{bpm:112,root:49.0, bass:[0,0,1,1,3,3,1,0], lead:[12,8,7,5,3,5,7,8], dr:2},
+  3:{bpm:88, root:65.4, bass:[0,4,2,4,5,4,2,0], lead:[11,9,7,9,11,12,14,12], dr:1},
+  4:{bpm:132,root:58.3, bass:[0,0,3,5,6,5,3,0], lead:[10,12,13,12,10,7,6,7], dr:3},
+  5:{bpm:124,root:46.2, bass:[0,0,0,3,5,5,2,2], lead:[7,10,12,15,12,10,7,3], dr:3},
+  6:{bpm:146,root:43.7, bass:[0,1,0,1,3,1,0,1], lead:[12,11,8,6,4,6,8,11], dr:4},
+  7:{bpm:58, root:43.7, bass:[0,0,0,0,0,0,0,0], lead:[12,12,12,12,10,10,12,12], dr:0}
+};
+function noteHz(root,i){ let o=i; while(o>12)o-=12; while(o<0)o+=12; return root*Math.pow(2,o/12); }
+function mus(f,d,type,g,t){
+  const o=AC.createOscillator(),gn=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t);
+  gn.gain.setValueAtTime(0,t); gn.gain.linearRampToValueAtTime(g,t+0.015);
+  gn.gain.exponentialRampToValueAtTime(0.0008,t+d);
+  o.connect(gn); gn.connect(musGain); o.start(t); o.stop(t+d+0.02);
+}
+function kick(t){ const o=AC.createOscillator(),gn=AC.createGain();
+  o.type='sine'; o.frequency.setValueAtTime(140,t); o.frequency.exponentialRampToValueAtTime(38,t+0.13);
+  gn.gain.setValueAtTime(0.26,t); gn.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+  o.connect(gn); gn.connect(musGain); o.start(t); o.stop(t+0.18); }
+function hat(t,g){ const n=Math.floor(AC.sampleRate*0.05),b=AC.createBuffer(1,n,AC.sampleRate),c=b.getChannelData(0);
+  for(let i=0;i<n;i++) c[i]=(Math.random()*2-1)*(1-i/n);
+  const s=AC.createBufferSource(); s.buffer=b; const gn=AC.createGain(); gn.gain.value=g||0.07;
+  s.connect(gn); gn.connect(musGain); s.start(t); }
+function startMusic(idx){
+  stopMusic(); if(!AC||muted) return;
+  const T=TRACKS[idx]||TRACKS[1]; let step=0,next=AC.currentTime+0.08,spb=60/T.bpm/2;
+  musTimer=setInterval(()=>{
+    if(muted||!AC) return;
+    while(next<AC.currentTime+0.25){
+      const s=step%8,t=next,b=noteHz(T.root,T.bass[s]);
+      mus(b,spb*0.9,'square',0.19,t); mus(b/2,spb*0.9,'triangle',0.14,t);
+      if(T.dr>0){ kick(t); if(T.dr>=2&&s%2===1) hat(t,0.05); if(T.dr>=3&&(s===2||s===6)) noise(0.1,0.1,2600,t); }
+      if(step%2===0){
+        mus(noteHz(T.root,T.lead[s]*2),spb*0.5,'sawtooth',0.05,t);
+        if(step%4===2) mus(noteHz(T.root,T.lead[(s+3)%8]*2),spb*0.4,'square',0.035,t+spb*0.5);
+      }
+      next+=spb; step++;
+    }
+  },40);
+}
+function stopMusic(){ if(musTimer){clearInterval(musTimer);musTimer=null;} }
+
+/* frame-driven timers (so they respect pause/dialogue and never fire while dead) */
+const TIMERS=[];
+function after(sec,fn){ TIMERS.push({t:sec,fn}); }
+function tickTimers(dt){
+  for(let i=TIMERS.length-1;i>=0;i--){
+    TIMERS[i].t-=dt;
+    if(TIMERS[i].t<=0){ const f=TIMERS[i].fn; TIMERS.splice(i,1); f(); }
+  }
+}
+function clearTimers(){ TIMERS.length=0; }
+
+/* ----------------------------------------------------------------- input -- */
+const keys={},pressed={};
+const KEYMAP={ArrowLeft:'left',a:'left',A:'left',ArrowRight:'right',d:'right',D:'right',
+  ArrowUp:'jump',w:'jump',W:'jump',' ':'jump',e:'talk',E:'talk',Enter:'talk'};
+addEventListener('keydown',e=>{
+  if(e.target&&e.target.tagName==='INPUT'){ if(e.key==='Enter') startGame(); return; }
+  const k=KEYMAP[e.key];
+  if(k){ if(!keys[k]) pressed[k]=true; keys[k]=true;
+    if(e.key===' '||e.key==='ArrowUp'||e.key==='ArrowDown') e.preventDefault(); }
+  if(e.key==='m'||e.key==='M') toggleMute();
+  if(e.key==='p'||e.key==='P') togglePause();
+  if(dlgOpen){
+    if(/^[1-9]$/.test(e.key)){
+      if(soupMode){ chooseIngredient(parseInt(e.key,10)-1); return; }
+      pick(parseInt(e.key,10)-1); return;
+    }
+    if(e.key===' '||e.key==='Enter'||e.key==='e'||e.key==='E'){ e.preventDefault(); skipOrNext(); return; }
+  }
+},{passive:false});
+addEventListener('keyup',e=>{ const k=KEYMAP[e.key]; if(k) keys[k]=false; });
+addEventListener('blur',()=>{ for(const k in keys) keys[k]=false; });
+addEventListener('touchstart',()=>audio(),{once:true});
+
+(function(){
+  const el=$('#touch');
+  if(!matchMedia('(pointer:coarse)').matches) return;
+  el.classList.add('on');
+  el.querySelectorAll('.tb').forEach(b=>{
+    const k=b.dataset.k;
+    const dn=ev=>{ev.preventDefault();if(!keys[k])pressed[k]=true;keys[k]=true;b.style.opacity='.5';};
+    const up=ev=>{ev.preventDefault();keys[k]=false;b.style.opacity='1';};
+    b.addEventListener('touchstart',dn,{passive:false}); b.addEventListener('touchend',up,{passive:false});
+    b.addEventListener('touchcancel',up,{passive:false});
+    b.addEventListener('mousedown',dn); b.addEventListener('mouseup',up);
+  });
+})();
+
+/* ------------------------------------------------------------------ cast -- */
+const CAST=[
+  ['mario','SUPER MARIO (grandfather)'],['boot','THE BOOT (which is him too)'],
+  ['slop','SLOP'],['floater','FLOATER'],['dave','DAVE (died at mile 12)'],
+  ['conrad','CONRAD (was right)'],['it','IT'],['mauppi','MAUPPI1'],
+  ['kathunk','KATHUNK HARRIS'],['toll','THE TOLL TROLL'],
+  ['preacher','THE DOOMSDAY RADIO PREACHER'],['icescream','ICE SCREAM'],
+  ['obama','OBAMA (tourist / lawyer)'],['satan','SATAN (landlord)'],
+  ['paivi','PÄIVI RÄSÄNEN'],['pludski','PLUDSKI (doing community service)'],
+  ['periorpo','PERIORPO'],['elikabura','ELIKABURA'],
+  ['hellbot','HELLBOT'],['sign','A SIGN'],['penar','THE WORD "PENAR"']
+];
+const NODE_CAST={
+  intro:['boot','mario'], boot_call:['boot','mario'],
+  boot_a2:['boot','mario'], boot_a3:['boot','mario'], boot_a4:['boot','mario'],
+  boot_a5:['boot','mario'], boot_a6:['boot','mario'],
+  slop1:['slop'], slop_penar:['slop','penar'], slop_sciss:['slop'],
+  floater:['floater'], dave1:['dave'], hellbot1:['hellbot'],
+  conrad1:['conrad'], conrad_rescue:['conrad'], conrad_far:['conrad'], conrad2:['conrad'],
+  it_walk:['it'], mine_intro:['sign'], ore_pick:['conrad'], mine_end:['conrad'],
+  mauppi:['mauppi'], soup_pick:['mauppi'], kathunk_intro:['kathunk'], kathunk_penar:['kathunk','penar'],
+  mauppi_out:['mauppi'], toll:['toll'], toll_yes:['toll'], toll_soup:['toll'], toll_no:['toll'],
+  preacher:['preacher'], icescream:['icescream'], dave2:['dave'], highway_sign:['sign'],
+  highway_end:['sign'],
+  conrad3:['conrad'], obama:['obama'], satan:['satan'], satan_pay:['satan'], satan_refuse:['satan'],
+  temple_intro:['pludski'], paivi:['paivi'], paivi_penar:['paivi','penar'], paivi_book:['paivi'],
+  pludski:['pludski'], altar:['periorpo','elikabura'],
+  end_divorce:['periorpo','elikabura','obama','pludski','paivi'],
+  end_snipe:['periorpo','elikabura','obama'],
+  end_fight:['periorpo','elikabura','obama'],
+  end_yes:['periorpo','elikabura'],
+  timeout:['boot','mario'],
+  mario_dies:['mario'], mario_1985:['mario']
+};
+
+/* ---------------------------------------------------------------- script -- */
+const REDACT='<span class="redact">███████</span>';
+const PENAR='the '+REDACT;
+const SCRIPT={
+intro:[
+  ['BOOT','GRANDSON. It is a boot. I am talking out of a boot, and in Hell a boot is a telephone, and I have been using it all night.'],
+  ['BOOT','I am Super Mario. I am your grandfather. I have been dead since 1985, which makes me the oldest corpse in this building.'],
+  ['BOOT','Here is the part I have been rehearsing. I am not a dead man at a wedding. I am the wedding present.'],
+  ['BOOT','Tonight Periorpo marries Elikabura. A bride and a groom each keep one thing that belonged to the family. They chose me.'],
+  ['BOOT','They are keeping me because I am the Great Scissors.'],
+  ['BOOT','And when they open me, they make one cut. They call that cut sniba snib. That is the whole of it: the phrase, and the act, and me.'],
+  ['BOOT','The cut is made with me. That is how a cut works. Whatever it is spent on, I am the thing being spent.'],
+  [null,'(YOUR PENAR IS THE STUFF IN THE CUT. It has always been yours. That is the part that frightened me.)'],
+  ['BOOT','Get to the Temple of Pludski before the ceremony starts. You have nine minutes. The clock is real and it is my fault.'],
+  ['BOOT','When you get there they will ask you one question, and there is an answer to it that is not the one you will want.'],
+  [null,'GO RIGHT. Behind you is the line, and the line bites.']
+],
+// The premise, on demand. The boot is an object in every act now, so a player
+// who skimmed the opening can walk back into it instead of restarting.
+// Act I gets the full brief; every later act gets its own short, local one —
+// a man who says the same six lines at you in every room is a menu, not a
+// character, and by Act III you would be pressing E out of spite.
+boot_call:[
+  ['BOOT','Still here. Good. You looked like a man who was about to go left.'],
+  ['BOOT','Short version, since you will ask and I would rather you did not run out of road.'],
+  ['BOOT','Wedding tonight. They keep one family thing each. They kept me.'],
+  ['BOOT','I am the scissors. They open me, they make one cut, they call the cut sniba snib, and then there is no more me.'],
+  ['BOOT','Temple of Pludski. It is to the right. It is always to the right.'],
+  ['BOOT','And if you go back the way you came, there is a line back there and the line bites. I am not being dramatic, I am being specific.'],
+  [null,'(HE IS NOT AFRAID OF THE TEMPLE. HE IS AFRAID OF THE QUESTION AT THE END OF IT.)']
+],
+boot_a2:[
+  ['BOOT','Chasm. The floor is lava, the lava is slop, and a man called Conrad cut the whole thing out of the rock by hand in 1994.'],
+  ['BOOT','He will be furious about rescuing you. Let him. It is the only thing he enjoys.'],
+  ['BOOT','The wedding has not started, grandson. Do not let the walking make you forget the wedding.']
+],
+boot_a3:[
+  ['BOOT','There is soup in there. You are not here for the soup.'],
+  ['BOOT','Mauppi served the man who is getting married, on Tuesday, and he did not finish the bowl. In four years he never has.'],
+  ['BOOT','That is the whole of what I know. It is enough. Still right. Still not started.']
+],
+boot_a4:[
+  ['BOOT','Highway. The trucks come at you from the front and they do not stop for a wedding or a grandfather.'],
+  ['BOOT','Jump them. That is the entire content of this act and I refuse to insult you by explaining it twice.'],
+  ['BOOT','Still right. Still not started.']
+],
+boot_a5:[
+  ['BOOT','The mine. The paperwork is in here somewhere and so is the man who wrote it.'],
+  ['BOOT','He is not your lawyer. He is a tourist who became one, and that is the closest thing to help this town has.'],
+  ['BOOT','Still right. Still not started.']
+],
+boot_a6:[
+  ['BOOT','You made it. I have been counting the minutes and I did not like the arithmetic.'],
+  ['BOOT','They will ask you one question, and you do not have to answer it quickly. Nobody down here has ever answered it well.'],
+  ['BOOT','...Take the form, grandson. Not the choice.']
+],
+slop1:[
+  ['SLOP','glorp. Oh — hello. You are new, and you smell like the surface, which down here is a medical condition.'],
+  ['SLOP','I am Slop. I am the mascot of this field. Pludski invented me in a bathtub in 1994 and has never once acknowledged doing so.'],
+  [null,'WHAT IS HAPPENING TO MY GRANDFATHER TONIGHT?'],
+  ['SLOP','Yes, it is horrible. It is also, allegedly, on a poster, although we do not have posters here, so mostly it is just horrible.'],
+  ['SLOP','Periorpo and Elikabura, the Great Scissors, and the phrase they have chosen for the ceremony: sniba snib. Everybody down here says it like a greeting.'],
+  ['SLOP','I asked a boot what it means once, and the boot said the same word back at me, louder. That is the only definition I have.'],
+  ['SLOP','Ask somebody with a stamp. Ask somebody with a court. Do not ask a field. A field has one (1) opinion and it is glorp.'],
+  {CH:[['WHAT IS A PENAR?','slop_penar'],['WHAT DO YOU KNOW ABOUT THE SCISSORS?','slop_sciss'],['LEAVE','@leave']]}
+],
+slop_penar:[
+  [null,'WHAT IS '+PENAR+'?'],
+  ['SLOP','I do not know what a penar is, and I have never had one.'],
+  ['SLOP','What I have is slop. The penar is above the slop, and the slop is below me, and that is the entire extent of my knowledge.'],
+  ['SLOP','Ask Kathunk. Kathunk knows absolutely everything and will tell you precisely nothing, which in this town counts as the same skill.'],
+  {CH:[['BACK','slop1']]}
+],
+slop_sciss:[
+  [null,'WHAT DO YOU KNOW ABOUT THE SCISSORS?'],
+  ['SLOP','They are in the Temple of Pludski, and they were in the temple before the temple existed. The temple was built around them, which is what a temple is: a building with a hole cut in it for one idea.'],
+  ['SLOP','I have never been inside. I am a field. I stay in the field and say glorp at people.'],
+  ['SLOP','Go right. The field ends, then it gets worse, then it gets better, then it is soup.']
+],
+floater:[
+  ['FLOATER','Let me guess what you think I am.'],
+  ['FLOATER','I am the rumor that there is something down here worth having. That is my whole job and I do it well.'],
+  ['FLOATER','People tell you I am ahead of you. I am not. I am exactly level with you, which is the genuinely bad version.'],
+  ['FLOATER','You have nine minutes. After that I am a headline, and headlines do not have to be anywhere near you.'],
+  ['FLOATER','Good luck. I will not say it again, because saying it twice makes it sound like I mean it.']
+],
+dave1:[
+  ['DAVE','sup.'],
+  ['DAVE',"I'm Dave. I died at mile twelve on the highway to TS. I'm still walking. Nobody down here has ever stopped me, because I am the thing that stops people."],
+  ['DAVE','Advice, and take it now, because I am only permitted to be wrong once and I have not spent it.'],
+  ['DAVE','At the end they will offer you a choice. Do not take the choice. Take the form.'],
+  ['DAVE','Nobody down here has ever been stopped by a choice. Everybody down here has been stopped by paperwork.'],
+  ['DAVE','...'],
+  ['DAVE','That was a lie. I have one thought and I have been saving it for someone who could use it.'],
+  ['DAVE','Here. Take my hubcap. I do not need it, I am bone, and you are going to need the double jump about two hundred yards from now.'],
+  ['DAVE','Also: Dave is always right. That is Forum Rule Three. I did not write Rule Three, I just enforce it, and I am the only person here qualified.'],
+  ['DAVE','Bye. I will be here later. I am always here later.']
+],
+hellbot1:[
+  ['HELLBOT','your thread has been blessed by lava (slop). dave has been notified.'],
+  ['HELLBOT','no damned threads match. the lava is silent.'],
+  ['HELLBOT','try "oddave".']
+],
+conrad1:[
+  ['CONRAD','STOP.'],
+  ['CONRAD','I am Conrad. I cut this chasm out of the rock by hand in 1994, and I want that on the record, because I was right about the rock and wrong about literally everything else.'],
+  ['CONRAD','The lava down here is not hot. It is slop that has given up on being a liquid, and it will not kill you so much as file you.'],
+  ['CONRAD','You are going to fall into it. Everyone falls into it exactly once, and it is on the schedule, and the schedule does not take requests.'],
+  ['CONRAD','When you do, I will fish you out, and I will be furious about it, and that is the deal. Conrad was right. The horror.']
+],
+conrad_rescue:[
+  ['CONRAD','EVERY TIME.'],
+  ['CONRAD','Get up. The schedule allows for one fall per person per lifetime and you have just spent yours.'],
+  ['CONRAD','From here on the lava is entirely your problem. I have done all the rescuing I intend to do in this decade.']
+],
+conrad_far:[
+  ['CONRAD','You cannot hurt it. I have tried, for four years, and I am the man who dug this hole with his own hands.'],
+  ['CONRAD','It is not solid and it is not afraid. It is simply a thing that watches, and that is the worst kind — the other kinds run.'],
+  ['CONRAD','It has never once hurt anybody. It does not even want to. It is just thorough.']
+],
+conrad2:[
+  ['CONRAD','The temple is that way, and you are going to need paperwork more than you are going to need courage.'],
+  ['CONRAD','I have never in my life seen a wedding end in a snip, and I would very much like to keep it that way.'],
+  ['CONRAD','Miners keep things that way. It is the entire profession.']
+],
+it_walk:[
+  ['???','IT IS BEHIND YOU.'],
+  [null,'(TURN AROUND.)'],
+  ['???','IT IS ALSO, IMPORTANTLY, A GREAT DISTANCE BEHIND YOU.'],
+  ['???','IT IS DAVE-SHAPED.'],
+  ['???','NO. IT IS NOT DAVE. DAVE IS SUN-BLEACHED AND IT IS NOT SUN-BLEACHED.'],
+  ['???','...'],
+  ['???','Go on. I will follow at a respectful distance, because I am not unreasonable, I am just extremely consistent.'],
+  ['???','IT IS BEHIND YOU.']
+],
+mine_intro:[
+  ['SIGN','NOBODY KNOWS WHAT THIS IS.'],
+  ['SIGN','NOT EVEN DAVE.'],
+  ['SIGN','I AM DAVE. I HAVE BEEN ASKED.'],
+  ['SIGN','IT IS A MINE. IT MINES. GO RIGHT.']
+],
+ore_pick:[[null,'(PICK UP ORE. It is the only thing down here that is either useful or beautiful.)']],
+mauppi:[
+  ['MAUPPI1','Welcome to my soup tavern. I am Mauppi. The sign out front says Mauppi1, and both of those are true, which is more than most places manage.'],
+  ['MAUPPI1','I know why you are here. Everybody who walks through that door is here for one of three reasons: soup, a divorce, or soup.'],
+  ['MAUPPI1','You have the face of a divorce, so I am going to assume the soup is for nerve.'],
+  ['MAUPPI1','Sit down. I will make you the house special, and then you can meet the beard.']
+],
+soup_pick:[[null,'(ORDER THE HOUSE SPECIAL. Two ingredients. Like a greedy Hell.)']],
+kathunk_intro:[
+  ['KATHUNK HARRIS','...'],
+  ['KATHUNK HARRIS','I have been told there would be a soup.'],
+  ['KATHUNK HARRIS','I am Kathunk Harris. I do not judge unprovoked, and I do not judge provoked either, but I judge, continuously, without pause, and there is no appeals process.']
+],
+kathunk_penar:[
+  [null,'WHAT IS '+PENAR+'?'],
+  ['KATHUNK HARRIS','...'],
+  ['KATHUNK HARRIS','I am the critic. I am not the dictionary.'],
+  ['KATHUNK HARRIS','Three skulls. Next.'],
+  [null,'THAT IS NOT—'],
+  ['KATHUNK HARRIS','...the notary stamps it. Go and ask the notary, if you have the nerve to stand near fire.'],
+  [null,'(THAT IS THE FIRST USEFUL THING ANYBODY HAS SAID ABOUT IT.)']
+],
+mauppi_out:[
+  ['MAUPPI1','Periorpo was in here on Tuesday, which I mention because he never comes here.'],
+  ['MAUPPI1','He ordered the Number Two and did not finish it. In four years he has never once not finished it.'],
+  ['MAUPPI1','He said, "It will not be the same after tonight," and then he would not say what "it" was.'],
+  ['MAUPPI1','I have decided not to say it either. Take the soup, get the paperwork, and go.']
+],
+toll:[
+  ['TOLL TROLL','ONE DOLLAR FOR THE BRIDGE.'],
+  ['TOLL TROLL','You do not have a dollar. I have checked. I check everyone, it is a compulsion.'],
+  ['TOLL TROLL','Do you have a sigh? Everyone has a sigh. One (1) sigh, and the bridge is yours.'],
+  {CH:[['PAY ONE SIGH','toll_yes'],['PAY WITH SOUP','toll_soup'],['WALK PAST HIM','toll_no']]}
+],
+toll_yes:[['TOLL TROLL','Good. The bridge is yours. The bridge was always mine.'],
+  ['TOLL TROLL','That was free. Do not tell anyone — I am a toll troll, not a charity, and the distinction is the whole of my personality.']],
+toll_soup:[['TOLL TROLL','Soup. The bridge has not accepted soup since 1911.'],
+  ['TOLL TROLL','It has also not been standing since 1911, so we are even. Cross.']],
+toll_no:[['TOLL TROLL','Walking past. Classic.'],
+  ['TOLL TROLL','There is no punishment for this and I want you to know that clearly. I just let people walk past. I have never recovered from it.']],
+preacher:[
+  ['DOOMSDAY RADIO PREACHER','THE SEMI-TRUCK GOD COMES AT MILE ONE HUNDRED!'],
+  [null,'(WE ARE AT MILE FOUR.)'],
+  ['DOOMSDAY RADIO PREACHER','BUT HE IS MUCH CLOSER THAN HE LOOKS! HE IS ALWAYS MUCH CLOSER THAN HE LOOKS!'],
+  ['DOOMSDAY RADIO PREACHER','REPENT!'],
+  ['DOOMSDAY RADIO PREACHER','OR DO NOT! I HAVE A BRIDGE AND IT IS ALREADY TAKING MONEY!']
+],
+icescream:[[null,'(THE JINGLE IS STUCK ON ONE NOTE. It has been since 1987.)'],
+  [null,'(It is currently the only music in the world, and it is getting louder.)']],
+dave2:[
+  ['DAVE','Second Dave. Different walk.'],
+  ['DAVE','In this act I am standing still. I have been standing for one (1) hour. It is by far the hardest thing I do.'],
+  ['DAVE','Advice. The scissors do not have to touch your grandfather in order to win.'],
+  ['DAVE','The scissors only have to be held by two people who are still married.'],
+  ['DAVE','The cut is not the point. The cut is just what happens after the paperwork.'],
+  ['DAVE','I did not make that up. I am permitted to be wrong exactly once and I have just spent it.']
+],
+highway_sign:[[null,'(A SIGN. It has been hit by a great many vehicles and has developed opinions.)'],
+  ['SIGN','TEMPLE AHEAD. 1 MILE.'],
+  ['SIGN','THE TEMPLE IS NOT A MILE. I AM A SIGN.']],
+highway_end:[[null,'(THE HIGHWAY ENDS AT A WALL. THE WALL IS ALSO A SIGN.)'],
+  ['SIGN','END OF HIGHWAY. TEMPLE THROUGH THERE.'],
+  ['SIGN','THE HIGHWAY HAS NOT ENDED. YOU HAVE. I AM THE SIGN.'],
+  [null,'(GO RIGHT.)']],
+conrad3:[
+  ['CONRAD','You again.'],
+  ['CONRAD','There is a lawyer asleep in filing cabinet nine. He has been down there since Pludski was a tourist.'],
+  ['CONRAD','Do not open the other eight.']
+],
+mine_end:[
+  ['CONRAD','The temple is through there.'],
+  ['CONRAD','Take the paperwork. Leave the scissors alone.'],
+  ['CONRAD','If you touch the scissors I have to write a report, and I have been writing the same report since 1994.']
+],
+obama:[
+  ['OBAMA','Let me be clear:'],
+  ['OBAMA','You cannot stop a cut with a sword.'],
+  ['OBAMA','You cannot stop a cut with a prayer, although I considered it, and I would have kept it, but anyway —'],
+  ['OBAMA','You can only stop a cut with paperwork.'],
+  ['OBAMA','I have drafted three (3) documents. They are inside my coat.'],
+  [null,'(HIS COAT IS A FILING CABINET.)'],
+  ['OBAMA','Document one: Notice of Intent to Divorce. Document two: Waiver of Consent, either party. Document three: a form I invented.'],
+  [null,'WHAT DOES THE THIRD FORM DO?'],
+  ['OBAMA','It is called a SNIBWAIVER.'],
+  ['OBAMA','I do not know what it does. Nobody does. That is what a waiver is. Sign it.'],
+  [null,'THAT IS NOT A REAL FORM.'],
+  ['OBAMA','It is real now, because I filed it. I filed it under "cut."'],
+  ['OBAMA','I also filled in the applicant. It is going to be PRÖT. I put it in early because there is a queue.'],
+  [null,'(THERE IS A QUEUE FOR THE END OF THE WORLD. OF COURSE THERE IS A QUEUE.)'],
+  ['OBAMA','The drawer is closed. It is not my drawer. Do not open the drawer.'],
+  ['OBAMA','Also — I am not your lawyer. I am a tourist who became a lawyer. There is a difference, and the difference is billing.']
+],
+satan:[
+  ['SATAN','I AM THE LANDLORD.'],
+  ['SATAN','Excuse me. You are standing on my property.'],
+  ['SATAN','The property is a mine. The mine is on the property. The property is on a slightly larger property. Do not get comfortable.'],
+  ['SATAN','Here is a parking ticket, for the parking you did.'],
+  {CH:[['PAY THE TICKET','satan_pay'],['TEAR IT UP','satan_refuse']]}
+],
+satan_pay:[['SATAN','Accepted. The temple is yours.'],
+  ['SATAN','The parking was not actually yours, but I am not going to argue with a paying guest in my own house.'],
+  [null,'(TEMPLE PASS ACQUIRED. It cost you something. You will not be saying what.)']],
+satan_refuse:[['SATAN','You have torn up the parking ticket.'],
+  ['SATAN','The ticket is not the law. The law is also a ticket.'],
+  ['SATAN','But the law has no parking, so the law may pass. Go on.']],
+temple_intro:[
+  ['BELL','THE TEMPLE OF PLUDSKI'],
+  ['BELL','FOUNDED BY PLUDSKI. BELOVED. FLAWLESS. NEVER DID ANYTHING WRONG, PER THE PLAQUE.'],
+  ['BELL','THE BELL IS NOT A PERSON. THE BELL IS THE ONLY THING IN THIS BUILDING THAT IS BEING HONEST.']
+],
+paivi:[
+  ['PÄIVI RÄSÄNEN','You are late. Everyone is late. Being late is the wedding.'],
+  ['PÄIVI RÄSÄNEN','I am Päivi Räsänen. I notarize. I do not read the documents — I stamp them, and the stamp does all of the actual work.'],
+  [null,'(she leans in very close)'],
+  ['PÄIVI RÄSÄNEN','Do not look at the altar too long.'],
+  {CH:[['WHAT IS '+PENAR+'?','paivi_penar'],['WHY IS THE BOOK ON FIRE?','paivi_book'],['GO TO THE ALTAR','@leave']]}
+],
+paivi_penar:[
+  [null,'WHAT IS '+PENAR+'?'],
+  ['PÄIVI RÄSÄNEN','It is in the book.'],
+  [null,'CAN I READ THE BOOK?'],
+  ['PÄIVI RÄSÄNEN','The book is on fire.'],
+  [null,'HAS IT ALWAYS BEEN ON FIRE?'],
+  ['PÄIVI RÄSÄNEN','It has been on fire since 1985.'],
+  ['PÄIVI RÄSÄNEN','Please sign here. It is hot. That is normal. It has always been hot.'],
+  {CH:[['BACK','paivi']]}
+],
+paivi_book:[
+  [null,'WHY IS THE BOOK ON FIRE?'],
+  ['PÄIVI RÄSÄNEN','Because it is the truth, and truth is not permitted to be read in Hell. Only the correct parts are permitted to be stamped.'],
+  ['PÄIVI RÄSÄNEN','I stamp the correct parts. You never see them. It works beautifully and I have never once checked.'],
+  ['PÄIVI RÄSÄNEN','If you ever check, you become the stamp. So please do not check.']
+],
+pludski:[
+  ['PLUDSKI','I AM PLUDSKI. I JUDGE.'],
+  ['PLUDSKI','I AM DOING COMMUNITY SERVICE. SATAN SUPERVISES. I DID NOT WANT TO BE HERE AND THE TEMPLE WAS NOT MY IDEA.'],
+  ['PLUDSKI','YOU WISH TO STOP A MARRIAGE?'],
+  ['PLUDSKI','THAT IS THE EASY PART. THAT IS PAPERWORK. THAT IS THE ENTIRE CONTENT OF OBAMA\'S PROFESSIONAL LIFE.'],
+  ['PLUDSKI','THE HARD PART IS WHAT YOU ARE ACTUALLY ASKING ME, WHICH IS NOT A LEGAL QUESTION.'],
+  ['PLUDSKI','YOU ARE NOT ASKING ME TO STOP THE SCISSORS. YOU ARE ASKING ME TO ADMIT THAT A MARRIAGE CAN END BEFORE A DEATH.'],
+  ['PLUDSKI','THAT IS NEW. THAT IS TERRIFYING. I HAVE TAXED EVERY OTHER EVENTUALITY IN EXISTENCE AND I AM NOT PREPARED FOR THIS ONE.'],
+  [null,'(THE SCISSORS ARE OPENING.)']
+],
+altar:[
+  ['PERIORPO','Hello, small one. I am Periorpo, and this is Elikabura, and you are the grandson.'],
+  ['PERIORPO','We are the bride and the groom, which we did not know until this afternoon. The priest is a rock. The rock knew. The rock has always known.'],
+  ['ELIKABURA','We have been married for eleven years already.'],
+  ['PERIORPO','We are marrying again tonight because the first time did not take.'],
+  ['ELIKABURA','A bride and a groom each keep one thing that belonged to the family. Tonight they chose your grandfather.'],
+  ['PERIORPO','We are keeping him because he is the Great Scissors.'],
+  ['ELIKABURA','A wedding needs one cut. The cutting is called sniba snib.'],
+  ['ELIKABURA','We make it with him, and he is spent, and that is the whole of what he is for.'],
+  ['PERIORPO','It is a small ceremony. One snip. About four seconds.'],
+  ['ELIKABURA','You may watch. We do not mind. We have done this before.'],
+  [null,'(YOUR PENAR IS WHAT GOES IN THE CUT. YOU HAVE ALWAYS KNOWN THIS. YOU HAVE BEEN AVOIDING KNOWING IT.)'],
+  ['ELIKABURA','It has not started. There is time for one answer, and then it starts.'],
+  [null,'WHAT IS THE ANSWER?']
+],
+end_divorce:[
+  ['OBAMA','LET ME BE CLEAR.'],
+  ['OBAMA','THESE TWO ARE MARRIED. BEING MARRIED MAKES THEM ONE (1) PERSON.'],
+  ['OBAMA','ONE (1) PERSON CANNOT BE TWO (1) PEOPLE IN TWO (1) PLACES AT THE SAME TIME. THAT IS NOT AN OPINION, THAT IS COUNTING.'],
+  ['OBAMA','I AM DISSOLVING THE MARRIAGE. AS OF NOW. RETROACTIVELY. AND ALSO FROM THE FUTURE.'],
+  ['PLUDSKI','THAT IS NOT A THING.'],
+  ['OBAMA','IT IS NOW. I FILED IT.'],
+  ['PERIORPO','WE DID NOT SIGN ANYTHING.'],
+  ['PÄIVI RÄSÄNEN','(she stamps everything, including the table)'],
+  ['PÄIVI RÄSÄNEN','SIGNATURES ARE A FORMALITY. THE STAMP IS THE TRUTH.'],
+  ['PERIORPO','...'],
+  ['ELIKABURA','...'],
+  ['PERIORPO','Well. That was embarrassing.'],
+  ['ELIKABURA','Is the marriage over?'],
+  ['PERIORPO','The marriage is over.'],
+  ['ELIKABURA','Then there is no ceremony tonight, and there is no ceremony any night.'],
+  ['ELIKABURA','I keep the scissors. They were always mine. That is not a consolation, it is just inventory.'],
+  [null,'SO IT IS STOPPED?'],
+  ['OBAMA','Grandson. Listen to me.'],
+  ['OBAMA','YOU DID NOT STOP ANYTHING. YOU REMOVED THE OCCASION.'],
+  ['OBAMA','THE CUT WAS NEVER THE PROBLEM. THE WEDDING WAS THE PROBLEM. THE CUT IS ONLY WHAT HAPPENS AFTER THE PAPERWORK.'],
+  [null,'(She folds them shut. She does not open them again.)'],
+  ['PERIORPO','So. Are we going to stand here all night?'],
+  ['ELIKABURA','No.']
+],
+end_snipe:[
+  [null,'(YOU JUMP. YOU TAKE THE SCISSORS. YOU SNIP AIR.)'],
+  ['YOU','SNIBA SNIB.'],
+  ['PERIORPO','Good snip.'],
+  ['ELIKABURA','Nothing was in there.'],
+  ['YOU','I KNOW.'],
+  ['ELIKABURA','Then nothing is spent, and nothing is ended. We will do it on a night when something is in there.'],
+  ['PERIORPO','We were going to do it next Tuesday.'],
+  ['ELIKABURA','There are always other Tuesdays. There is always more grandfather.'],
+  ['OBAMA','Grandson. Listen to me.'],
+  ['OBAMA','YOU DID NOT STOP ANYTHING. YOU MOVED THE SCISSORS.'],
+  ['OBAMA','AND THE SCISSORS WERE ALWAYS GOING TO BE MOVED. YOU JUST HELD THEM FOR A SECOND.'],
+  [null,'(She takes them back. She does not thank you. She does not need to.)'],
+  ['SHE','SNIBA. SNIB.'],
+  ['PERIORPO','Next Tuesday, then.'],
+  ['ELIKABURA','Next Tuesday.']
+],
+end_fight:[
+  [null,'(YOU HIT THEM.)'],
+  ['PERIORPO','ah.'],
+  ['ELIKABURA','oh.'],
+  [null,'(YOU HIT THEM AGAIN.)'],
+  ['PERIORPO','ah.'],
+  ['ELIKABURA','oh.'],
+  [null,'(They have one (1) hit point each. They cannot be hit. They are holding a piece of you in common.)'],
+  ['OBAMA','You cannot punch a marriage.'],
+  ['OBAMA','I would know. I tried, in 1994. It is on my record and I have accepted it.'],
+  ['PERIORPO','Thank you for trying.'],
+  ['ELIKABURA','You can hold the scissors. We will do it.'],
+  ['OBAMA','...You are doing it for them.'],
+  ['OBAMA','Grandson, that was the worst answer on the list and it was on the list, and you took it.'],
+  [null,'(They are very kind about it. They wait for you to be ready.)'],
+  ['SHE','SNIBA. SNIB.']
+],
+end_yes:[
+  [null,'(YOU AGREE.)'],
+  ['YOU','YES. IT IS FAMILY.'],
+  ['PERIORPO','Oh.'],
+  ['ELIKABURA','Thank you.'],
+  ['ELIKABURA','You were the easy one.'],
+  ['PERIORPO','There are nine more grandfathers in this temple and we have not started on them.'],
+  [null,'(She does not celebrate. She finishes.)'],
+  ['ELIKABURA','SNIBA. SNIB.']
+],
+timeout:[
+  [null,'(THE CLOCK RUNS OUT.)'],
+  [null,'(You are still walking right. You have been walking right the entire time and it has run out anyway.)'],
+  [null,'(Nobody was ever waiting for you to arrive. The ceremony did not wait for anyone. It never has.)'],
+  ['BOOT','...oh.'],
+  ['BOOT','You ran out of clock, grandson. Not out of road. Out of clock.'],
+  ['BOOT','That is different. That is a thing I cannot do anything about.'],
+  [null,'(HELL FILES A MISSED ANSWER AS A YES. THE HELL HAS ALWAYS DONE THIS. IT IS NOT MALICE, IT IS PROCEDURE.)']
+],
+mario_dies:[
+  [null,'(THE BOOT RINGS. It is never not ringing.)'],
+  ['BOOT','...'],
+  ['BOOT','Oh.'],
+  ['BOOT','Oh, no.'],
+  ['BOOT','Grandson. I need you to understand something, and I am sorry that it has taken you an entire grandfather to get around to it.'],
+  ['BOOT','I died in 1985.'],
+  ['BOOT','I died when I jumped. Everything after that was falling.'],
+  ['BOOT','The pipe, the flag, the castle, the princess — all of it was falling. All of it has been falling for forty years and that is the part nobody told you.'],
+  ['BOOT','I have been dead for forty years and nobody has ever once said it out loud, including me, mostly because saying it out loud down here makes it official.'],
+  ['BOOT','You have been extremely brave about this and I do not think you have any idea how rare that is.'],
+  ['BOOT','Grandson. I am proud of you.'],
+  ['BOOT','...proud of you.'],
+  ['BOOT','One more thing, and then I will let you go.'],
+  ['BOOT','She is going to come back.'],
+  ['BOOT','Divorced is not the same thing as finished. In Hell nothing is ever finished — that is not a moral judgement, it is simply what the place IS.'],
+  ['BOOT','But she will have to come back alone.'],
+  ['BOOT','And you will be here.'],
+  ['BOOT','That is the whole difference.'],
+  ['BOOT','That is the entire difference, and it is the only thing I actually wanted.'],
+  [null,'(SNIBA. SNIB.)'],
+  [null,'(MARIO DIES.)']
+],
+mario_1985:[
+  ['SUPER MARIO','1985.'],
+  ['SUPER MARIO','A pipe. A jump.'],
+  ['SUPER MARIO','And then, only falling.'],
+  ['SUPER MARIO','That was the whole game.'],
+  ['SUPER MARIO','That was always the whole game.']
+]
+};
+
+/* --------------------------------------------------------------- world ---- */
+const INGREDIENTS=['BLEEDING HEART','DEMON HORN','BLOOD VIAL','BLACK LUNG','HORNED SKULL',
+  'ENTRAILS','DEMON CLAW','LIVING SHADOW','EYE STALK'];
+const INGREDIENT_LORE={
+  'BLEEDING HEART':'still beating. barely.',
+  'DEMON HORN':'the goat has not been informed.',
+  'BLOOD VIAL':'do not drink the vial. drink the soup.',
+  'BLACK LUNG':'the dark takes seconds.',
+  'HORNED SKULL':'it remembers being a landlord.',
+  'ENTRAILS':'the long way around. always.',
+  'DEMON CLAW':'strong. unsliced. ironic.',
+  'LIVING SHADOW':'it watches you pick it up.',
+  'EYE STALK':'do not pick it up with the eye stalk.'
+};
+const VERDICTS=[
+  'TWO SKULLS. SOUP IS WET. SOUP IS SUPPOSED TO BE WET.',
+  'FOUR SKULLS. I DID NOT ASK FOR THIS AND I ATE ALL OF IT.',
+  'ZERO SKULLS. STILL FINISHED THE BOWL. THAT IS THE SAD PART.',
+  'FIVE SKULLS. MY CORNEA HAS FILED A FORMAL COMPLAINT.',
+  'THREE SKULLS. TASTED LIKE MY EX-WIFE\'S CIGARETTES. I SMOKED THE EX-WIFE.',
+  'ONE SKULL. THERE IS ONE (1) SKULL IN THE BOWL. I DID NOT PUT IT THERE.',
+  'I AM CALLING THE HEALTH INSPECTOR. I AM THE HEALTH INSPECTOR. CONDEMNED.',
+  'THREE SKULLS. THE FLAVOUR IS FINE. THE CONCEPT IS NOT. CONCEPT CONDEMNED.',
+  'FIVE SKULLS. CONRAD WAS RIGHT. THE HORROR.',
+  'TWO SKULLS. IT TASTED LIKE A WEDDING. WHICH IS NOT A COMPLIMENT.'
+];
+
+function build(fn){
+  const a={solids:[],plats:[],haz:[],enemies:[],items:[],npcs:[],beats:[],qte:[],w:6000,bg:{}};
+  const gr=(x,w,top)=>{const t=top==null?GY:top;a.solids.push({x:x,y:t,w:w,h:VH+500-t});};
+  const pf=(x,y,w)=>{a.plats.push({x:x,y:y,w:w,h:20,one:true});};
+  const mv=(x,y,w,dx)=>{a.plats.push({x:x,y:y,w:w,h:22,dx:dx,ox:x,oy:y});};
+  const lv=(x,w,top)=>{a.haz.push({x:x,y:top,w:w,h:VH+400-top,kind:'lava'});};
+  const sp=(x,y,w)=>{a.haz.push({x:x,y:y,w:w,h:24,kind:'spike'});};
+  const en=(kind,x,y,o)=>{a.enemies.push(Object.assign({kind:kind,x:x,y:y,w:24,h:24,dead:false,y0:y,vy:0,ph:0},o||{}));};
+  const pc=(x,y,kind)=>{a.items.push({x:x,y:y,w:22,h:22,kind:kind,taken:false});};
+  const np=(o)=>{a.npcs.push(Object.assign({x:o.x,y:o.y,w:26,h:44,node:o.node,met:false,label:'TALK',
+    floats:!!o.floats},o));};
+  const bt=(x,node,o)=>{a.beats.push(Object.assign({x:x,y:GY,node:node,done:false,r:130},o||{}));};
+  const qt=(x,arrow,o)=>{a.qte.push(Object.assign({x:x,arrow:arrow,kind:'x',fired:false,t:0,ok:false},o||{}));};
+  fn(gr,pf,mv,lv,sp,en,pc,np,bt,qt,a);
+  let maxw=0;
+  a.solids.forEach(s=>maxw=Math.max(maxw,s.x+s.w));
+  a.plats.forEach(s=>maxw=Math.max(maxw,s.x+s.w));
+  a.npcs.forEach(s=>maxw=Math.max(maxw,s.x+200));
+  a.beats.forEach(s=>maxw=Math.max(maxw,s.x+260));
+  a.w=Math.max(a.w,maxw+340);
+  /* right-hand wall: you cannot walk out of an act. the act must let you go. */
+  a.solids.push({x:a.w-44,y:0,w:44,h:VH+500,wall:true});
+  /* left-hand line: an act only runs right. every act has warned you about the
+     left since the first line of the game and there was nothing there, so now
+     there is. the wall stops you; the strip in front of it bites. */
+  a.solids.push({x:-46,y:0,w:46,h:VH+500,wall:true,edge:'left'});
+  return a;
+}
+
+/* ACT I -------------------------------------------------------------- */
+const A1=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt)=>{
+  gr(0,1460); gr(1460,1180); gr(2640,2100); gr(4740,1440);
+  en('glorp',700,GY-2); en('glorp',980,GY-2); en('floater',1180,330);
+  en('dart',1700,320); en('glorp',1900,GY-2); en('floater',2800,330);
+  en('dart',3100,280); en('glorp',3320,GY-2); en('dart',3560,270);
+  en('glorp',3820,GY-2); en('dart',4400,290); en('glorp',5150,GY-2);
+  pc(600,GY-26,'soup'); pc(1300,330,'gem'); pc(1640,330,'gem'); pc(1880,GY-26,'soup');
+  pc(2900,330,'gem'); pc(3280,GY-26,'soup'); pc(3600,270,'gem'); pc(4180,GY-26,'gem');
+  pc(5000,GY-26,'gem'); pc(5400,290,'soup');
+  /* the boot is always the first thing you meet in an act: it is the premise,
+     and it stays re-readable for anyone who skimmed the opening */
+np({x:250,y:GY,node:'boot_call',label:'THE BOOT',w:26,h:44});
+  np({x:440,y:GY,node:'slop1',label:'SLOP',w:34,h:40});
+  np({x:1150,y:320,node:'floater',label:'FLOATER',floats:true,w:36,h:36});
+  bt(2900,'dave1');
+  bt(5400,'hellbot1');
+});
+A1.name='ACT I · THE SLOP FIELDS';
+A1.sub='your grandfather is the scissors · the temple is that way · go right';
+A1.music=1; A1.bg={kind:'field'};
+
+/* ACT II ------------------------------------------------------------- */
+const A2=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt)=>{
+  gr(0,900); gr(2460,3180);
+  lv(900,1560,486);
+  /* a descending stair of stones across the chasm — each hop is ~160px, well inside reach */
+  pf(940,376,150); pf(1110,376,150); pf(1280,344,150); pf(1450,344,150);
+  pf(1620,312,150); pf(1790,312,150); pf(1960,344,150); pf(2130,376,150);
+  pf(2290,376,150);
+  sp(2620,388,44); sp(2980,388,44);
+  en('glorp',430,GY-2); en('floater',1030,240); en('dart',1380,190);
+  en('dart',1750,170); en('floater',2050,210); en('glorp',2620,GY-2);
+  en('dart',3000,250); en('glorp',3300,GY-2); en('floater',3700,310);
+  en('dart',4100,260); en('glorp',4450,GY-2); en('dart',4900,280);
+  en('glorp',5200,GY-2); en('dart',5450,250);
+  pc(1000,352,'gem'); pc(1160,352,'gem'); pc(1480,320,'gem');
+  pc(1800,288,'gem'); pc(2120,256,'gem'); pc(2260,320,'gem');
+  pc(2740,GY-26,'soup'); pc(3050,310,'gem'); pc(3400,GY-26,'soup');
+  pc(3760,286,'gem'); pc(4180,GY-26,'soup'); pc(4560,GY-26,'gem'); pc(5100,GY-26,'soup');
+  np({x:250,y:GY,node:'boot_a2',label:'THE BOOT',w:26,h:44});
+  np({x:640,y:GY,node:'conrad1',label:'CONRAD'});
+  bt(1980,'it_walk');
+  bt(4500,'conrad_far');
+  bt(5350,'conrad2');
+});
+A2.name='ACT II · THE PLOP CHASM'; A2.sub='the floor is lava. that is fine. lava is also slop. · go right';
+A2.music=2; A2.bg={kind:'chasm'}; A2.voidPenalty=true;
+
+/* ACT III ------------------------------------------------------------ */
+const A3=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt)=>{
+  gr(0,2700);
+  en('floater',1000,200);
+  pc(420,GY-26,'gem'); pc(480,GY-26,'gem'); pc(1500,240,'gem'); pc(1900,300,'gem');
+  pc(2380,GY-26,'soup'); pc(2500,GY-26,'gem');
+  np({x:250,y:GY,node:'boot_a3',label:'THE BOOT',w:26,h:44});
+  np({x:430,y:GY,node:'mauppi',label:'MAUPPI1',w:30,h:46});
+  bt(760,'soup_pick');
+  bt(2560,'mauppi_out');
+});
+A3.name="ACT III · MAUPPI'S SOUP TAVERN";
+A3.sub='periorpo was in here on tuesday and did not finish the soup · go right';
+A3.music=3; A3.bg={kind:'tavern'};
+
+/* ACT IV ------------------------------------------------------------- */
+const A4=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt)=>{
+  gr(0,900); gr(900,710); gr(1610,760); gr(2370,900); gr(3270,900); gr(4170,760); gr(4930,1830);
+  np({x:250,y:GY,node:'boot_a4',label:'THE BOOT',w:26,h:44});
+  /* Trucks park past the right-hand wall and only roll once you are close
+     enough to have seen one coming, so nobody is run over on the loading
+     second. `home` is the distance at which each one sets off. */
+  en('truck',1500,368,{dir:-1,spd:230,w:56,h:44,home:1500,lead:900});
+  en('dart',760,220); en('dart',1900,190);
+  en('truck',2600,368,{dir:-1,spd:230,w:56,h:44,home:2600,lead:620});
+  en('dart',3200,200); en('truck',3900,368,{dir:-1,spd:230,w:56,h:44,home:3900,lead:620});
+  en('dart',4500,210); en('truck',5100,368,{dir:-1,spd:230,w:56,h:44,home:5100,lead:620});
+  en('dart',5400,240); en('floater',5900,300);
+  /* one dodge prompt per truck, fired by the truck itself — an arrow that
+     means nothing and points at nothing is not a warning, it is a coin flip */
+  qt(0,'jump',{kind:'truck'});
+  qt(0,'jump',{kind:'truck'});
+  qt(0,'jump',{kind:'truck'});
+  qt(0,'jump',{kind:'truck'});
+  pc(360,GY-26,'soup'); pc(1120,GY-26,'gem'); pc(1340,GY-26,'gem');
+  pc(2080,260,'gem'); pc(2900,GY-26,'soup'); pc(3520,GY-26,'gem');
+  pc(3950,GY-26,'gem'); pc(5000,GY-26,'soup'); pc(5250,GY-26,'gem'); pc(5650,GY-26,'gem');
+  np({x:520,y:GY,node:'toll',label:'TOLL TROLL',w:30,h:44});
+  np({x:1200,y:GY,node:'preacher',label:'PREACHER',w:30,h:46});
+  bt(1560,'icescream');
+  bt(2500,'dave2');
+  bt(3000,'highway_sign');
+  bt(5700,'highway_end');
+});
+A4.name='ACT IV · HIGHWAY TO TS';
+A4.sub='every truck here is a decision somebody already made · go right';
+A4.music=4; A4.bg={kind:'highway'};
+
+/* ACT V -------------------------------------------------------------- */
+const A5=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt)=>{
+  gr(0,800); gr(1520,800); gr(2560,700); gr(3620,700); gr(4680,1900);
+  /* four lava chasms, each spanned by a tight stair of standing stones */
+  lv(800,720,486);
+  pf(840,382,150); pf(1010,344,150); pf(1180,306,150); pf(1350,344,150);
+  lv(2320,240,486);
+  pf(2360,382,150);
+  lv(3260,360,486);
+  pf(3300,382,150); pf(3470,344,150);
+  lv(4320,360,486);
+  pf(4360,382,150); pf(4530,344,150);
+  sp(2900,388,40); sp(3960,388,40);
+  /* enemies stay on solid ground or well above the lava */
+  en('dart',560,190); en('glorp',430,GY-2); en('dart',1700,170);
+  en('glorp',1900,GY-2); en('dart',2150,160); en('glorp',2950,GY-2);
+  en('dart',3720,170); en('glorp',4100,GY-2); en('dart',5000,180);
+  en('floater',5400,270); en('glorp',5700,GY-2);
+  pc(300,GY-26,'gem'); pc(880,358,'gem'); pc(1040,320,'gem'); pc(1200,282,'gem');
+  pc(1400,320,'gem'); pc(1600,GY-26,'soup'); pc(1850,GY-26,'gem');
+  pc(2130,358,'gem'); pc(2390,358,'gem'); pc(2900,GY-26,'soup');
+  pc(3330,358,'gem'); pc(3500,320,'gem'); pc(3700,GY-26,'soup');
+  pc(3900,GY-26,'gem'); pc(4390,358,'gem'); pc(4560,320,'gem');
+  pc(4760,GY-26,'soup'); pc(5000,GY-26,'gem'); pc(5600,GY-26,'soup');
+  np({x:190,y:GY,node:'boot_a5',label:'THE BOOT',w:26,h:44});
+  np({x:320,y:GY,node:'mine_intro',label:'A SIGN',w:34,h:46});
+  np({x:1700,y:GY,node:'conrad3',label:'CONRAD'});
+  bt(2150,'ore_pick');
+  np({x:2820,y:GY,node:'obama',label:'OBAMA',w:30,h:46});
+  np({x:4200,y:GY,node:'satan',label:'SATAN',w:30,h:46});
+  bt(5800,'mine_end');
+});
+A5.name='ACT V · THE PLUDSKI MINE';
+A5.sub='nobody knows what it is · not even dave · i am dave · it is a mine · it mines · go right';
+A5.music=5; A5.bg={kind:'mine'}; A5.voidPenalty=true;
+
+/* ACT VI ------------------------------------------------------------- */
+const A6=build((gr,pf,mv,lv,sp,en,pc,np,bt,qt,A)=>{
+  gr(0,2700);
+  en('floater',1150,190); en('floater',1500,230); en('dart',900,160);
+  pc(430,GY-26,'gem'); pc(2380,GY-26,'soup'); pc(2470,GY-26,'gem');
+  np({x:250,y:GY,node:'boot_a6',label:'THE BOOT',w:26,h:44});
+  np({x:380,y:GY,node:'temple_intro',label:'THE BELL',w:28,h:44});
+  np({x:780,y:GY,node:'paivi',label:'PÄIVI RÄSÄNEN',w:28,h:44});
+  np({x:1450,y:GY,node:'pludski',label:'PLUDSKI',w:30,h:46});
+  np({x:2270,y:GY,node:'altar',label:'PERIORPO + ELIKABURA',w:60,h:50,r:110});
+  /* the altar is a dead end: walk in, and you are in it. */
+  A.solids.push({x:2330,y:GY-130,w:40,h:130,altarBlock:true});
+});
+A6.name='ACT VI · THE TEMPLE OF PLUDSKI';
+A6.sub='you made it. they are waiting. answer the question.';
+A6.music=6; A6.bg={kind:'temple'};
+
+const ACTS=[A1,A2,A3,A4,A5,A6];
+const SNIB_LEVEL=[0,0,0.16,0.34,0.58,0.86,1];
+
+/* ---------------------------------------------------------------- state -- */
+const S={
+  act:0,x:120,y:0,vx:0,vy:0,onGround:false,face:1,jumps:0,
+  hp:3,maxhp:3,time:RUN,dead:false,deadAds:2,inv:0,
+  items:[],enemies:[],npcs:[],beats:[],qtes:[],plats:[],
+  gems:0,soups:0,started:false,paused:false,
+  lastSafe:{x:120,y:GY},hubcap:false,armor:false,paper:false,pass:false,
+  fellOnce:false,t:0,bob:0,camX:0,snib:0,shake:0,pending:null,ending:null,atAltar:false,
+  name:'PRÖT',frozen:0,lineCd:0,lineT:0
+};
+
+/* ------------------------------------------------------------ dialogue --- */
+let dlgOpen=false,queue=null,qDone=null,curFull='',shown=0,typeAcc=0,
+    waitChoice=false,curChoices=null;
+function openDlg(){ dlgOpen=true; $('#dlg').classList.add('on'); stopMusic(); }
+function closeDlg(){
+  dlgOpen=false; $('#dlg').classList.remove('on');
+  $('#choices').style.display='none'; $('#choices').innerHTML='';
+  $('#txt').innerHTML=''; $('#who').textContent='—'; $('#next').style.display='none';
+  $('#hint').innerHTML='[E] / [SPACE] / TAP TO CONTINUE';
+  curChoices=null; waitChoice=false; shown=0; typeAcc=0;
+  if(S.started&&!S.paused&&!S.dead&&!dlgOpen) startMusic(ACTS[S.act].music);
+}
+function say(node,onDone){
+  audio();
+  if(!SCRIPT[node]){ console.warn('missing script node:',node); if(onDone) onDone(); return; }
+  const ids=NODE_CAST[node]; if(ids) ids.forEach(met);
+  queue=SCRIPT[node].slice(); qDone=onDone||null; openDlg(); advance();
+}
+function advance(){
+  if(!queue||!queue.length){ const f=qDone; closeDlg(); if(f) f(); return; }
+  let it=queue.shift();
+  while(it===null||it===undefined){ if(!queue.length){ const f=qDone; closeDlg(); if(f) f(); return; } it=queue.shift(); }
+  if(it.SET){ Object.assign(S,it.SET); advance(); return; }
+  if(it.CH){ showChoices(it.CH); return; }
+  typeLine(it[0],it[1]);
+}
+function typeLine(who,text){
+  waitChoice=false;
+  curFull=String(text); shown=0; typeAcc=0;
+  $('#who').textContent=who||'—';
+  $('#who').style.color=who?whoColor(who):'#ffcc33';
+  $('#choices').style.display='none'; $('#choices').innerHTML='';
+  $('#next').style.display='none';
+  const el=$('#txt');
+  if(!who){ shown=curFull.length; el.innerHTML=curFull; $('#next').style.display='block'; return; }
+  el.innerHTML='<span class="cursor">▌</span>';
+}
+/* typewriter runs on the game loop so it pauses with the game and respects dt */
+function tickTypewriter(dt){
+  if(!dlgOpen||!curFull||shown>=curFull.length) return;
+  typeAcc+=dt;
+  const step=0.017;
+  let guard=0;
+  while(typeAcc>=step&&shown<curFull.length&&guard++<400){
+    typeAcc-=step; shown++;
+  }
+  const n=Math.min(shown,curFull.length);
+  $('#txt').innerHTML=esc(curFull.slice(0,n))+(n<curFull.length?'<span class="cursor">▌</span>':'');
+  if(n>=curFull.length) $('#next').style.display='block';
+}
+function skipOrNext(){
+  if(!dlgOpen||waitChoice) return;
+  if(shown<curFull.length){          /* first press completes the line */
+    shown=curFull.length;
+    $('#txt').innerHTML=curFull; $('#next').style.display='block'; return;
+  }
+  $('#next').style.display='none'; SFX.talk(); advance();
+}
+function showChoices(list){
+  curChoices=list; waitChoice=true; shown=0; typeAcc=0;
+  $('#txt').innerHTML=''; $('#next').style.display='none';
+  const box=$('#choices'); box.innerHTML=''; box.style.display='flex';
+  list.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML='<span style="opacity:.55">'+(i+1)+'.</span> '+c[0];
+    b.onclick=()=>pick(i);
+    box.appendChild(b);
+  });
+}
+function pick(i){
+  if(!dlgOpen||!waitChoice||!curChoices||!curChoices[i]) return;
+  const target=curChoices[i][1];
+  const done=qDone;              /* capture BEFORE say() overwrites qDone */
+  waitChoice=false; curChoices=null; SFX.paper();
+  if(typeof target==='string'&&target[0]==='@'){
+    const fn=FNS[target.slice(1)];
+    if(fn){
+      closeDlg(); fn();                         /* the ending takes over from here */
+      if(done && !S.pending) done();
+    } else {
+      closeDlg(); if(done) done();
+    }
+  } else {
+    say(target,()=>{ closeDlg(); if(done) done(); });
+  }
+}
+function whoColor(w){
+  return {
+    BOOT:'#c9a68a', DAVE:'#ffffff', SLOP:'#7dff5a', FLOATER:'#8fd7ff', CONRAD:'#ffd24a',
+    MAUPPI1:'#ffb0a0', 'KATHUNK HARRIS':'#39d353', OBAMA:'#4fa8ff', SATAN:'#ff4a00',
+    'PÄIVI RÄSÄNEN':'#ffcc33', PLUDSKI:'#ffcc33', PERIORPO:'#ff6ad5', ELIKABURA:'#6ad5ff',
+    'TOLL TROLL':'#b9ff3d', 'DOOMSDAY RADIO PREACHER':'#b9ff3d', SIGN:'#d8b0a0',
+    BELL:'#ffcc33', 'SUPER MARIO':'#ffffff', SHE:'#ff6ad5', YOU:'#ffd9c9', '???':'#5a5a5a'
+  }[w]||'#ffcc33';
+}
+
+/* ------------------------------------------------------------- gameplay --- */
+function loadAct(i){
+  const A=ACTS[i]; S.act=i;
+  S.items=A.items.map(o=>Object.assign({},o));
+  S.enemies=A.enemies.map(o=>Object.assign({},o,{dead:false,ph:Math.random()*6.28}));
+  S.npcs=A.npcs.map(o=>Object.assign({},o,{talked:false,met:false}));
+  S.beats=A.beats.map(o=>Object.assign({},o,{done:false}));
+  S.qtes=A.qte.map(o=>Object.assign({},o,{fired:false,t:0,ok:false}));
+  S.plats=A.plats;
+  S.x=110; S.y=GY-PH-2; S.vx=0; S.vy=0; S.jumps=0; S.onGround=false;
+  S.camX=0; S.lastSafe={x:S.x,y:GY};
+  $('#actname').textContent=A.name.split('·')[0].trim();
+  $('#actcard').classList.remove('on'); void $('#actcard').offsetWidth;
+  $('#acT').textContent=A.name; $('#acS').textContent=A.sub.toUpperCase();
+  $('#actcard').classList.add('on');
+  after(3.5,()=>$('#actcard').classList.remove('on'));
+  if(S.started) startMusic(A.music);
+}
+function nextAct(){
+  if(S.act+1<ACTS.length){
+    loadAct(S.act+1);
+    S.lastSafe={x:S.x,y:GY};
+  }
+}
+function heal(){ if(S.hp<S.maxhp){S.hp=S.maxhp;SFX.heal();} }
+function hurt(n){
+  if(S.inv>0||S.dead||dlgOpen) return;
+  if(S.armor){ S.armor=false; S.inv=1.1; S.shake=9; SFX.hurt(); toast('SOUP ARMOR. THE SOUP HELD.'); return; }
+  S.hp-=n; S.inv=1.4; S.shake=13; SFX.hurt();
+  if(S.hp<=0) kill();
+}
+function kill(){
+  S.dead=true; stopMusic(); SFX.die(); S.shake=22;
+  after(0.75,()=>{
+    $('#deadtxt').textContent=S.deadAds>0
+      ?'watch an ad. it is five seconds. it is longer than dying.'
+      :'no ads left. just dying, then.';
+    $('#dead').classList.add('on');
+  });
+}
+function respawn(){
+  S.deadAds--; S.dead=false; S.hp=S.maxhp; S.inv=1.6;
+  S.x=S.lastSafe.x; S.y=S.lastSafe.y-PH-2; S.vx=0; S.vy=0;
+  $('#dead').classList.remove('on'); startMusic(ACTS[S.act].music);
+  toast('THE HELL IS ETERNAL AND SO IS THIS.');
+}
+function fallInLava(){
+  if(S.inv>0||S.dead) return;
+  S.inv=1.7; S.shake=15; S.hp-=1; SFX.hurt();
+  S.x=S.lastSafe.x; S.y=S.lastSafe.y-PH-4; S.vx=0; S.vy=-260;
+  if(!S.fellOnce){
+    S.fellOnce=true;
+    after(0.42,()=>{ if(S.started&&!S.dead) say('conrad_rescue'); });
+  } else toast('THE LAVA IS ON YOU NOW. (CONRAD SAID SO.)');
+  if(S.hp<=0) kill();
+}
+let toastT=null;
+function toast(msg){
+  const el=$('#toast'); el.textContent=msg; el.style.opacity='1';
+  if(toastT) clearTimeout(toastT);
+  toastT=setTimeout(()=>{el.style.opacity='0';},2300);
+}
+function togglePause(){
+  if(dlgOpen||!S.started||S.dead) return;
+  S.paused=!S.paused;
+  $('#pause').classList.toggle('on',S.paused);
+  if(S.paused) stopMusic(); else startMusic(ACTS[S.act].music);
+}
+const FNS={
+  leave(){},
+  end_divorce(){ S.pending='end_divorce'; met('ending_divorce'); finishEnding(); },
+  end_snipe(){ S.pending='end_snipe'; met('ending_snipe'); finishEnding(); },
+  end_fight(){ S.pending='end_fight'; met('ending_fight'); finishEnding(); },
+  end_yes(){ S.pending='end_yes'; met('ending_yes'); finishEnding(); }
+};
+
+function collideX(p,dx,A){
+  p.x+=dx;
+  for(const s of A.solids){
+    if(p.x+p.w>s.x&&p.x<s.x+s.w&&p.y+p.h>s.y+4&&p.y<s.y+s.h){
+      if(dx>0) p.x=s.x-p.w; else if(dx<0) p.x=s.x+s.w;
+      p.vx=0;
+    }
+  }
+}
+function collideY(p,dy,A,prevY){
+  p.y+=dy; let hit=false;
+  const all=A.solids.concat(A.plats);
+  for(const s of all){
+    if(p.x+p.w>s.x&&p.x<s.x+s.w&&p.y+p.h>s.y&&p.y<s.y+s.h){
+      if(s.one){
+        if(dy<=0) continue;
+        if(prevY+PH>s.y+6) continue;   // was already below the lip: fall straight through
+      }
+      if(dy>0) p.y=s.y-p.h; else p.y=s.y+s.h;
+      p.vy=0; hit=true;
+    }
+  }
+  return hit;
+}
+
+/* soup minigame */
+let soupSel=[], soupMode=false;
+function chooseIngredient(i){
+  const ing=INGREDIENTS[i]; if(!ing) return;
+  const j=soupSel.indexOf(ing);
+  if(j>=0) soupSel.splice(j,1);
+  else{ if(soupSel.length>=2){ toast('TWO (2) INGREDIENTS. LIKE A GREEDY HELL.'); return; } soupSel.push(ing); SFX.item(); }
+  toast(ing+' ('+soupSel.length+'/2)');
+  if(soupSel.length===2) after(0.26,judgeSoup);
+}
+function showSoupPickerMenu(){
+  soupSel=[]; openDlg(); waitChoice=true; curChoices=null; soupMode=true;
+  $('#who').textContent='MAUPPI1'; $('#who').style.color='#ffb0a0';
+  $('#txt').innerHTML=''; $('#next').style.display='none';
+  const box=$('#choices'); box.innerHTML=''; box.style.display='flex';
+  const head=document.createElement('div');
+  head.style.cssText='font-size:13px;color:#c9a68a;letter-spacing:1px;padding:2px 2px 4px';
+  head.innerHTML='CHOOSE TWO INGREDIENTS. PRESS [1]-[9] OR CLICK. <span id="soupsel">(0/2)</span>';
+  box.appendChild(head);
+  INGREDIENTS.forEach((ing,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML='<span style="opacity:.55">'+(i+1)+'.</span> '+ing+
+      ' <span style="opacity:.5;font-size:12px">— '+INGREDIENT_LORE[ing]+'</span>';
+    b.onclick=()=>chooseIngredient(i);
+    box.appendChild(b);
+  });
+}
+function judgeSoup(){
+  soupMode=false; waitChoice=false;
+  const v=soupSel.join(' + ');
+  S.soups++; S.armor=true; SFX.organ(); SFX.item();
+  $('#choices').innerHTML=''; $('#choices').style.display='none';
+  $('#who').textContent='KATHUNK HARRIS'; $('#who').style.color='#39d353';
+  $('#txt').innerHTML=esc(v)+'<br><br>'+esc(VERDICTS[(Math.random()*VERDICTS.length)|0])+
+    '<br><br><span style="color:#39d353">SOUP ARMOR ACQUIRED. SOUP IS NOT A JOKE. SOUP IS A SHIELD.</span>';
+  $('#next').style.display='block'; waitChoice=false;
+  after(3.4,()=>{ $('#next').style.display='none'; say('kathunk_penar'); });
+}
+
+/* endings */
+const ENDINGS={
+  end_divorce:{key:'divorce',title:'ENDING A — THE PAPERWORK ENDING',
+    blurb:'You did not stop the scissors. You removed the occasion. She keeps them; she has always owned them. There is no bride, no groom, and therefore no cut, and therefore no reason to open them. He was going to die anyway. He has been dying since 1985, in the falling sense, which is the only sense he has left. The difference is that tonight, somebody filed a form.'},
+  end_snipe:{key:'snipe',title:'ENDING B — THE SNIP ENDING',
+    blurb:'Good snip. Wrong hands. Nothing was in the scissors, so nothing was spent and nothing was ended. She takes them back cheerfully, because they were always hers. There are always other Tuesdays. There is always more grandfather. You bought a week and called it a rescue.'},
+  end_fight:{key:'fight',title:'ENDING C — THE ONE (1) HIT POINT ENDING',
+    blurb:'You hit them. They cannot be hit. They are holding a piece of you in common, and you cannot punch a marriage. It is on Obama\'s record. It is on yours now too. They let you hold the scissors, and you held them, and that was the worst answer on the list.'},
+  end_yes:{key:'yes',title:'ENDING D — "IT IS FAMILY" ENDING',
+    blurb:'You said yes. That was the fastest ending available. There were nine more grandfathers in the temple and you did not hear a thing. He would have said you did well. He said that.'}
+};
+/* The altar is a state, not a one-shot. Until you commit to an answer, you can
+   walk up, read them, walk away and come back. The scissors stay open. */
+function openAltarChoice(){
+  audio();
+  if(S.ending) return;              /* the game is over; nothing more to decide */
+  openDlg();
+  const box=$('#choices'); box.innerHTML=''; box.style.display='flex';
+  const opts=[
+    [S.paper?'FILE THE PAPERWORK. OBAMA ALREADY FILED IT UNDER YOU.':'DIVORCE THEM. FILE THE PAPERWORK. (YOU ARE CARRYING NO PAPERWORK.)','divorce'],
+    ['SNIP THEM FIRST. TAKE THE SCISSORS.','snipe'],
+    ['FIGHT. HIT THEM.','fight'],
+    ['AGREE. IT IS FAMILY.','yes']];
+  curChoices=opts.map(o=>[o[0],'@end_'+o[1]]);
+  waitChoice=true;
+  const carry = S.paper
+    ? 'OBAMA\'S THREE (3) DOCUMENTS ARE IN YOUR HAND. HE FILLED IN YOUR NAME BEFORE YOU ASKED FOR IT.<br><br>YOU ALSO CAME THROUGH A TOLL BOOTH '+(S.pass?'PAID FOR WITH A SIGH.':'YOU WALKED PAST.')+'<br><br>'
+    : 'YOU CAME IN WITH NOTHING. NO DOCUMENTS. NO FORM. NO FILED ANYTHING.<br><br>';
+  $('#who').textContent='THE ALTAR';
+  $('#who').style.color='#ff6ad5';
+  $('#txt').innerHTML='<b style="color:#ffcc33">THE GREAT SCISSORS ARE OPEN.</b><br><br>'+
+    carry+'<b>THE CEREMONY HAS NOT STARTED. WHATEVER YOU DECIDE, IT IS DECIDED HERE.</b><br><br>'+
+    '<b>WHAT DO YOU DO?</b>';
+  $('#next').style.display='none';
+  opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML='<span style="opacity:.55">'+(i+1)+'.</span> '+o[0];
+    b.onclick=()=>pick(i);
+    box.appendChild(b);
+  });
+  SFX.snip();
+  SFX.organ();
+  $('#hint').innerHTML='[1]-[4] TO CHOOSE · YOU CAN WALK AWAY AND COME BACK — THE SCISSORS WILL WAIT';
+}
+function finishEnding(){
+  if(!S.pending){ console.warn('finishEnding with no pending ending'); return; }
+  S.ending=ENDINGS[S.pending];
+  if(!S.ending){ console.warn('unknown ending', S.pending); return; }
+  closeDlg(); waitChoice=false; curChoices=null; stopMusic();
+  $('#actcard').classList.remove('on');
+  SFX.snip();
+  say('mario_dies',()=>{
+    showBlack(['SNIBA. SNIB.','','SUPER MARIO DIES.','','(HE WAS ALREADY DEAD.)','',
+      '(EVERYTHING AFTER 1985 WAS NEVER A DANGER.)','(IT WAS FALLING.)'],()=>{
+      say('mario_1985',()=>{
+        showBlack(['MARIO. 1985.','A PIPE. A JUMP.','AND THEN, ONLY FALLING.','','THANK YOU FOR PLAYING.'],showEnd);
+      });
+    });
+  });
+}
+function showBlack(lines,done){
+  const box=$('#blacktxt');
+  box.innerHTML=lines.map(l=>l?esc(l):'&nbsp;').join('<br>');
+  $('#blackout').classList.add('on');
+  SFX.stamp();
+  let closed=false;
+  const go=()=>{ if(closed) return; closed=true; $('#blackout').classList.remove('on');
+    removeEventListener('keydown',onkey,false);
+    if(done) done(); };
+  function onkey(e){ if(e.key===' '||e.key==='Enter'||e.key==='e'||e.key==='E'){ e.preventDefault(); go(); } }
+  addEventListener('keydown',onkey,false);
+  const b=document.createElement('button');
+  b.className='btn'; b.textContent='▶'; b.style.marginTop='20px'; b.onclick=go;
+  box.appendChild(document.createElement('br')); box.appendChild(b);
+}
+function showEnd(){
+  S.started=false; $('#hud').style.display='none'; SFX.organ(); stopMusic();
+  const E=S.ending, elapsed=Math.max(0,Math.floor(RUN-S.time));
+  const t=Math.floor(elapsed/60)+':'+String(elapsed%60).padStart(2,'0');
+  save.runs++; save.endings[E.key]=(save.endings[E.key]||0)+1;
+  if(!save.best||elapsed<save.best) save.best=elapsed;
+  persist();
+  $('#endtitle').textContent=E.title;
+  $('#endblurb').innerHTML=E.blurb+'<br><br><span style="color:#c9a68a;font-size:13px">'+
+    'the word in question is '+PENAR+'. it is still not defined. it will not be defined. '+
+    'dave was asked. dave was not asked. nobody was asked twice.</span>';
+  const st=[['TIME',t],['SOUPS DRUNK',S.soups],['SOULS COUNTED',S.gems],
+    ['DOCUMENTS FILED',S.paper?3:0],['HEARTS LEFT',Math.max(0,S.hp)],
+    ['ADS WATCHED',2-S.deadAds],['FELL IN LAVA',S.fellOnce?1:0],
+    ['GRANDKIDS WHO SAID YES',E.key==='yes'?1:0]];
+  $('#endstats').innerHTML=st.map(s=>'<div class="stat"><b>'+s[1]+'</b><i>'+s[0]+'</i></div>').join('');
+  $('#endcast').innerHTML=CAST.map(c=>'<div class="'+(save.cast[c[0]]?'met':'')+'">'+
+    (save.cast[c[0]]?'✓ ':'· ')+'<b>'+c[1]+'</b></div>').join('');
+  $('#endfine').innerHTML='SNIBA SNIB · v6.66 · no refunds · souls processed daily · made with Unity (not really)<br>'+
+    '<a href="../">← BACK TO HELL</a> · <a href="../forum/">FORUM</a> · run '+save.runs+
+    ' · endings found '+Object.keys(save.endings).length+'/4 · he dies in all of them';
+  $('#endov').classList.add('on');
+}
+function timeoutEnding(){
+  if(S.pending||S.ending) return;
+  closeDlg(); waitChoice=false; curChoices=null;
+  $('#hud').style.display='none'; $('#actcard').classList.remove('on');
+  stopMusic();
+  say('timeout',()=>{ S.pending='end_yes'; SFX.snip(); say('mario_dies',finishEnding); });
+}
+
+/* ----------------------------------------------------------- main loop ---- */
+let promptTalk=false,promptX=0,promptY=0,promptLabel='';
+function update(dt){
+  const A=ACTS[S.act];
+  S.t+=dt; S.bob+=dt; S.inv=Math.max(0,S.inv-dt); S.shake=Math.max(0,S.shake-dt*3);
+  S.snib=lerp(S.snib,SNIB_LEVEL[S.act],0.03);
+
+  S.time-=dt;
+  if(S.time<=0){ S.time=0; timeoutEnding(); return; }
+
+  for(const pl of A.plats){
+    if(pl.dx){
+      pl.x+=pl.dx*dt;
+      if(pl.x>pl.ox+170) pl.x=pl.ox;
+      if(pl.x<pl.ox-170) pl.x=pl.ox-170;
+    }
+  }
+
+  /* horizontal */
+  let ax=0;
+  if(keys.left) ax-=1;
+  if(keys.right) ax+=1;
+  if(ax!==0){ S.vx=lerp(S.vx,ax*252,1-Math.pow(0.0012,dt)); S.face=ax; }
+  else S.vx=lerp(S.vx,0,1-Math.pow(0.00001,dt));
+
+  /* jump */
+  const pressJump=pressed.jump;
+  if(pressJump){
+    if(S.onGround){ S.vy=-640; S.jumps=1; S.onGround=false; SFX.jump(); }
+    else if(S.hubcap&&S.jumps===1){ S.vy=-580; S.jumps=2; S.shake=4; SFX.jump(); }
+  }
+
+  const p={x:S.x,y:S.y,w:PW,h:PH};
+  collideX(p,S.vx*dt,A);
+  const prevY=p.y;
+  S.vy+=GRAV*dt; if(S.vy>1200) S.vy=1200;
+  const grounded=collideY(p,S.vy*dt,A,prevY);
+  if(grounded&&S.vy>=0){ if(!S.onGround) SFX.land(); S.onGround=true; S.jumps=0; }
+  else S.onGround=false;
+  S.x=clamp(p.x,0,A.w-PW); S.y=p.y;
+
+  if(S.y>VH+300){
+    if(A.voidPenalty) fallInLava();
+    else { S.x=S.lastSafe.x; S.y=S.lastSafe.y-PH-2; }
+  }
+  if(S.onGround) S.lastSafe={x:S.x,y:S.y+PH};
+
+  /* hazards */
+  for(const z of A.haz){
+    if(p.x+p.w>z.x&&p.x<z.x+z.w&&p.y+p.h>z.y&&p.y<z.y+z.h){
+      if(z.kind==='lava'){ if(A.voidPenalty) fallInLava(); }
+      else { hurt(1); S.vy=-400; }
+      break;
+    }
+  }
+
+  /* THE LINE: the left edge. acts run right, and backing up is not free.
+     the wall is solid, this strip is not. there is a short grace period so
+     brushing the edge on your way past is free — the bite is for leaning on it. */
+  S.lineCd=Math.max(0,S.lineCd-dt);
+  if(S.x<LINE_X){
+    S.x=LINE_X; if(S.vx<0)S.vx=0;
+    S.lineT+=dt;
+    if(S.lineT>.45&&S.lineCd<=0&&!S.dead){ S.lineCd=1.2; hurt(1); S.shake=11; SFX.hurt();
+      toast('THE LINE BITES. GO RIGHT.'); }
+  } else S.lineT=0;
+
+  /* enemies */
+  for(const e of S.enemies){
+    if(e.dead) continue;
+    e.ph+=dt;
+    if(e.kind==='truck'){
+      /* trucks hold station past the right-hand wall until you are close
+         enough to see one coming, then set off from just ahead of you.
+         (previously every truck was gated behind `e.x<A.w-200` while being
+         declared at x<=5100, so none of them ever moved at all) */
+      if(!e.go){
+        if(S.x<(e.home||1500)-700) continue;
+        e.x=S.x+(e.lead||620); e.go=true;
+      }
+      e.x+=(e.dir||1)*(e.spd||250)*dt;
+      if(e.x<-260) e.x=A.w+260;
+      if(e.x>A.w+460) e.x=-260;
+    } else {
+      if(e.kind==='glorp'){ e.x+=Math.sin(e.ph*1.7)*70*dt; }
+      else if(e.kind==='floater'){ e.x+=Math.sin(e.ph*0.9)*60*dt; e.y=e.y0+Math.sin(e.ph*1.8)*34*dt; }
+      else if(e.kind==='dart'){ e.x+=(e.dx||1)*95*dt; e.y=e.y0+Math.cos(e.ph*2.4)*46*dt; }
+      if(e.x<-260) e.x=A.w+260;
+      if(e.x>A.w+460) e.x=-260;
+    }
+    if(p.x+p.w>e.x-5&&p.x<e.x+e.w+5&&p.y+p.h>e.y-5&&p.y<e.y+e.h+5){
+      if(S.vy>80&&S.y+PH<e.y+e.h-8&&e.kind!=='truck'){
+        e.dead=true; S.vy=-440; S.shake=6; SFX.stomp(); S.gems+=(e.kind==='floater'?10:5); SFX.gem();
+        toast(e.kind==='floater'?'THE RUMOR IS NOW A HEADLINE.':'GLORPED.');
+      } else hurt(1);
+    }
+  }
+
+  /* items */
+  for(const it of S.items){
+    if(it.taken) continue;
+    if(p.x+p.w>it.x&&p.x<it.x+it.w&&p.y+p.h>it.y&&p.y<it.y+it.h){
+      it.taken=true;
+      if(it.kind==='soup'){ S.soups++; heal(); SFX.heal(); }
+      else if(it.kind==='ore'){ S.gems+=10; SFX.gem(); }
+      else { S.gems+=5; SFX.gem(); }
+    }
+  }
+
+  /* camera */
+  const target=clamp(S.x-VW*0.38,0,Math.max(0,A.w-VW));
+  S.camX=lerp(S.camX,target,1-Math.pow(0.0009,dt));
+
+  /* beats */
+  for(const b of S.beats){
+    if(b.done) continue;
+    if(Math.abs(S.x-b.x)<b.r&&S.y>b.y-300){
+      b.done=true;
+      runBeat(b);
+    }
+  }
+
+  /* npcs */
+  promptTalk=false;
+  for(const n of S.npcs){
+    n.drawY=n.floats?n.y+Math.sin(S.t*2+n.x)*8:n.y;
+    n.reach=n.r||48;
+    if(Math.abs(S.x-n.x)<n.reach&&Math.abs(S.y-n.y)<120){
+      promptTalk=true; promptX=n.x; promptY=n.drawY-n.h-16; promptLabel=n.label; break;
+    }
+  }
+  if(pressed.talk){
+    /* every npc is repeatable. a nine-minute story about paperwork is not the
+       right place to make text one-read-only — if you missed a line, or you
+       want to re-read what the boot said, you walk back and press E again. */
+    const n=S.npcs.find(z=>Math.abs(S.x-z.x)<(z.r||48)&&Math.abs(S.y-z.y)<120);
+    if(n){
+      const node=n.node;
+      n.met=true; SFX.talk();
+      if(node==='obama') S.paper=true;
+      if(node==='satan') S.pass=true;
+      if(node==='altar'){ S.atAltar=true; say('altar',openAltarChoice); }
+      else say(node,()=>{ if(node==='satan') S.pass=true; });
+    }
+    pressed.talk=false;
+  }
+
+  /* qte */
+  for(const q of S.qtes){
+    if(!q.fired){
+      if(q.kind==='truck'){
+        /* fire off the hazard, never off a coordinate: a prompt that points at
+           nothing is not a warning */
+        for(const e of S.enemies)
+          if(e.kind==='truck'&&!e.dead&&e.dir<0&&e.x>S.x&&e.x-S.x<760&&e.x-S.x>60){
+            q.fired=true; q.t=1.15; SFX.talk(); break; }
+      } else if(Math.abs(S.x-q.x)<80){ q.fired=true; q.t=1.15; SFX.talk(); }
+      continue;
+    }
+    q.t-=dt;
+    if(q.ok||q.t<=0) continue;
+    const hit=(q.arrow==='left'&&keys.left)||(q.arrow==='right'&&keys.right)||(q.arrow==='jump'&&(keys.jump||pressJump));
+    if(hit){ q.ok=true; SFX.qte(); toast('DODGED ON DIRECTION. (NOT SOUND. DON\'T TRUST THE FORUM.)'); }
+    else if(q.t<0.15&&!q.failed){ q.failed=true; hurt(1); S.shake=11; SFX.hurt(); }
+  }
+  pressed.jump=false;
+}
+function runBeat(b){
+  const after=()=>{
+    if(b.node==='dave1'){ S.hubcap=true; SFX.item(); toast('GLINTING HUBCAP · DOUBLE JUMP'); }
+    if(b.node==='hellbot1'){ toast('THE FIELD ENDS. THE TEMPLE IS THAT WAY.'); }
+    if(b.node==='mauppi_out'){ S.armor=true; SFX.item(); toast('SOUP ARMOR · [THE SOUP HOLDS]'); }
+    if(b.node==='conrad2'||b.node==='mauppi_out'||b.node==='highway_end'||b.node==='mine_end'
+       ||b.node==='hellbot1') nextAct();
+  };
+  if(b.node==='soup_pick'){ say('kathunk_intro',showSoupPickerMenu); return; }
+  if(b.node==='altar'){ altarChoice(); return; }
+  say(b.node,after);
+}
+
+/* --------------------------------------------------------------- render --- */
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let DPR=1;
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.max(1,Math.floor(innerWidth*DPR));
+  cv.height=Math.max(1,Math.floor(innerHeight*DPR));
+  VW=clamp(Math.round(VH*(innerWidth/innerHeight)),700,1500);
+}
+addEventListener('resize',resize); resize();
+
+let last=0;
+function frame(ts){
+  requestAnimationFrame(frame);
+  const dt=Math.min(0.05,(ts-last)/1000||0); last=ts;
+  if(!S.started||S.paused) return;
+  if(dlgOpen) tickTypewriter(dt);
+  if(S.dead) return;
+  tickTimers(dt);
+  if(dlgOpen){ render(ts/1000); drawHUD(); return; }
+  update(dt); render(ts/1000); drawHUD();
+}
+function render(time){
+  const A=ACTS[S.act];
+  const scale=(cv.height/DPR)/VH;
+  ctx.setTransform(DPR*scale,0,0,DPR*scale,0,0);
+  ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,VW,VH);
+  const sx=(Math.random()*2-1)*S.shake, sy=(Math.random()*2-1)*S.shake;
+  ctx.save();
+  ctx.translate(-Math.round(S.camX)+sx,sy);
+  drawBG(A,time); drawHaz(A,time); drawSolids(A,time);
+  drawItems(A,time); drawNpcs(A,time); drawEnemies(A,time); drawPlayer(A,time);
+  drawBeats(A,time);
+  if(promptTalk&&!dlgOpen){
+    ctx.font='16px VT323, monospace'; ctx.textAlign='center';
+    const y=promptY-Math.sin(S.t*4)*4;
+    ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(promptX-34,y-14,68,17);
+    ctx.strokeStyle='#ffb300'; ctx.lineWidth=2; ctx.strokeRect(promptX-34,y-14,68,17);
+    ctx.fillStyle='#ffcc33'; ctx.fillText('[E] '+promptLabel,promptX,y);
+    ctx.textAlign='left';
+  }
+  drawQTE();
+  ctx.restore();
+  /* sniba snib shudder grows as the meter fills */
+  if(S.snib>0.5&&S.started){
+    cv.style.filter='hue-rotate('+(Math.sin(S.t*11)*S.snib*24)+'deg) saturate('+(1+S.snib*0.5)+')';
+  } else cv.style.filter='';
+}
+function drawBG(A,t){
+  const cam=S.camX,k=A.bg.kind;
+  const sky=k==='field'?['#2b0f2b','#5a1230']:k==='chasm'?['#120308','#3a0a10']:
+            k==='tavern'?['#1d0d05','#4a1c07']:k==='highway'?['#05060f','#141c3d']:
+            k==='mine'?['#0d0a06','#2b1b0c']:['#1a0404','#52100c'];
+  const g=ctx.createLinearGradient(0,0,0,VH);
+  g.addColorStop(0,sky[0]); g.addColorStop(1,sky[1]);
+  ctx.fillStyle=g; ctx.fillRect(cam-20,-20,A.w+60,VH+60);
+
+  if(k==='field'){
+    for(let i=0;i<30;i++){
+      const x=i*340-((cam*0.25)%340)-340, hgt=60+((i*97)%130);
+      ctx.fillStyle='#3a1030'; ctx.fillRect(cam+x,GY-hgt-40,86,hgt+40);
+      ctx.fillStyle='#57163f'; ctx.fillRect(cam+x-8,GY-hgt-46,102,16);
+      ctx.fillStyle='#1e0a1c'; ctx.fillRect(cam+x+10,GY-hgt-20,26,26);
+      ctx.fillStyle='rgba(255,180,220,0.10)'; ctx.fillRect(cam+x+4,GY-hgt-32,78,4);
+    }
+    ctx.strokeStyle='rgba(125,255,90,0.10)'; ctx.lineWidth=1;
+    for(let y=0;y<VH;y+=34){
+      const off=(cam*0.55)%68;
+      for(let x=-off;x<VW+68;x+=68){
+        ctx.beginPath(); ctx.moveTo(cam+x-34,y+17); ctx.lineTo(cam+x,y-17);
+        ctx.lineTo(cam+x+34,y+17); ctx.lineTo(cam+x,y+51); ctx.closePath(); ctx.stroke();
+      }
+    }
+  }
+  if(k==='chasm'){
+    for(let i=0;i<46;i++){
+      const x=i*240-((cam*0.3)%240)-240, hgt=50+((i*61)%140);
+      ctx.fillStyle='#1a0409';
+      ctx.beginPath(); ctx.moveTo(cam+x-70,-10); ctx.lineTo(cam+x+8,-10);
+      ctx.lineTo(cam+x+24,hgt); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(cam+x+130,-10); ctx.lineTo(cam+x+215,-10);
+      ctx.lineTo(cam+x+192,hgt-30); ctx.closePath(); ctx.fill();
+    }
+    const lg=ctx.createLinearGradient(0,VH-120,0,VH);
+    lg.addColorStop(0,'rgba(255,60,0,0)'); lg.addColorStop(1,'rgba(255,130,0,0.5)');
+    ctx.fillStyle=lg; ctx.fillRect(cam-20,VH-120,A.w+60,140);
+  }
+  if(k==='tavern'){
+    for(let i=0;i<20;i++){
+      const x=i*290-((cam*0.4)%290)-290;
+      ctx.fillStyle='#3a1a08'; ctx.fillRect(cam+x+44,130,26,300);
+      ctx.fillStyle='#5c2a0c'; ctx.fillRect(cam+x+34,118,46,14);
+      ctx.fillStyle='rgba(255,180,60,0.45)'; ctx.beginPath(); ctx.arc(cam+x+57,150,13,0,7); ctx.fill();
+      ctx.fillStyle='rgba(255,180,60,0.09)'; ctx.beginPath(); ctx.arc(cam+x+57,150,46,0,7); ctx.fill();
+    }
+    ctx.fillStyle='rgba(60,20,6,0.9)'; ctx.fillRect(cam-20,GY-56,A.w+60,14);
+    for(let i=0;i<16;i++){ const x=i*180-((cam*0.5)%180);
+      ctx.fillStyle='#2a1408'; ctx.fillRect(cam+x+40,GY-42,60,42); }
+  }
+  if(k==='highway'){
+    ctx.fillStyle='#e8d0c0'; ctx.beginPath(); ctx.arc(VW-cam*0.06-160,104,44,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,60,0,0.22)'; ctx.beginPath(); ctx.arc(VW-cam*0.06-160,104,68,0,7); ctx.fill();
+    for(let i=0;i<80;i++){
+      const x=((i*137)%1800)-((cam*0.1)%1800), y=(i*53)%320;
+      ctx.fillStyle='rgba(255,255,220,'+(0.2+((i*7)%5)/14)+')'; ctx.fillRect(cam+x,y,2,2);
+    }
+    ctx.fillStyle='#191920'; ctx.fillRect(cam-20,GY-96,A.w+60,240);
+    ctx.fillStyle='#c41e00'; ctx.fillRect(cam-20,GY-100,A.w+60,6);
+    ctx.fillStyle='#e8e0c0';
+    for(let x=-((cam)%130);x<VW+130;x+=130) ctx.fillRect(cam+x,GY-54,74,6);
+  }
+  if(k==='mine'){
+    for(let i=0;i<54;i++){
+      const x=i*190-((cam*0.35)%190)-190, hgt=40+((i*83)%150);
+      ctx.fillStyle='#150c06';
+      ctx.beginPath(); ctx.moveTo(cam+x-90,-10); ctx.lineTo(cam+x+12,-10);
+      ctx.lineTo(cam+x+24,hgt); ctx.closePath(); ctx.fill();
+    }
+    for(let i=0;i<44;i++){
+      const x=i*220-((cam*0.55)%220), y=50+((i*113)%250);
+      ctx.fillStyle='rgba(255,204,51,0.26)';
+      ctx.fillRect(cam+x,y,17,10); ctx.fillRect(cam+x+28,y+24,10,14);
+    }
+  }
+  if(k==='temple'){
+    for(let i=0;i<22;i++){
+      const x=i*250-((cam*0.35)%250)-250;
+      ctx.fillStyle='#3a0e0a'; ctx.fillRect(cam+x+34,86,42,VH);
+      ctx.fillStyle='#571410'; ctx.fillRect(cam+x+22,74,66,16); ctx.fillRect(cam+x+22,336,66,14);
+    }
+    ctx.save(); ctx.globalAlpha=0.22; ctx.fillStyle='#ffcc33';
+    ctx.beginPath(); ctx.ellipse(VW/2-(cam*0.08)%VW,146,58,26,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(VW/2-(cam*0.08)%VW,112,58,20,0,0,7); ctx.fill(); ctx.restore();
+    /* the great scissors, looming */
+    ctx.save(); ctx.globalAlpha=0.5; ctx.translate(2150-cam*0.55,116);
+    ctx.rotate(0.32+Math.sin(t*0.7)*0.05);
+    ctx.strokeStyle='#c9a68a'; ctx.lineWidth=9;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-9,240); ctx.moveTo(32,0); ctx.lineTo(41,240); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-5,262,18,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(36,262,18,0,7); ctx.stroke(); ctx.restore();
+  }
+}
+function drawSolids(A,t){
+  /* the left-hand line, drawn under the wall: a lit strip you can see biting */
+  const lg=ctx.createLinearGradient(0,0,LINE_X,0);
+  lg.addColorStop(0,'rgba(255,26,0,.5)'); lg.addColorStop(1,'rgba(255,26,0,0)');
+  ctx.fillStyle=lg; ctx.fillRect(0,0,LINE_X,VH);
+  ctx.fillStyle='rgba(255,60,0,'+(0.35+Math.sin(t*5)*0.18)+')';
+  ctx.fillRect(LINE_X-2,0,2,VH);
+  ctx.font='12px VT323,monospace'; ctx.fillStyle='rgba(255,140,90,.75)'; ctx.textAlign='center';
+  ctx.save(); ctx.translate(20,GY-150); ctx.rotate(-Math.PI/2);
+  ctx.fillText('THE LINE · GO RIGHT',0,0); ctx.restore();
+  ctx.textAlign='left';
+  for(const s of A.solids){
+    if(s.wall){
+      /* the act does not let you leave. the act is a wall with an opinion. */
+      const g=ctx.createLinearGradient(s.edge==='left'?s.x+s.w:s.x,0,s.edge==='left'?s.x:s.x+s.w,0);
+      g.addColorStop(0,'#2a0a06'); g.addColorStop(.6,'#5a140c'); g.addColorStop(1,'#0d0303');
+      ctx.fillStyle=g; ctx.fillRect(s.x,0,s.w,VH);
+      ctx.fillStyle='rgba(0,0,0,0.35)';
+      for(let y=0;y<VH;y+=28) for(let x=s.x;x<s.x+s.w-6;x+=28) ctx.fillRect(x+((y/28)%2?14:0)+3,y+3,22,22);
+      ctx.fillStyle='#ffb300'; ctx.font='13px VT323,monospace'; ctx.textAlign='center';
+      ctx.save(); ctx.translate(s.x+s.w/2,GY-120); ctx.rotate(-Math.PI/2);
+      ctx.fillText(s.edge==='left'?'START OF ACT · GO RIGHT':'END OF ACT · THE ACT IS A WALL',0,5); ctx.restore();
+      ctx.textAlign='left';
+      continue;
+    }
+    ctx.fillStyle='#160808'; ctx.fillRect(s.x,s.y,s.w,s.h);
+    ctx.fillStyle='#4a1410'; ctx.fillRect(s.x,s.y,s.w,9);
+    ctx.fillStyle='rgba(255,80,0,0.09)'; ctx.fillRect(s.x,s.y+9,s.w,4);
+    ctx.fillStyle='rgba(255,180,120,0.07)';
+    for(let i=0;i<s.w/28;i++){ ctx.fillRect(s.x+i*28+((i*37)%14), s.y+16+((i*53)%120), 5, 3); }
+  }
+  for(const p of A.plats){
+    ctx.fillStyle='#7a1a00'; ctx.fillRect(p.x,p.y,p.w,p.h);
+    ctx.fillStyle='#ffb300'; ctx.fillRect(p.x,p.y,p.w,4);
+    ctx.fillStyle='#3a0e0a';
+    for(let i=0;i<p.w;i+=16) ctx.fillRect(p.x+i,p.y+4,10,p.h-4);
+    if(p.dx){ ctx.fillStyle='#ffcc33'; ctx.font='11px VT323,monospace';
+      ctx.fillText(p.dx>0?'>>>':'<<<',p.x+4,p.y-4); }
+  }
+}
+function drawHaz(A,t){
+  for(const z of A.haz){
+    if(z.kind==='lava'){
+      ctx.fillStyle='#3a0a00'; ctx.fillRect(z.x,z.y,z.w,VH+400-z.y);
+      const g=ctx.createLinearGradient(0,z.y-14,0,z.y+56);
+      g.addColorStop(0,'#ff8a00'); g.addColorStop(1,'#6a0800');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(z.x,z.y+20);
+      for(let x=z.x;x<=z.x+z.w;x+=12) ctx.lineTo(x,z.y+2+Math.sin(x*0.05+t*3)*5+Math.sin(x*0.13-t*4)*3);
+      ctx.lineTo(z.x+z.w,z.y+20); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='rgba(255,220,120,0.5)';
+      for(let x=z.x+10;x<z.x+z.w;x+=70){
+        const yy=z.y+2+Math.sin(x*0.05+t*3)*5;
+        ctx.fillRect(x,yy-14-Math.random()*8,2,2);
+      }
+    } else {
+      ctx.fillStyle='#c9a68a';
+      for(let x=z.x;x<z.x+z.w;x+=18){
+        ctx.beginPath(); ctx.moveTo(x,z.y+20); ctx.lineTo(x+8,z.y+2); ctx.lineTo(x+16,z.y+20); ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle='#5a5048'; ctx.fillRect(z.x,z.y+16,z.w,5);
+    }
+  }
+}
+function drawItems(A,t){
+  for(const it of S.items){
+    if(it.taken) continue;
+    const bob=Math.sin(t*3+it.x*0.05)*4;
+    ctx.fillStyle='rgba(255,204,51,0.13)'; ctx.beginPath(); ctx.arc(it.x+11,it.y+11+bob,17,0,7); ctx.fill();
+    if(it.kind==='soup'){
+      ctx.fillStyle='#e8d0b0'; ctx.beginPath(); ctx.ellipse(it.x+11,it.y+14+bob,10,7,0,0,7); ctx.fill();
+      ctx.fillStyle='#b94735'; ctx.beginPath(); ctx.ellipse(it.x+11,it.y+13+bob,8,5,0,0,7); ctx.fill();
+      ctx.strokeStyle='#e8d0b0'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(it.x+4,it.y+15+bob,4,0,7); ctx.stroke();
+    } else {
+      ctx.fillStyle='#ff4ad0';
+      ctx.beginPath(); ctx.moveTo(it.x+11,it.y+2+bob); ctx.lineTo(it.x+20,it.y+11+bob);
+      ctx.lineTo(it.x+11,it.y+21+bob); ctx.lineTo(it.x+2,it.y+11+bob); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.moveTo(it.x+11,it.y+2+bob); ctx.lineTo(it.x+15,it.y+11+bob); ctx.lineTo(it.x+11,it.y+21+bob);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+}
+function drawNpcs(A,t){
+  /* the altar pulses once the couple have been read to you */
+  if(S.atAltar&&!S.pending){
+    const ax=2270;
+    ctx.save();
+    ctx.globalAlpha=0.18+Math.sin(t*4)*0.08;
+    ctx.fillStyle='#ff1a00';
+    ctx.beginPath(); ctx.ellipse(ax+30,GY-60,110,150,0,0,7); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,26,0,'+(0.4+Math.sin(t*4)*0.2)+')'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(ax+30,GY-70,64,0,7); ctx.stroke();
+    ctx.font='13px VT323,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='#ff6ad5';
+    ctx.fillText('THE SCISSORS ARE STILL OPEN',ax+30,GY-146);
+    ctx.textAlign='left';
+  }
+  for(const n of S.npcs){
+    const x=n.x,y=n.drawY||n.y,h=n.h,w=n.w;
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.ellipse(x+w/2,n.y+h-2,w*0.8,5,0,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+    /* people who have already spoken to you stay at full opacity — fading them
+       out read as "deleted". they get a tick instead, so you know what is left
+       to read without losing anyone off the screen. */
+    if(n.met){ ctx.fillStyle='#ffcc33';
+      ctx.beginPath(); ctx.arc(x+w-3,y+2,3,0,7); ctx.fill(); }
+    const c=n.node;
+    if(/^boot/.test(c)){
+      /* THE BOOT: a telephone whose handset is a boot. it is always ringing. */
+      ctx.fillStyle='#2a1a10'; ctx.fillRect(x+2,y+26,w-4,h-26);
+      ctx.fillStyle='#3a2418'; ctx.fillRect(x+4,y+28,w-8,11);
+      ctx.fillStyle='#ffb300'; ctx.fillRect(x+6,y+31,4,4); ctx.fillRect(x+13,y+31,4,4);
+      ctx.strokeStyle='#c9a68a'; ctx.lineWidth=3;         /* the boot */
+      ctx.beginPath(); ctx.moveTo(x+1,y+8); ctx.lineTo(x+w-1,y+8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+1,y+8); ctx.lineTo(x+1,y+19); ctx.lineTo(x+10,y+22); ctx.stroke();
+      ctx.strokeStyle='#7a1a00'; ctx.lineWidth=1;         /* the cord, trailing off */
+      ctx.beginPath(); ctx.moveTo(x+2,y+13); ctx.quadraticCurveTo(x-13,y+9,x-15,y+23); ctx.stroke();
+      if(Math.floor(S.t*3)%2===0){                          /* ring, ring */
+        ctx.fillStyle='rgba(255,60,0,.30)'; ctx.beginPath(); ctx.arc(x+w/2,y+12,16,0,7); ctx.fill();}
+    }
+    else if(c==='slop1'){
+      ctx.fillStyle='#5fbf3a'; ctx.beginPath(); ctx.moveTo(x+w/2,y-6);
+      ctx.lineTo(x+w,y+h); ctx.lineTo(x,y+h); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#2f7a1c'; ctx.fillRect(x+4,y+16,w-8,h-16);
+      ctx.fillStyle='#d8ff9a'; ctx.fillRect(x+7,y+8,6,6); ctx.fillRect(x+w-13,y+8,6,6);
+      ctx.fillStyle='#0d2a06'; ctx.fillRect(x+9,y+10,3,3); ctx.fillRect(x+w-11,y+10,3,3);
+      ctx.fillStyle='#3a8f22'; ctx.fillRect(x+w*0.25,y+26,w*0.5,4);
+    }
+    else if(c==='floater'){
+      ctx.fillStyle='rgba(150,205,255,0.6)';
+      ctx.beginPath(); ctx.ellipse(x+w/2,y+h/2,w*0.7,h*0.6,0,0,7); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.fillRect(x+7,y+10,5,5); ctx.fillRect(x+w-12,y+10,5,5);
+      ctx.fillStyle='#0b1b2e'; ctx.fillRect(x+9,y+11,3,4); ctx.fillRect(x+w-10,y+11,3,4);
+    }
+    else if(c==='conrad1'||c==='conrad3'){
+      ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(x+w/2,y+11,11,0,7); ctx.fill();
+      ctx.fillStyle='#e07a1a'; ctx.fillRect(x+w/2-9,y+9,18,4);
+      ctx.fillStyle='#5a3010'; ctx.fillRect(x+3,y+21,w-6,h-21);
+      ctx.fillStyle='#2a1a0a'; ctx.fillRect(x+w/2-7,y+8,14,5);
+      ctx.fillStyle='#3a3a3a'; ctx.fillRect(x+w-2,y+16,3,26);
+    }
+    else if(c==='toll'){
+      ctx.fillStyle='#b9ff3d'; ctx.beginPath(); ctx.arc(x+w/2,y+11,12,0,7); ctx.fill();
+      ctx.fillStyle='#1a3d00'; ctx.fillRect(x+w/2-8,y+10,16,3);
+      ctx.fillStyle='#2a5a10'; ctx.fillRect(x+3,y+22,w-6,h-22);
+      ctx.fillStyle='#1a3d00'; ctx.fillRect(x+w-8,y+34,16,4);
+    }
+    else if(c==='preacher'){
+      ctx.fillStyle='#e8e0c0'; ctx.beginPath(); ctx.arc(x+w/2,y+11,11,0,7); ctx.fill();
+      ctx.fillStyle='#3a1a08'; ctx.fillRect(x+2,y+21,w-4,h-21);
+      ctx.fillStyle='#c9a68a'; ctx.fillRect(x+w-4,y+2,12,10);
+      ctx.fillStyle='#8a8a8a'; ctx.beginPath(); ctx.arc(x+w+2,y+13,5,0,7); ctx.fill();
+    }
+    else if(c==='mauppi'){
+      ctx.fillStyle='#ffd9c9'; ctx.beginPath(); ctx.arc(x+w/2,y+12,13,0,7); ctx.fill();
+      ctx.fillStyle='#5a3a10'; ctx.fillRect(x+w/2-13,y+2,26,8);
+      ctx.fillStyle='#f3e4c8'; ctx.fillRect(x+3,y+24,w-6,h-24);
+      ctx.fillStyle='#b94735'; ctx.fillRect(x+w/2-1,y+26,3,h-26);
+      ctx.fillStyle='#c9a68a'; ctx.fillRect(x+w/2-5,y+16,11,3);
+    }
+    else if(c==='paivi'){
+      ctx.fillStyle='#f3e4c8'; ctx.beginPath(); ctx.arc(x+w/2,y+12,12,0,7); ctx.fill();
+      ctx.fillStyle='#ffcc33'; ctx.fillRect(x+w/2-12,y+2,24,7);
+      ctx.fillStyle='#2a2a2a'; ctx.fillRect(x+3,y+24,w-6,h-24);
+      ctx.fillStyle='#111'; ctx.fillRect(x+7,y+13,3,3); ctx.fillRect(x+w-10,y+13,3,3);
+      ctx.fillStyle='#e8a050'; ctx.fillRect(x+2,y+30,w-4,10);
+    }
+    else if(c==='pludski'){
+      ctx.fillStyle='#ffcc33'; ctx.beginPath(); ctx.arc(x+w/2,y+13,14,0,7); ctx.fill();
+      ctx.fillStyle='#7a3a0a'; ctx.fillRect(x+w/2-16,y-2,32,9);
+      ctx.fillStyle='#3a2a6a'; ctx.fillRect(x+3,y+26,w-6,h-26);
+      ctx.fillStyle='#ffcc33'; ctx.fillRect(x+w/2-9,y+34,18,4);
+      ctx.fillStyle='#111'; ctx.fillRect(x+7,y+12,3,3); ctx.fillRect(x+w-10,y+12,3,3);
+    }
+    else if(c==='obama'){
+      ctx.fillStyle='#5a3a28'; ctx.beginPath(); ctx.arc(x+w/2,y+12,12,0,7); ctx.fill();
+      ctx.fillStyle='#111'; ctx.fillRect(x+2,y+8,w-4,5);
+      ctx.fillStyle='#1a1a2a'; ctx.fillRect(x+3,y+24,w-6,h-24);
+      ctx.fillStyle='#fff'; ctx.fillRect(x+w/2-1,y+24,3,h-24);
+      ctx.fillStyle='#c9a68a'; ctx.fillRect(x+w/2-6,y+16,13,3);
+    }
+    else if(c==='satan'){
+      ctx.fillStyle='#ff4a00'; ctx.beginPath(); ctx.arc(x+w/2,y+13,14,0,7); ctx.fill();
+      ctx.fillStyle='#ffb300';
+      ctx.beginPath(); ctx.moveTo(x+1,y+3); ctx.lineTo(x+8,y-15); ctx.lineTo(x+13,y+4); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x+w-1,y+3); ctx.lineTo(x+w-8,y-15); ctx.lineTo(x+w-13,y+4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#2a0a0a'; ctx.fillRect(x+3,y+26,w-6,h-26);
+      ctx.fillStyle='#ffb300'; ctx.fillRect(x+w+1,y+30,12,16);
+    }
+    else if(c==='altar'){
+      ctx.fillStyle='#ff6ad5'; ctx.fillRect(x+2,y+16,24,h-16);
+      ctx.fillStyle='#ffd9c9'; ctx.beginPath(); ctx.arc(x+14,y+12,11,0,7); ctx.fill();
+      ctx.fillStyle='#6ad5ff'; ctx.fillRect(x+34,y+16,24,h-16);
+      ctx.fillStyle='#ffd9c9'; ctx.beginPath(); ctx.arc(x+46,y+12,11,0,7); ctx.fill();
+      ctx.strokeStyle='#c9a68a'; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.moveTo(x+58,y+18); ctx.lineTo(x+50,y-30); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+70,y+18); ctx.lineTo(x+78,y-30); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x+49,y-42,11,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x+79,y-42,11,0,7); ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.fillRect(x+11,y+10,3,3); ctx.fillRect(x+43,y+10,3,3);
+    }
+    else if(c==='mine_intro'){
+      ctx.fillStyle='#3a1a08'; ctx.fillRect(x+2,y+6,w-8,h-6);
+      ctx.fillStyle='#ffcc33'; ctx.font='14px VT323,monospace'; ctx.textAlign='center';
+      ctx.fillText('?MINE',x+w/2,y+28); ctx.textAlign='left';
+      ctx.fillStyle='#1a0a04'; ctx.fillRect(x+2,y+6,w-8,4);
+    }
+    else if(c==='temple_intro'){
+      ctx.strokeStyle='#ffcc33'; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.arc(x+w/2,y+20,20,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+w/2,y+2); ctx.lineTo(x+w/2,y-8); ctx.stroke();
+    }
+    ctx.globalAlpha=1; ctx.restore();
+  }
+}
+function drawEnemies(A,t){
+  for(const e of S.enemies){
+    if(e.dead) continue;
+    const x=e.x,y=e.y;
+    ctx.save();
+    if(e.kind==='glorp'){
+      ctx.fillStyle='#39d353';
+      ctx.beginPath(); ctx.ellipse(x+12,y+12,12,10+Math.sin(e.ph*4)*2,0,0,7); ctx.fill();
+      ctx.fillStyle='#0d3a15'; ctx.fillRect(x+5,y+9,4,4); ctx.fillRect(x+15,y+9,4,4);
+      ctx.fillStyle='#7dff5a'; ctx.fillRect(x+10,y+2,5,4);
+    }
+    else if(e.kind==='floater'){
+      const yy=y+12+Math.sin(e.ph*3)*4;
+      ctx.fillStyle='rgba(200,220,255,0.72)';
+      ctx.beginPath(); ctx.ellipse(x+12,yy,10,13,0,0,7); ctx.fill();
+      ctx.fillStyle='#123'; ctx.fillRect(x+7,yy-3,3,4); ctx.fillRect(x+14,yy-3,3,4);
+      ctx.fillStyle='rgba(200,220,255,0.25)';
+      ctx.beginPath(); ctx.ellipse(x+12,yy,16,19,0,0,7); ctx.fill();
+    }
+    else if(e.kind==='dart'){
+      ctx.fillStyle='#b8b8c8';
+      ctx.beginPath(); ctx.moveTo(x+12,y); ctx.lineTo(x+24,y+14);
+      ctx.lineTo(x+12,y+28); ctx.lineTo(x,y+14); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#ff1a00'; ctx.fillRect(x+10,y+12,5,5);
+    }
+    else if(e.kind==='truck'){
+      const dir=e.dir||1;
+      ctx.fillStyle=(Math.random()<0.03)?'#c9a68a':'#e8e0c0';
+      ctx.fillRect(x,y+6,58,26);
+      ctx.fillStyle='#3a6ad0'; ctx.fillRect(x+(dir>0?40:2),y+10,16,16);
+      ctx.fillStyle='#111'; ctx.fillRect(x+6,y+30,11,7); ctx.fillRect(x+41,y+30,11,7);
+      ctx.fillStyle='#ff1a00'; ctx.fillRect(x+(dir>0?56:0),y+12,4,7);
+      ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(x,y+37,58,4);
+    }
+    ctx.restore();
+  }
+}
+function drawPlayer(A,t){
+  if(S.inv>0&&Math.floor(S.t*14)%2===0) return;
+  const x=S.x,y=S.y;
+  const sq=S.onGround?0:Math.sin(S.bob*7)*1.4;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.ellipse(x+PW/2,S.lastSafe.y+1,PW*0.95,4,0,0,7); ctx.fill();
+  ctx.fillStyle='#c9a68a'; ctx.fillRect(x+3,y+15+sq,14,PH-15);
+  ctx.fillStyle='#f3d8b0'; ctx.fillRect(x+4,y+8+sq,12,11);
+  ctx.fillStyle='#f3d8b0'; ctx.fillRect(x+3,y+4+sq,14,12);
+  ctx.fillStyle='#4a2a18'; ctx.fillRect(x+3,y+sq,14,5);
+  ctx.fillStyle='#4a2a18'; ctx.fillRect(x+(S.face>0?12:3),y+3+sq,5,4);
+  ctx.fillStyle='#111'; ctx.fillRect(x+6,y+8+sq,3,3); ctx.fillRect(x+12,y+8+sq,3,3);
+  ctx.fillStyle='#4a2a18'; ctx.fillRect(x+3,y+11+sq,14,4);
+  ctx.fillStyle='#3a5ad0'; ctx.fillRect(x+3,y+22+sq,14,14);
+  ctx.fillStyle='#ffcc33'; ctx.fillRect(x+5,y+24+sq,2,2); ctx.fillRect(x+13,y+24+sq,2,2);
+  ctx.fillStyle='#3a1a0a'; ctx.fillRect(x+2,y+PH-5+sq,7,5); ctx.fillRect(x+11,y+PH-5+sq,7,5);
+  ctx.fillStyle='#f3d8b0'; ctx.fillRect(S.face>0?x+15:x-3,y+18+sq,5,11);
+  if(S.armor){ ctx.strokeStyle='rgba(255,204,51,0.75)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(x+PW/2,y+PH/2,21,0,7); ctx.stroke(); }
+  if(S.paper){ ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.fillRect(x+PW+2,y+10+sq,11,14);
+    ctx.fillStyle='#c41e00'; ctx.fillRect(x+PW+4,y+13+sq,7,2); ctx.fillRect(x+PW+4,y+17+sq,7,2); }
+  if(S.hubcap){ ctx.strokeStyle='#c9c9d9'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(x+PW/2,y+2,13,Math.PI,0); ctx.stroke();
+    ctx.strokeStyle='#8a8a9a'; ctx.lineWidth=1;
+    for(let i=0;i<4;i++){ const a=Math.PI+ (i+1)*Math.PI/5;
+      ctx.beginPath(); ctx.moveTo(x+PW/2,y+2); ctx.lineTo(x+PW/2+Math.cos(a)*13,y+2-Math.sin(a)*13); ctx.stroke(); } }
+  ctx.restore();
+  /* the word is above your head. it is not spelled out. it never is. */
+  ctx.font='10px VT323,monospace'; ctx.fillStyle='rgba(255,204,51,0.42)';
+  ctx.fillText('the '+'▓'.repeat(7),x-5,y-9);
+}
+function drawBeats(A,t){
+  for(const b of S.beats){
+    const x=b.x,y=b.y;
+    if(!b.done) drawActor(b.node,x,y,t,true);
+    else if(b.persist) drawActor(b.node,x,y,t,false);
+    else {
+      /* spent beat: a fading footprint so you can see where the scene happened */
+      ctx.fillStyle='rgba(255,204,51,0.18)';
+      ctx.fillRect(x-6,y-2,12,2);
+    }
+    if(!b.done){
+      ctx.fillStyle='#ffcc33'; ctx.font='22px VT323,monospace'; ctx.textAlign='center';
+      ctx.fillText('▼',x,y-74+Math.sin(t*3)*4);
+      ctx.strokeStyle='rgba(255,204,51,0.35)'; ctx.lineWidth=2;
+      ctx.setLineDash([6,8]); ctx.beginPath(); ctx.moveTo(x,y-64); ctx.lineTo(x,y-14); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.textAlign='left';
+  }
+}
+/* Draws a named character. `marker` draws the "you can talk to me" chevron. */
+function drawActor(kind,x,y,t,marker){
+  const bob=Math.sin(t*2+x*0.01)*1.5;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(x+16,y+44,20,5,0,0,7); ctx.fill();
+  const N=BEAT_ART[kind];
+  if(N) N(x,y+bob,t);
+  else {
+    /* generic silhouette: a person-shaped blob, labelled */
+    ctx.fillStyle='#4a3020'; ctx.fillRect(x+6,y+18,20,26);
+    ctx.fillStyle='#f3d8b0'; ctx.fillRect(x+8,y+4,16,16);
+    ctx.fillStyle='#111'; ctx.fillRect(x+11,y+10,3,3); ctx.fillRect(x+18,y+10,3,3);
+  }
+  if(marker){
+    ctx.font='11px VT323,monospace'; ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,204,51,0.8)';
+    ctx.fillText(BEAT_LABEL[kind]||'',x+16,y-4);
+  }
+  ctx.restore();
+  ctx.textAlign='left';
+}
+const BEAT_LABEL={
+  dave1:'DAVE',dave2:'DAVE',hellbot1:'HELLBOT',it_walk:'???',
+  conrad1:'CONRAD',conrad2:'CONRAD',conrad_far:'CONRAD',conrad_rescue:'CONRAD',
+  highway_sign:'SIGN',highway_end:'SIGN',icescream:'ICE SCREAM',
+  mauppi:'MAUPPI1',soup_pick:'SOUP',kathunk_intro:'KATHUNK HARRIS',mauppi_out:'MAUPPI1',
+  mine_intro:'A SIGN',ore_pick:'ORE',mine_end:'CONRAD',temple_intro:'THE BELL'
+};
+/* one painter per beat-character, all drawn in world units with feet at (x+16, y+44) */
+const BEAT_ART={
+  dave1(x,y,t){
+    /* DAVE: sun-bleached skeleton, still walking */
+    const sw=Math.sin(t*7)*3;
+    ctx.strokeStyle='#e8e0d0'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x+16,y+20); ctx.lineTo(x+16,y+36); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+16,y+36); ctx.lineTo(x+12+sw,y+44);
+    ctx.moveTo(x+16,y+36); ctx.lineTo(x+20-sw,y+44); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+16,y+24); ctx.lineTo(x+7,y+30+sw*0.4);
+    ctx.moveTo(x+16,y+24); ctx.lineTo(x+25,y+30-sw*0.4); ctx.stroke();
+    ctx.fillStyle='#f3ece0'; ctx.beginPath(); ctx.arc(x+16,y+10,10,0,7); ctx.fill();
+    ctx.fillStyle='#1a1a1a';
+    ctx.fillRect(x+11,y+8,4,4); ctx.fillRect(x+18,y+8,4,4);
+    ctx.fillRect(x+13,y+15,7,2);
+    ctx.strokeStyle='#8a8070'; ctx.lineWidth=1;
+    for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(x+11,y+20+i*4); ctx.lineTo(x+22,y+20+i*4); ctx.stroke(); }
+    ctx.fillStyle='#c41e00'; ctx.fillRect(x+12,y+0,3,10); ctx.fillRect(x+18,y+0,3,10);
+  },
+  dave2(x,y,t){ BEAT_ART.dave1(x,y,0); ctx.fillStyle='#c9a68a'; ctx.fillRect(x+10,y+44,14,4); },
+  hellbot1(x,y,t){
+    ctx.fillStyle='#2a2a2a'; ctx.fillRect(x+6,y+18,20,26);
+    ctx.fillStyle='#ffb0a0'; ctx.fillRect(x+8,y+6,16,14);
+    ctx.fillStyle='#111'; ctx.fillRect(x+11,y+10,4,3); ctx.fillRect(x+18,y+10,4,3);
+    ctx.fillStyle='#ffcc33'; ctx.fillRect(x+8,y+22,20,3);
+    ctx.font='10px VT323,monospace'; ctx.fillStyle='#c9a68a'; ctx.textAlign='center';
+    ctx.fillText('blessed by lava',x+16,y+2);
+  },
+  it_walk(x,y,t){
+    /* IT: the mangler, watching from a respectful distance */
+    ctx.fillStyle='#1a0505';
+    ctx.beginPath(); ctx.ellipse(x+16,y+34,20,12,0,0,7); ctx.fill();
+    ctx.strokeStyle='#3a0a0a'; ctx.lineWidth=3;
+    for(let i=0;i<4;i++){ const a=Math.PI+(i+1)*Math.PI/5;
+      ctx.beginPath(); ctx.moveTo(x+16,y+32);
+      ctx.lineTo(x+16+Math.cos(a)*22,y+32-Math.sin(a)*18+10); ctx.stroke(); }
+    ctx.fillStyle='#ffb300'; ctx.fillRect(x+9,y+18,5,4); ctx.fillRect(x+19,y+18,5,4);
+    ctx.fillStyle='#3a0a0a'; ctx.fillRect(x+4,y+30,24,7);
+    ctx.font='10px VT323,monospace'; ctx.fillStyle='#7a1a00'; ctx.textAlign='center';
+    ctx.fillText('it is behind you',x+16,y+8);
+  },
+  conrad1(x,y,t){ BEAT_ART.conrad_paint(x,y,t); },
+  conrad2(x,y,t){ BEAT_ART.conrad_paint(x,y,t); },
+  conrad_far(x,y,t){ BEAT_ART.conrad_paint(x,y,t); },
+  conrad_rescue(x,y,t){ BEAT_ART.conrad_paint(x,y,t); },
+  conrad_paint(x,y,t){
+    ctx.fillStyle='#5a3010'; ctx.fillRect(x+6,y+20,20,24);
+    ctx.fillStyle='#ffd24a'; ctx.beginPath(); ctx.arc(x+16,y+11,11,0,7); ctx.fill();
+    ctx.fillStyle='#e07a1a'; ctx.fillRect(x+7,y+9,18,4);
+    ctx.fillStyle='#2a1a0a'; ctx.fillRect(x+9,y+7,14,5);
+    ctx.fillStyle='#3a3a3a'; ctx.fillRect(x+30,y+16,4,28);
+    ctx.fillStyle='#8a8a8a'; ctx.fillRect(x+28,y+8,8,9);
+  },
+  highway_sign(x,y,t){ BEAT_ART.sign_paint(x,y,t); },
+  highway_end(x,y,t){ BEAT_ART.sign_paint(x,y,t); },
+  sign_paint(x,y,t){
+    ctx.fillStyle='#6a6a6a'; ctx.fillRect(x+15,y+22,4,22);
+    ctx.fillStyle='#d8d8d8'; ctx.fillRect(x+2,y+2,30,22);
+    ctx.fillStyle='#8a8a8a'; ctx.fillRect(x+2,y+20,30,4);
+    ctx.fillStyle='#c41e00'; ctx.fillRect(x+5,y+6,24,3); ctx.fillRect(x+5,y+12,16,3);
+  },
+  icescream(x,y,t){
+    ctx.fillStyle='#e8e0c0'; ctx.fillRect(x,y+12,64,32);
+    ctx.fillStyle='#3a6ad0'; ctx.fillRect(x+44,y+18,18,18);
+    ctx.fillStyle='#111'; ctx.fillRect(x+8,y+42,11,8); ctx.fillRect(x+46,y+42,11,8);
+    ctx.fillStyle='#ff1a00'; ctx.fillRect(x+60,y+20,5,8);
+    ctx.fillStyle='#ffb300'; ctx.font='10px VT323,monospace'; ctx.textAlign='center';
+    ctx.fillText('ICE SCREAM ♪',x+32,y+10);
+  },
+  mauppi(x,y,t){ BEAT_ART.mauppi_paint(x,y,t); },
+  mauppi_out(x,y,t){ BEAT_ART.mauppi_paint(x,y,t); },
+  mauppi_paint(x,y,t){
+    ctx.fillStyle='#f3e4c8'; ctx.fillRect(x+6,y+22,20,22);
+    ctx.fillStyle='#ffd9c9'; ctx.beginPath(); ctx.arc(x+16,y+12,12,0,7); ctx.fill();
+    ctx.fillStyle='#5a3a10'; ctx.fillRect(x+4,y+3,24,7);
+    ctx.fillStyle='#c9a68a'; ctx.fillRect(x+11,y+16,11,3);
+    ctx.fillStyle='#b94735'; ctx.fillRect(x+15,y+24,3,20);
+  },
+  soup_pick(x,y,t){
+    /* a steaming bowl on a stool */
+    ctx.fillStyle='#5a3010'; ctx.fillRect(x+8,y+30,16,14);
+    ctx.fillStyle='#e8d0b0'; ctx.beginPath(); ctx.ellipse(x+16,y+28,13,8,0,0,7); ctx.fill();
+    ctx.fillStyle='#b94735'; ctx.beginPath(); ctx.ellipse(x+16,y+27,10,6,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(255,220,180,0.5)'; ctx.lineWidth=2;
+    for(let i=0;i<3;i++){
+      const yy=y+16-((t*20+i*7)%18);
+      ctx.beginPath(); ctx.moveTo(x+10+i*6,yy); ctx.quadraticCurveTo(x+13+i*6,yy-5,x+10+i*6,yy-10); ctx.stroke();
+    }
+  },
+  kathunk_intro(x,y){
+    /* KATHUNK HARRIS: green beard, green spikes, one (1) face */
+    ctx.fillStyle='#2f9a2a'; ctx.fillRect(x+6,y+22,20,22);
+    ctx.beginPath(); ctx.arc(x+16,y+12,12,0,7); ctx.fill();
+    for(let i=0;i<7;i++){
+      const a=-Math.PI+(i/6)*Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(x+16+Math.cos(a)*11,y+12+Math.sin(a)*11);
+      ctx.lineTo(x+16+Math.cos(a)*21,y+12+Math.sin(a)*21);
+      ctx.lineTo(x+16+Math.cos(a+0.34)*11,y+12+Math.sin(a+0.34)*11);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='#39d353'; ctx.beginPath(); ctx.ellipse(x+16,y+24,13,10,0,0,7); ctx.fill();
+    ctx.fillStyle='#111'; ctx.fillRect(x+11,y+9,4,4); ctx.fillRect(x+18,y+9,4,4);
+    ctx.fillStyle='#1a3a12'; ctx.fillRect(x+12,y+17,9,3);
+    ctx.fillStyle='#1a3a12'; ctx.fillRect(x+13,y+26,7,2);
+  },
+  mine_intro(x,y,t){
+    ctx.fillStyle='#3a1a08'; ctx.fillRect(x+4,y+6,24,38);
+    ctx.fillStyle='#ffcc33'; ctx.font='13px VT323,monospace'; ctx.textAlign='center';
+    ctx.fillText('?MINE',x+16,y+30);
+  },
+  temple_intro(x,y,t){
+    ctx.strokeStyle='#ffcc33'; ctx.lineWidth=5;
+    ctx.beginPath(); ctx.arc(x+16,y+24,18,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x+16,y+6); ctx.lineTo(x+16,y-2); ctx.stroke();
+  }
+};
+
+function drawQTE(){
+  for(const q of S.qtes){
+    if(!q.fired||q.ok||q.t<=0) continue;
+    const x=S.x+PW/2,y=S.y-104;
+    const ch=q.arrow==='jump'?'↑':(q.arrow==='left'?'←':'→');
+    const key=q.arrow==='left'?'[A] / [←]':(q.arrow==='right'?'[D] / [→]':'[SPACE] / [W]');
+    const pulse=1+Math.sin(q.t*26)*0.05;
+    ctx.textAlign='center';
+    /* PRESS ... */
+    ctx.font='bold 20px VT323,monospace';
+    ctx.fillStyle='#000'; ctx.fillText('P R E S S',x+1,y-38+1);
+    ctx.fillStyle=q.t<0.4?'#fff':'#ffcc33'; ctx.fillText('P R E S S',x,y-38);
+    /* the arrow in a big obvious box */
+    const w=54*pulse,h=54*pulse;
+    ctx.fillStyle='rgba(120,10,0,0.94)'; ctx.fillRect(x-w/2,y-w/2-6,w,h);
+    ctx.strokeStyle=q.t<0.4?'#fff':'#ffb300'; ctx.lineWidth=4;
+    ctx.strokeRect(x-w/2,y-w/2-6,w,h);
+    ctx.fillStyle='#fff'; ctx.font='bold 38px monospace';
+    ctx.fillText(ch,x,y+12);
+    /* which key */
+    ctx.font='15px VT323,monospace'; ctx.fillStyle='#ffcc33';
+    ctx.fillText(key,x,y+40);
+    /* countdown bar so you can see how long you have */
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(x-34,y+48,68,6);
+    ctx.fillStyle='#39d353'; ctx.fillRect(x-34,y+48,68*Math.max(0,q.t/1.15),6);
+    ctx.textAlign='left';
+  }
+}
+function drawHUD(){
+  const t=Math.max(0,S.time);
+  const m=Math.floor(t/60),s=Math.floor(t%60);
+  const el=$('#timer');
+  el.innerHTML='<b>SNIBA IN</b> '+m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('panic',t<60);
+  const hp=Math.max(0,S.hp);
+  $('#hearts').textContent='♥'.repeat(hp)+'♡'.repeat(Math.max(0,S.maxhp-hp));
+  const inv=[];
+  if(S.hubcap) inv.push('HUB');
+  if(S.armor) inv.push('SOUP');
+  if(S.paper) inv.push('PAPER');
+  if(S.pass) inv.push('PASS');
+  $('#inv').textContent=inv.length?inv.join(' · '):'—';
+  const pct=Math.round(S.snib*100);
+  $('#snibfill').style.width=pct+'%';
+  $('#snibpct').textContent=pct+'%';
+}
+
+/* ------------------------------------------------------------- lifecycle -- */
+function injectName(){
+  const N=S.name;
+  for(const k in SCRIPT){
+    SCRIPT[k]=SCRIPT[k].map(it=>{
+      if(Array.isArray(it)&&typeof it[1]==='string'&&it[1].indexOf('PRÖT')>=0)
+        return [it[0],it[1].split('PRÖT').join(N)];
+      return it;
+    });
+  }
+}
+function startGame(){
+  audio(); if(AC&&AC.state==='suspended') AC.resume();
+  S.name=($('#nm').value||'PRÖT').toUpperCase().slice(0,10);
+  Object.assign(S,{started:true,time:RUN,hp:3,maxhp:3,gems:0,soups:0,hubcap:false,
+    armor:false,paper:false,pass:false,snib:0,deadAds:2,fellOnce:false,dead:false,pending:null,ending:null,
+    atAltar:false,lineCd:0,lineT:0});
+  clearTimers();
+  injectName();
+  $('#title').classList.remove('on'); $('#endov').classList.remove('on');
+  $('#hud').style.display='flex';
+  loadAct(0);
+  SFX.ring();
+  say('intro',()=>{ startMusic(1); toast('GO RIGHT. THE LINE BEHIND YOU BITES.'); });
+}
+function toTitle(){
+  S.started=false; stopMusic();
+  S.pending=null; S.ending=null; S.atAltar=false;
+  $('#hud').style.display='none'; $('#dead').classList.remove('on'); $('#pause').classList.remove('on');
+  $('#actcard').classList.remove('on'); $('#blackout').classList.remove('on'); cv.style.filter='';
+  $('#title').classList.add('on');
+}
+$('#play').onclick=startGame;
+$('#rnd').onclick=()=>{ const a=['PRÖT','PRÜT','PROT','PRÖTNUS','PRÖTTO','PЯÖT','PROÖT'];
+  $('#nm').value=a[(Math.random()*a.length)|0]; };
+$('#howto').onclick=()=>$('#howto').classList.add('on');
+$('#howback').onclick=()=>$('#howto').classList.remove('on');
+$('#mute').onclick=toggleMute;
+$('#resume').onclick=togglePause;
+$('#ptitle').onclick=toTitle;
+$('#retry').onclick=()=>{
+  if(S.deadAds<=0){ respawn(); return; }
+  const slot=$('#dead'); slot.innerHTML='';
+  if(window.HellAds&&HellAds.play){
+    HellAds.play(slot,{secs:5,exclude:'sniba-snib',onDone:()=>{ $('#dead').classList.remove('on'); respawn(); }});
+  } else after(2.5,()=>respawn());
+};
+$('#giveup').onclick=toTitle;
+$('#again').onclick=()=>startGame();
+$('#home').onclick=()=>location.href='../';
+$('#nm').addEventListener('keydown',e=>{ if(e.key==='Enter') startGame(); });
+document.addEventListener('click',e=>{
+  if(dlgOpen&&!e.target.closest('#choices')&&!e.target.closest('.ov')) skipOrNext();
+});
+if(window.HellAds&&HellAds.mount) HellAds.mount($('#adslot'),{exclude:'sniba-snib'});
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -570,7 +570,7 @@ function tutorialMile(){
 const CARS=['PICKUP TRUCK','SEMI 18-WHEELER','MINIVAN OF DOOM','LOW RIDER','ICE-CREAM TRUCK (evil)','BUS FULL OF SCREAMING'];
 function wildMile(){
   const m=S.mile;
-  const q = m<15?0.07 : m<40?0.12 : 0.17;   // was a flat 0.20 from mile 0
+  const q = m<15?0.05 : m<40?0.08 : 0.12;   // nerfed: was 0.07/0.12/0.17
   const roll=Math.random();
   if(roll<q) startQTE(pick(CARS));
   else if(roll<q+0.28) spawnNPC();
@@ -601,7 +601,7 @@ function hazardEvent(){ const t=R(0,4);
   else if(t===1){S.en=Math.max(0,S.en-2);log('Heat shimmer. −2 energy. Drink the air.','bad');say('The sun files a formal complaint against you.','HEAT');}
   else if(t===2){log('A billboard reads: "TS → (definitely real)". Hope +1.','good');gainXp(2);say('"TS → DEFINITELY REAL (not a mirage) — Dept. of TS"','BILLBOARD');}
   else if(t===3){S.scrap=Math.max(0,S.scrap-1);log('Pothole tax! −1 scrap falls out of your pockets.','bad');say('*CRACK.* The highway collects its due.','POTHOLE');}
-  else{startQTE('TUMBLEWEED MISSILE (it\'s huge)',{ms:1200});}
+  else{startQTE('TUMBLEWEED MISSILE (it\'s huge)',{ms:1800});}
   setChoices([]);
 }
 const FLAVOR=['Wind. A plastic bag crosses like a ghost.','A mile marker: "TS ???mi (someone scratched out the number)".','Crows discuss you. You pretend not to hear.','Heat lightning. No rain. The road wants rain.','An empty shoe. You do not ask.','A distant horn. Not yours. Not yet.','You count lane dashes. You lose count at 400. You feel peace.','Smell of diesel and sage. The official perfume of nowhere.','Your shadow walks beside you. Good company.','A lizard does push-ups. You do two, out of respect. (−0 energy, +honor)'];
@@ -627,8 +627,8 @@ function startQTE(carName,opts){
   if(qte||!S.alive) return;
   opts=opts||{};
   const need=pick(['left','up','right','down']);
-  // generous early, faster later: 2100ms → 950ms floor (was 1350 → 550 from mile 0)
-  let ms=opts.ms||Math.max(950,2100-S.mile*8-S.dodges*10);
+  // generous early, faster later: 2600ms → 1400ms floor (was 2100 → 950)
+  let ms=opts.ms||Math.max(1400,2600-S.mile*5-S.dodges*5);
   if(S._tip){ms*=1.5;S._tip=false;}
   const carLane=R(0,2);
   qte={need,carLane,ms,t0:performance.now(),done:false,car:carName,practice:!!opts.practice};
@@ -724,8 +724,8 @@ function fix(){ if(!S.alive||S.won||busy||qte) return;
 document.addEventListener('keydown',e=>{
   if(!$('vTitle').classList.contains('hidden')){ if(e.key==='Enter'||e.key===' '){startFromTitle();} return; }
   if(!$('vEnd').classList.contains('hidden')){ if(e.key==='r'||e.key==='R'||e.key==='Enter'){newGame();} return; }
-  // QTE has absolute priority, arrows only
-  if(qte&&!qte.done){ const k=KEYS[e.key]; if(k){ e.preventDefault(); resolveQTE(k); } return; }
+  // QTE has absolute priority, arrows + WASD
+  if(qte&&!qte.done){ const k=KEYS[e.key]||({a:'left',A:'left',w:'up',W:'up',d:'right',D:'right',s:'down',S:'down'})[e.key]; if(k){ e.preventDefault(); resolveQTE(k); } return; }
   if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){ e.preventDefault(); walk(); }
   else if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ e.preventDefault(); moveLane(-1); }
   else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ e.preventDefault(); moveLane(1); }

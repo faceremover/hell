@@ -19,6 +19,7 @@
     { slug: 'poopy butthole', icon: '🍽️💩', title: 'POOPY BUTTHOLE', tag: "Mauppi1's Restaurant", copy: '102 flavours. Kathunk condemned 11. Chef\u2019s Number Two is BACK.', cta: 'TASTE', hue: 25 },
     { slug: 'potslop', icon: '🍲🧔', title: 'POTSLOP', tag: '54 Soups. 1 Beard.', copy: 'Brew every soup. Kathunk Harris judges ALL. The beard knows.', cta: 'BREW NOW', hue: 95 },
     { slug: 'slop royal', icon: '👑🌊', title: 'SLOP ROYAL', tag: 'River-Dump Radius +10%', copy: 'Goblins furious. Slop Master unbothered. Dump like royalty.', cta: 'DUMP', hue: 275 },
+    { slug: 'sniba-snib', icon: '✂️🧓', title: 'SNIBA SNIB', tag: 'A Family Story. 9 Minutes.', copy: 'Your grandfather is Super Mario. Two strangers are getting married tonight. Do not let them keep him. (He dies anyway.)', cta: 'PLAY', hue: 355 },
     { slug: 'the dangler 4d', icon: '🛹👹', title: 'SUBWAY DANGLER SURF', tag: 'Dangle \u2022 Surf \u2022 Subway', copy: 'ALL THREE!! 500M+ downloads*. +3 energy FREE if you watch Dave eat a sandwich.', cta: 'INSTALL FREE', hue: 130 },
     { slug: 'the mangler', icon: '😱🌀', title: 'THE MANGLER', tag: 'Now With Jumpscares', copy: 'Spoiler-tag them. Dave didn\u2019t. Dave is gone now.', cta: 'GET MANGLED', hue: 320 },
     { slug: 'the mangler 3d', icon: '👁️🏃', title: 'THE MANGLER 3D', tag: 'IT Is Behind You', copy: '4% faster. 100% more behind you. Do not turn around. (Turn around.)', cta: 'RUN', hue: 190 }
